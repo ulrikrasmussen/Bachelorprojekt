@@ -1,3 +1,72 @@
 Videreudvikling af Fladuino
 ---------------------------
-Troels Henriksens et al.
+Troels Henriksens, Martin Dybdal og Jesper Reenberg lavede sidste år et
+Bachelorprojekt ("Fladuino: Controlling embedded devices with functional
+reactive programming"), hvor de inspireret af projektet Flask designede et
+indlejret sprog til Haskell, som kan oversættes til C-kode og afvikles på
+Arduino-platformen.[1]
+
+Projektet lægger op til flere fremtidige udvidelser til deres løsning, bl.a:
+
+* Mulighed for blot at specificere hvilke hardwareenheder ens program er
+  interesseret i at benytte, frem for at specificere hvilke specifikke pins
+  der skal kommunikeres over. Fladuino skal da køre en constraint-solver, og
+  specificere hvordan de forskellige pins skal tilsluttes (eller komme med en
+  fejlmeddelelse hvis konfigurationen ikke er mulig).
+
+* Omstrukturering af Fladuino til at supportere sikker kommunikation mellem
+  flere uafhængige enheder. I den nuværende Fladuino-implementation sikres det
+  ikke at kommunikationen mellem forskellige enheder er typesikker, da de
+  programmer der afvikles på hver enhed er udviklet uafhængigt af hinanden.
+  For at sikre dette skal Fladuino altså udvides til at kunne udtrykke
+  programmer der skal kommunikere med hinanden.
+
+
+Programmering af uafhængige enheder baseret på join-calculus
+------------------------------------------------------------
+Join-calculus er en proceskalkule specielt designet til distribuerede systemer.
+Som udgangspunkt er al kommunikation asynkron (men man kan modellere synkrone og
+sekventielle beregninger i en delmængde af kalkulen), hvilket ophavsmændene påstår
+egner sig bedre i et distribueret miljø, hvor man ikke nødvendigvis kan
+garantere at alle de involverede processer kan synkronisere med hinanden (fordi
+de f.eks. er uden for radiokontakt).
+
+Jon Loldrup foreslog at man kunne oversætte et sprog baseret på join-calculus
+til Arduino-platformen. Mindst en implementation findes, JoCaml, som er en
+modificeret O'Caml med speciel understøttelse af primitiver fra
+join-calculus.[2] Der findes også tidligere implementationer af lignende sprog,
+men de er blevet erklæret forældrede.[3]
+
+Alle implementationer er dog afhængige af O'Caml miljøet, hvilket formentlig er
+for tungt til at afvikle på Arduino-platformen. En løsning kunne derfor være at
+se på en delmængde af et eksisterende join-sprog, eller udvikle et minimalt
+indlejret sprog i Haskell. Dette sprog skal vi så have bragt til at køre på en
+Arduino. Arduinoen kører med Atmel AVR-instruktionssættet, og den letteste måde
+at generere kode til den er nok ved først at generere C-kode som derefter
+oversættes med avr-gcc.
+
+Der er en del opgaver at tage fat på, og vi skal sikkert afgrænse os for ikke
+at drukne:
+
+* Vi skal undersøge hvilket sprog der er mest praktisk at arbejde med; et
+  eksisterende sprog eller et egetudviklet sprog. Hvis vi skal kunne forsvare
+  et egetudviklet sprog skal det være let at udvide.
+
+* Vi skal nok ikke forvente at have adgang til et trådbibliotek på Arduinoen,
+  så der skal sikkert udvikles et køretidsmiljø.
+
+* Der er begrænset med hukommelse på en Arduino, så vi skal undersøge om det er
+  muligt at give nogen som helst garantier om et statisk hukommelsesforbrug.
+
+* Ovenstående punkt giver også anledning til at overveje hvordan spildopsamling
+  skal foregå.
+
+* Hardware-interface og interkommunikation: Hvordan modellerer vi de
+  forskellige enheder som processer?
+
+Disclaimer: Jon Loldrup overvejer at skrive om det samme projekt, men vi ved
+ikke om det vil give nogle problemer.
+
+[1] http://www.arduino.cc/
+[2] http://jocaml.inria.fr/
+[3] http://moscova.inria.fr/join/
