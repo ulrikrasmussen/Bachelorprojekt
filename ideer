@@ -1,5 +1,5 @@
 Videreudvikling af Fladuino
----------------------------
+===========================
 Troels Henriksens, Martin Dybdal og Jesper Reenberg lavede sidste år et
 Bachelorprojekt ("Fladuino: Controlling embedded devices with functional
 reactive programming"), hvor de inspireret af projektet Flask designede et
@@ -8,13 +8,13 @@ Arduino-platformen.[1]
 
 Projektet lægger op til flere fremtidige udvidelser til deres løsning, bl.a:
 
-* Mulighed for blot at specificere hvilke hardwareenheder ens program er
+- Mulighed for blot at specificere hvilke hardwareenheder ens program er
   interesseret i at benytte, frem for at specificere hvilke specifikke pins
   der skal kommunikeres over. Fladuino skal da køre en constraint-solver, og
   specificere hvordan de forskellige pins skal tilsluttes (eller komme med en
   fejlmeddelelse hvis konfigurationen ikke er mulig).
 
-* Omstrukturering af Fladuino til at supportere sikker kommunikation mellem
+- Omstrukturering af Fladuino til at supportere sikker kommunikation mellem
   flere uafhængige enheder. I den nuværende Fladuino-implementation sikres det
   ikke at kommunikationen mellem forskellige enheder er typesikker, da de
   programmer der afvikles på hver enhed er udviklet uafhængigt af hinanden.
@@ -23,7 +23,7 @@ Projektet lægger op til flere fremtidige udvidelser til deres løsning, bl.a:
 
 
 Programmering af uafhængige enheder baseret på join-calculus
-------------------------------------------------------------
+============================================================
 Join-calculus er en proceskalkule specielt designet til distribuerede systemer.
 Som udgangspunkt er al kommunikation asynkron (men man kan modellere synkrone og
 sekventielle beregninger i en delmængde af kalkulen), hvilket ophavsmændene påstår
@@ -48,20 +48,20 @@ oversættes med avr-gcc.
 Der er en del opgaver at tage fat på, og vi skal sikkert afgrænse os for ikke
 at drukne:
 
-* Vi skal undersøge hvilket sprog der er mest praktisk at arbejde med; et
+- Vi skal undersøge hvilket sprog der er mest praktisk at arbejde med; et
   eksisterende sprog eller et egetudviklet sprog. Hvis vi skal kunne forsvare
   et egetudviklet sprog skal det være let at udvide.
 
-* Vi skal nok ikke forvente at have adgang til et trådbibliotek på Arduinoen,
+- Vi skal nok ikke forvente at have adgang til et trådbibliotek på Arduinoen,
   så der skal sikkert udvikles et køretidsmiljø.
 
-* Der er begrænset med hukommelse på en Arduino, så vi skal undersøge om det er
+- Der er begrænset med hukommelse på en Arduino, så vi skal undersøge om det er
   muligt at give nogen som helst garantier om et statisk hukommelsesforbrug.
 
-* Ovenstående punkt giver også anledning til at overveje hvordan spildopsamling
+- Ovenstående punkt giver også anledning til at overveje hvordan spildopsamling
   skal foregå.
 
-* Hardware-interface og interkommunikation: Hvordan modellerer vi de
+- Hardware-interface og interkommunikation: Hvordan modellerer vi de
   forskellige enheder som processer?
 
 Disclaimer: Jon Loldrup overvejer at skrive om det samme projekt, men vi ved
@@ -70,3 +70,58 @@ ikke om det vil give nogle problemer.
 [1] http://www.arduino.cc/
 [2] http://jocaml.inria.fr/
 [3] http://moscova.inria.fr/join/
+
+
+Klassificering af tekster efter holdning.
+=========================================
+
+Problemet.
+----------
+Det er interessant at kende en persons meninger og holdninger til andres
+meninger, hvis man fx ønsker at agere på basis den holdning, der er flertal
+for, eller hvis man ønsker at servicere oplysninger, der er relevante for
+mennesker med bestemte meninger og synspunkter, når de forsøger at følge en
+debat om et bestemt emne.
+
+Normalt er man ellers overladt helt til sig selv mht. at afgøre, hvilke
+tekster, der er relevante for en, hvis man prøver at danne sig en mening på et
+bestemt område. Typisk er det et privilegium, der er forbeholdt for
+journalister, at have et mere end overfladisk kendskab til andre holdninger end
+ens egne, da man ikke, hverken i hverdagen eller i fritiden, har tid til at
+undersøge, om der findes nyheder eller artikler, der har interesse for én.
+
+
+Metoden.
+--------
+-   Definer en ontologi for holdninger, der gør det muligt for en person at
+    udtrykke sin holdning (enig/uenig/etc.) om indholdet af en tekst, og
+    mulighed for at udtrykke sin holdning til forfatteren af en tekst, så det
+    fx er muligt at tilkendegive sin enighed med en bestemt person på et
+    bestemt område.
+
+    (RDF er oplagt)
+
+    eksempler: P er en person, T er en tekst, X er et område/semantisk domæne
+
+    - Jeg er enig med P omkring X
+
+    - Jeg er uenig i holdningen der er udtrykt i T
+
+    - Jeg synes at P er (in)kompetent på område X
+
+    - Jeg synes at afsnit Y i tekst T udtrykker (positiv/negativ)
+      holdning til X
+
+-   Undersøg, hvilke prædikater der skal til for at fremstille en
+    model til fornuftig klassifikation af tekster i forhold til
+    holdninger.
+
+-   Konstruer (eller specificer) et framework (webcrawler +
+    holdningstilkendegivelsesfunktion), der kan aggregere holdninger og
+    holdninger til holdninger udtrykt på tværs af internettet
+
+-   Konstruer en (Machine Learning) algoritme, der kan
+    forklassificere tekster på baggrund af forskellige parametre
+    omkring en tekst, ved brug af den aggregerede data fra forrige
+    punkt. (fx forfatter, afsnits lighed i ordvalg og formuleringer med
+    andre tekster, offentliggørelsessted (url), osv.)
