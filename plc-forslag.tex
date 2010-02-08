@@ -1,0 +1,72 @@
+\documentclass[a4paper,draft]{article}
+\usepackage[utf8]{inputenc}
+\title{Forslag til Bachelorprojekt}
+\author{Philip Lykke Carlsen}
+\usepackage[usenames]{color}
+\usepackage[T1]{fontenc}
+\usepackage[danish]{babel}
+\usepackage{lmodern}
+\usepackage[pdftex]{graphics}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{latexsym}
+\usepackage{verbatim}
+
+\usepackage{fixme}
+
+\begin{document}
+\maketitle
+\section{Klassificering af tekster efter holdning.}
+
+\paragraph{Problemet.}  Det er interessant at kende en persons meninger og
+holdninger til andres meninger, hvis man fx ønsker at agere på basis den
+holdning, der er flertal for, eller hvis man ønsker at servicere oplysninger,
+der er relevante for mennesker med bestemte meninger og synspunkter, når de
+forsøger at følge en debat om et bestemt emne.
+
+Normalt er man ellers overladt helt til sig selv mht. at afgøre, hvilke
+tekster, der er relevante for en, hvis man prøver at danne sig en mening på et
+bestemt område. Typisk er det et privilegium, der er forbeholdt for
+journalister, at have et mere end overfladisk kendskab til andre holdninger end
+ens egne, da man ikke, hverken i hverdagen eller i fritiden, har tid til at
+undersøge, om der findes nyheder eller artikler, der har interesse for én.  
+
+\paragraph{Metoden.} 
+\begin{itemize} \item Definer en ontologi for holdninger, der gør det
+muligt for en person at udtrykke sin holdning (enig/uenig/etc.) om
+indholdet af en tekst, og mulighed for at udtrykke sin holdning til
+forfatteren af en tekst, så det fx er muligt at tilkendegive sin enighed
+med en bestemt person på et bestemt område.
+
+(RDF er oplagt)
+
+eksempler: P er en person, T er en tekst, X er et område/semantisk domæne
+
+\subitem Jeg er enig med P omkring X 
+
+\subitem Jeg er uenig i holdningen
+der er udtrykt i T 
+
+\subitem Jeg synes at P er (in)kompetent på område X
+
+\subitem Jeg synes at afsnit Y i tekst T udtrykker (positiv/negativ)
+holdning til X
+
+\item Undersøg, hvilke prædikater der skal til for at fremstille en model
+til fornuftig klassifikation af tekster i forhold til holdninger.
+
+\item Konstruer (eller specificer) et framework (webcrawler + holdningstilkendegivelsesfunktion), der kan aggregere
+holdninger og holdninger til holdninger udtrykt på tværs af internettet
+
+\item Konstruer en (Machine Learning) algoritme, der kan forklassificere
+tekster på baggrund af forskellige parametre omkring en tekst, ved brug af
+den aggregerede data fra forrige punkt. (fx forfatter, afsnits lighed i
+ordvalg og formuleringer med andre tekster, offentliggørelsessted (url),
+osv.)
+\end{itemize}
+
+
+\end{document}
+
