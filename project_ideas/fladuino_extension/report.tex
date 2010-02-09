@@ -1,0 +1,70 @@
+\documentclass[a4paper, 11pt, oneside, report]{memoir}
+\chapterstyle{culver}
+\checkandfixthelayout
+
+% Palatino font
+\usepackage{palatino}
+
+% Font and input encoding
+\usepackage[T1]{fontenc}
+\usepackage[utf8x]{inputenc}
+
+% Babel (language)
+\usepackage[english]{babel}
+
+% Support for blackboard bold symbols.
+%\usepackage{bbm}
+
+% Nice math font
+%\usepackage{eulervm}
+
+% AMS-Math packages
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{amsthm}
+
+% For including bitmap graphics
+%\usepackage{graphicx}
+
+% Remove chapters from figure counters
+%\counterwithout{figure}{chapter}
+% Add sections instead
+%\counterwithin{figure}{section}
+
+\title{Extending Fladuino with support for expressing networks of embedded
+devices}
+\author{Ulrik Rasmussen \& Philip Lykke Carlsen}
+
+\begin{document}
+
+\maketitle
+
+\section*{Project Contents}
+
+The proposed project is an adaption of a bachelor's thesis from
+2009\cite{fladuino} in which a framework called Fladuino is created, for
+programming the Arduino devices in a declarative functional style. The project
+is an adaption of the Haskell-embedded domain-specific language \emph{Flask},
+which is used for programming sensor networks.
+
+%In Fladuino, programs are expressed as acyclic dataflow graphs, in which data
+%flows from sensors and through nodes in a network. Fladuino programs are said
+%to be \emph{reactive}; the programmer doesn't need to keep track of when a
+%specific input variable changes, but merely describes the relationship between
+%the output-variables (the reactions) and the input-values (what is observed).
+
+As it is, Fladuino only covers the programming of individual devices. If
+multiple Arduinos were to communicate with each other in a network (for
+instance, via bluetooth), possibly with different programs, there would be no
+support for sanity-checking that the programs actually transmit valid (i.e.
+type-safe) messages to each other. It would also be up to the programmer to
+manually establish connections to the other units, and to define a common
+protocol.
+
+If cheap, embedded systems like the Arduino are to be deployed in vast numbers,
+it would be a great improvement if Fladuino was extended to support (... to be
+continued)
+
+\bibliographystyle{plain}
+\bibliography{bibliography}
+\end{document}
