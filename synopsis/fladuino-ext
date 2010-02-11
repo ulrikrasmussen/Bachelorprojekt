@@ -1,14 +1,22 @@
 Titel:
-    Extending the Fladuino project with support for expressing communicating devices
+    Extending Fladuino with support for expressing networks of embedded devices
 
 Problemformulering:
-    
+     Kan man udvide det domæne-specifikke sprog Fladuino, således at det kan
+     udtrykke netværk af kommunikerende Arduinoer med funktionel reaktiv
+     programmering?
 
 Afgrænsning:
     
 
 Begrundelse:
-    
+    Fladuino er et eksisterende framework der muliggør programmering af en
+    Arduino indenfor programmeringsparadigmet "funktionel reaktiv
+    programmering". Målet med Fladuino er, at gøre det muligt at udtrykke
+    styringsprogrammer til indlejrede systemer i en mere koncis stil end man
+    ville kunne ved hjælp af et traditionelt imperativt programmeringssprog.
+
+
 
 Arbejdsopgaver:
     
@@ -16,3 +24,5 @@ Arbejdsopgaver:
 Produkt:
     
 
+Litteratur:
+    

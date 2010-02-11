@@ -67,9 +67,6 @@ at drukne:
 Disclaimer: Jon Loldrup overvejer at skrive om det samme projekt, men vi ved
 ikke om det vil give nogle problemer.
 
-[1] http://www.arduino.cc/
-[2] http://jocaml.inria.fr/
-[3] http://moscova.inria.fr/join/
 
 
 Klassificering af tekster efter holdning.
@@ -99,7 +96,7 @@ Metoden.
     fx er muligt at tilkendegive sin enighed med en bestemt person på et
     bestemt område.
 
-    (RDF er oplagt [http://en.wikipedia.org/wiki/Resource_Description_Framework])
+    (RDF er oplagt [4])
 
     eksempler: P er en person, T er en tekst, X er et område/semantisk domæne
 
@@ -125,3 +122,9 @@ Metoden.
     omkring en tekst, ved brug af den aggregerede data fra forrige
     punkt. (fx forfatter, afsnits lighed i ordvalg og formuleringer med
     andre tekster, offentliggørelsessted (url), osv.)
+
+
+[1] http://www.arduino.cc/
+[2] http://jocaml.inria.fr/
+[3] http://moscova.inria.fr/join/
+[4] http://en.wikipedia.org/wiki/Resource_Description_Framework
