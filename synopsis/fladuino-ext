@@ -1,14 +1,22 @@
 Titel:
-    Extending the Fladuino project with support for expressing communicating devices
+    Extending Fladuino with support for expressing networks of embedded devices
 
 Problemformulering:
-    
+     Kan man udvide det domæne-specifikke sprog Fladuino, således at det kan
+     udtrykke netværk af kommunikerende Arduinoer med funktionel reaktiv
+     programmering?
 
 Afgrænsning:
     
 
 Begrundelse:
-    
+    Fladuino er et eksisterende framework der muliggør programmering af en
+    Arduino indenfor paradigmet "funktionel reaktiv programmering". Målet med
+    Fladuino er, at gøre det muligt at udtrykke styringsprogrammer til
+    indlejrede systemer i en mere koncis stil end man ville kunne ved hjælp af
+    et traditionelt imperativt programmeringssprog.
+
+
 
 Arbejdsopgaver:
     1. Læse artikler om FRP, samt Fladuinorapporten.
@@ -34,9 +42,17 @@ Arbejdsopgaver:
 
     6. Implementere og afprøve testprogrammerne.
 
-    7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne med at udfærdige testprogrammerne.
+    7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne
+       med at udfærdige testprogrammerne.
     
 Produkt:
-    En udvidelse af fladuinosproget/frameworket, hvor det er muligt at programmere hele netværk af robotter, uden at skulle bekymre sig om kommunikationen mellem de enklete enheder.
+    En udvidelse af fladuinosproget/frameworket, hvor det er muligt at
+    programmere hele netværk af robotter, uden at skulle bekymre sig om
+    kommunikationen mellem de enklete enheder.
 
-    En rapport, der beskriver implementationen og giver en vurdering af fordele og ulemper ved brugen af FRP til at specificere programmer, der udføres på diskrete, kommunikerende enheder.
+    En rapport, der beskriver implementationen og giver en vurdering af fordele
+    og ulemper ved brugen af FRP til at specificere programmer, der udføres på
+    diskrete, kommunikerende enheder.
+
+Litteratur:
+    
