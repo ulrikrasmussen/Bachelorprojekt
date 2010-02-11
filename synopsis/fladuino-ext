@@ -19,10 +19,33 @@ Begrundelse:
 
 
 Arbejdsopgaver:
-    
+    1. Læse artikler om FRP, samt Fladuinorapporten.
 
-Produkt:
+    2. Undersøge hvilke kommunikationsmekanismer der vil være passende, på
+       basis af hvilke muligheder teknologien tilbyder, og hvor kompliceret den er
+       at programmere til.
+
+    3. Foretage en basal test af kommunikationshardwaren.
+
+    4. Specificere sprogudvidelserne og rammerne for kommunikationen. Heri skal
+       vi undersøge og overveje, hvilke udtryksmuligheder vil skal tilbyde
+       programmøren med hensyn til specifikationen af kommunikationen mellem
+       enhederne. Specielt er det relevant at beslutte, om enhederne skal
+       kommunikerer synkront over en protokol med garanteret kommunikation, eller
+       om events skal overføres over usikre, asynkrone kanaler.
+
+       For at få nogle indikationer af, hvilken retning udvidelserne skal
+       foretages i, overvejer vi at konstruere nogle testprogrammer i pseudokode
+       for overfladisk at evaluere de forskellige strategier.
+
+    5. Implementere sprogudvidelserne med løbende tests.
+
+    6. Implementere og afprøve testprogrammerne.
+
+    7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne med at udfærdige testprogrammerne.
     
+Produkt 
+    En udvidelse af fladuinosproget/frameworket, hvor kommunikationen mellem enheder er udtrykt implicit i reaktionen på events. En event kan altså opstå på én enhed, og reageres på af en eller flere andre enheder.
 
 Litteratur:
     
