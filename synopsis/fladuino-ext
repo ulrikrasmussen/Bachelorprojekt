@@ -11,10 +11,10 @@ Afgrænsning:
 
 Begrundelse:
     Fladuino er et eksisterende framework der muliggør programmering af en
-    Arduino indenfor programmeringsparadigmet "funktionel reaktiv
-    programmering". Målet med Fladuino er, at gøre det muligt at udtrykke
-    styringsprogrammer til indlejrede systemer i en mere koncis stil end man
-    ville kunne ved hjælp af et traditionelt imperativt programmeringssprog.
+    Arduino indenfor paradigmet "funktionel reaktiv programmering". Målet med
+    Fladuino er, at gøre det muligt at udtrykke styringsprogrammer til
+    indlejrede systemer i en mere koncis stil end man ville kunne ved hjælp af
+    et traditionelt imperativt programmeringssprog.
 
 
 
