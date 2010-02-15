@@ -52,7 +52,7 @@ Arbejdsopgaver:
        vi undersøge og overveje, hvilke udtryksmuligheder vil skal tilbyde
        programmøren med hensyn til specifikationen af kommunikationen mellem
        enhederne. Specielt er det relevant at beslutte, om enhederne skal
-       kommunikerer synkront over en protokol med garanteret kommunikation, eller
+       kommunikere synkront over en protokol med garanteret kommunikation, eller
        om events skal overføres uden garanti for levering.
 
     5. Implementere sprogudvidelserne med løbende tests.
@@ -62,7 +62,7 @@ Arbejdsopgaver:
     7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne
        med at udfærdige testprogrammerne.
 
-Produkt
+Produkt:
     En udvidelse af fladuinosproget/frameworket, hvor kommunikationen mellem
     enheder er udtrykt implicit i reaktionen på events. En event kan altså
     opstå på én enhed, og reageres på af en eller flere andre enheder.
