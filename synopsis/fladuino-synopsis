@@ -1,13 +1,18 @@
 Titel:
-    Extending Fladuino with support for expressing networks of embedded devices
+    Udvidelse af Fladuino med understøttelse for at udtrykke netværk af indlejrede maskiner
+
 
 Problemformulering:
-     Kan man udvide det domæne-specifikke sprog Fladuino, således at det kan
-     udtrykke netværk af kommunikerende Arduinoer med funktionel reaktiv
-     programmering?
+    Kan man udvide det domæne-specifikke sprog Fladuino, således at det kan
+    udtrykke netværk af kommunikerende Arduinoer med funktionel reaktiv
+    programmering?
+
 
 Afgrænsning:
-    
+    De udtrykte netværk vil som udgangspunkt være statiske, og vil derfor ikke
+    understøtte at man tilføjer og fjerner maskiner i netværket mens systemet
+    kører.
+
 
 Begrundelse:
     Fladuino er et eksisterende framework der muliggør programmering af en
@@ -16,43 +21,58 @@ Begrundelse:
     indlejrede systemer i en mere koncis stil end man ville kunne ved hjælp af
     et traditionelt imperativt programmeringssprog.
 
+    Fladuino understøtter dog kun programmering af isolerede enheder, hvilket
+    besværliggør programmering af flere enheder forbundet i netværk. Programmer
+    skal skrives uafhængigt af hinanden, hvilket umuliggør typecheck på tværs
+    af programmerne. Dette kan resultere i køretidsfejl som er besværlige at
+    diagnosticere på indlejrede enheder.
+
+    Vi har forestillet os en række mulige scenarier, hvor det ville være
+    ønskværdigt at kunne udtrykke netværk af kommunikerende enheder, bl.a.
+
+      * Robotsystemer, der på baggrund af resultatet fra flere spredte sensorer
+        udfører en arbejdsopgave. Dette kunne f.eks. være et gartneri der måler
+        vækstparametre for enkelte områder af gartneriet, og aktiverer
+        hjælperobotter til at opretholde optimale vækstbetingelser.
+
+      * ...
 
 
 Arbejdsopgaver:
-    1. Læse artikler om FRP, samt Fladuinorapporten.
+    1. Læse artikler om FRP samt Fladuinorapporten.
 
     2. Undersøge hvilke kommunikationsmekanismer der vil være passende, på
        basis af hvilke muligheder teknologien tilbyder, og hvor kompliceret den er
        at programmere til.
 
-    3. Foretage en basal test af kommunikationshardwaren.
+    3. Foretage en basal test af kommunikationshardwaren, og beslutte os for
+       hvilke kommunikationsmedier vi skal understøtte (bluetooth, radio,
+       ethernet, osv.)
 
     4. Specificere sprogudvidelserne og rammerne for kommunikationen. Heri skal
        vi undersøge og overveje, hvilke udtryksmuligheder vil skal tilbyde
        programmøren med hensyn til specifikationen af kommunikationen mellem
        enhederne. Specielt er det relevant at beslutte, om enhederne skal
        kommunikerer synkront over en protokol med garanteret kommunikation, eller
-       om events skal overføres over usikre, asynkrone kanaler.
-
-       For at få nogle indikationer af, hvilken retning udvidelserne skal
-       foretages i, overvejer vi at konstruere nogle testprogrammer i pseudokode
-       for overfladisk at evaluere de forskellige strategier.
+       om events skal overføres uden garanti for levering.
 
     5. Implementere sprogudvidelserne med løbende tests.
 
-    6. Implementere og afprøve testprogrammerne.
+    6. Implementere og afprøve testprogrammer.
 
     7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne
        med at udfærdige testprogrammerne.
-    
-Produkt:
-    En udvidelse af fladuinosproget/frameworket, hvor det er muligt at
-    programmere hele netværk af robotter, uden at skulle bekymre sig om
-    kommunikationen mellem de enklete enheder.
 
-    En rapport, der beskriver implementationen og giver en vurdering af fordele
-    og ulemper ved brugen af FRP til at specificere programmer, der udføres på
-    diskrete, kommunikerende enheder.
+
+Produkt
+    En udvidelse af fladuinosproget/frameworket, hvor kommunikationen mellem
+    enheder er udtrykt implicit i reaktionen på events. En event kan altså
+    opstå på én enhed, og reageres på af en eller flere andre enheder.
+
 
 Litteratur:
-    
+    Arduino:
+    http://arduino.cc/
+
+    "Fladuino: Controlling embedded devices with functional reactive programming":
+    http://sigkill.dk/athas/rapport.pdf
