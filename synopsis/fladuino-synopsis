@@ -1,6 +1,5 @@
 Titel:
-    Udvidelse af Fladuino med understøttelse for at udtrykke netværk af indlejrede maskiner
-
+    Extending Fladuino with support for expressing networks of embedded devices
 
 Problemformulering:
     Kan man udvide det domæne-specifikke sprog Fladuino, således at det kan
@@ -63,12 +62,14 @@ Arbejdsopgaver:
     7. Udfærdige rapportens konklusion, hvor vi reflekterer over erfaringerne
        med at udfærdige testprogrammerne.
 
-
 Produkt
     En udvidelse af fladuinosproget/frameworket, hvor kommunikationen mellem
     enheder er udtrykt implicit i reaktionen på events. En event kan altså
     opstå på én enhed, og reageres på af en eller flere andre enheder.
 
+    En rapport, der beskriver implementationen og giver en vurdering af fordele
+    og ulemper ved brugen af FRP til at specificere programmer, der udføres på
+    diskrete, kommunikerende enheder.
 
 Litteratur:
     Arduino:
