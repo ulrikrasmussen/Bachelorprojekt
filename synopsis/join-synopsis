@@ -1,0 +1,70 @@
+﻿Title:
+    Programming distributed embedded devices using join-calculus
+
+
+Problem statement:
+    Is it practical to use the join calculus to program mobile robots that need
+    to communicate in a dynamic setting, where there is no guarantee of message
+    delivery and not necessarily any centralised communication available?
+
+
+Motivation:
+    Programmable robotic devices present many possibilities, for instance in
+    the field of self-reconfiguring modular robotics or in swarm robotics. In
+    fields like these, many autonomous robots has to communicate and organise
+    themselves to accomplish certain tasks. There are no centralised means of
+    communication available, and the available communication channels may be
+    unreliable. Also, programs running on autonomous robots like these are
+    inherently distributed and asynchronous, which presents many challenges to
+    the programmer.
+
+    Many of the traditional tools available for programming such devices are
+    primitive, with concepts far from the problem domain and closer to the
+    actual hardware executing the program. Therefore, it seems obvious that
+    programming in a style that is more portable and less explicit with regards
+    to the actual communication algorithms will benefit the programming of
+    these devices. In both these aspects, join calculus seems to be a promising
+    abstraction of parallel, communicating processes.
+
+
+Scope:
+    In this project we choose to limit our investigation to the matter of
+    expressing programs in join calculus, and avoid the matter of actually
+    executing the programs on the special hardware it was meant for. Thus, this
+    project will largely be about language design and simulation.
+
+
+Tasks:
+    * Try to understand and document the relevant literature on join-calculus
+      (2-3 weeks)
+    * Design and document the programming language (~6-8 weeks)
+       * Decide on language constructs and semantics.
+       * Encode common data types in the join calculus.
+
+       * Implement the programming language (2-3 weeks)
+       * Construct sample programs (~2 weeks)
+       * Implement a simulator that simulates robots in a 2D space (~2-3 weeks)
+       * Document the performance of the sample programs and the efforts
+         involved in constructing them. (1-2 weeks)
+       * Compare join calculus to other process calculi (i.e. could any
+         eventual challenges that we met have been avoided, had we used another
+         process calculus?) (1 week)
+
+
+Product:
+    The product of the project will first of all be a report that documents the
+    effort, and secondly an implementation of our programming language,
+    probably in the shape of an EDSL with Haskell as a meta language, along
+    with a 2D simulation program, in which it is possible to run programs on
+    virtual robot units and observe the communication and movements of the
+    robots.
+
+    We will evaluate the usefulness of the calculus by constructing a
+    programming language based on the calculus, and a simulator that captures
+    the peculiarities of decentralised communication, along with situations of
+    unit failure and unit replacement.
+
+
+Literature:
+    The paper on join calculus.
+    (more to come)
