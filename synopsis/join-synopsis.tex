@@ -40,20 +40,22 @@
 
 \section*{Problem statement}
 
-Is it feasible to use the join calculus\cite{join-calculus} to program mobile
-robots that need to communicate in a dynamic setting, where there is no
+Is it feasible to use the join calculus\cite{join-calculus} to program embedded
+devices that need to communicate in a dynamic setting, where there is no
 guarantee of message delivery and not necessarily any centralised communication
-available?
+available? Additionally, is it feasible to use the calculus for modeling both
+intra- and inter-device communication?
 
 \section*{Motivation}
 
-Programmable robotic devices present many possibilities, for instance in the
-field of self-reconfiguring modular robotics or in swarm robotics. In fields
-like these, many autonomous robots have to communicate and organise themselves
-to accomplish certain tasks.  There are no centralised means of communication
-available, and the available communication channels may be unreliable. Also,
-programs running on autonomous robots like these are inherently distributed and
-asynchronous, which presents many challenges to the programmer.
+Programmable embedded devices present many possibilities, for instance in the
+field of self-reconfiguring modular robotics, swarm robotics, sensor networks,
+etc. In fields like these, many devices have to communicate and organise
+themselves to accomplish certain tasks.  There are no centralised means of
+communication available, and the available communication channels may be
+unreliable. Also, programs running on embedded devices like these are
+inherently distributed and asynchronous, which presents many challenges to the
+programmer.
 
 Many of the traditional tools available for programming such devices are
 primitive, with concepts far from the problem domain and closer to the actual
@@ -69,16 +71,15 @@ In this project we choose to limit our investigation to the matter of
 expressing programs in join calculus, and avoid the matter of actually
 executing the programs on the special hardware it was meant for.
 Thus, this project will focus on designing a programming language along with an
-interpreter for it, and a simulator for simulating robots in a simplified
-environment. It will then be possible to program the simulated robots using our
-programming language.
+interpreter for it, and a simulator for simulating communicating devices in a
+simplified environment. It will then be possible to program the simulated
+devices using our programming language.
 
 \section*{Tasks}
 
 \begin{itemize}
 \item
-  Try to understand and document the relevant literature on
-  join-calculus (2-3 weeks)
+  Survey and document the relevant literature on join-calculus (2-3 weeks)
 
 \item
   Design and document the programming language (\ensuremath{\sim}6-8
@@ -91,24 +92,27 @@ programming language.
   Construct sample programs (\ensuremath{\sim}2 weeks)
 
 \item
-  Implement a simulator that simulates robots in a simplified environment
-  (\ensuremath{\sim}2-3 weeks)
+  Implement a simulator that simulates communicating devices in a simplified
+  environment (\ensuremath{\sim}2-3 weeks)
 
 \item
-  Document the performance of the sample programs and the efforts
-  involved in constructing them. (1-2 weeks)
+  Investigate the expressiveness of the programming language, based on the
+  sample programs and the efforts involved in constructing them. (1-2 weeks)
 
 \item
-  Compare join calculus to other process calculi (i.e. if ) (1 week)
+  Compare the join calculus to other process calculi. That is, if we encounter
+  any problems that turns out to be cumbersome to express using the join
+  calculus, would another process calculus offer the expressive power to
+  model the problem better? (1 week)
 
 \end{itemize}
 \section*{Product}
 
 We will write a report that documents our efforts and our evaluation of the
-join calculus. W will also produce an implementation of our programming
+join calculus. We will also produce an implementation of our programming
 language in the form of an interpreter, and a simulator capable of simulating
-communicating robots. The virtual robots will be programmed using our
-programming language.
+communicating embedded devices. The virtual devices will be programmed using
+our programming language.
 
 \bibliographystyle{plain}
 \bibliography{join-synopsis}
