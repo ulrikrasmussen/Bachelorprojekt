@@ -1,0 +1,15 @@
+!obby
+session version="0.4.7"
+ user_table
+  user colour="ccccff" id="1" name="ulrik"
+ chat
+  system_message text="ulrik has joined" timestamp="1267456240"
+  system_message text="ulrik has created a new document: macros.tex" timestamp="1267456259"
+  system_message text="ulrik has created a new document: report.tex" timestamp="1267456259"
+  system_message text="ulrik has created a new document: introduction.tex" timestamp="1267456264"
+ document encoding="UTF-8" id="1" owner="1" suffix="1" title="macros.tex"
+  chunk author="0" content="\\renewcommand{\\S}[2]{\\ensuremath{#1{\\langle}#2{\\rangle}}}"
+ document encoding="UTF-8" id="2" owner="1" suffix="1" title="report.tex"
+  chunk author="0" content="% vim:spell:spelllang=en_gb:\n\\documentclass[a4paper, oneside, draft]{memoir}\n\\checkandfixthelayout\n\n% Font and input encoding\n\\usepackage[T1]{fontenc}\n\\usepackage[utf8x]{inputenc}\n\n% Babel (language)\n\\usepackage[british]{babel}\n\n% Palatino font\n\\usepackage{palatino}\n\n% Nice math font\n\\usepackage{eulervm}\n\n% AMS-Math packages\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{amsthm}\n\n% For including bitmap graphics\n\\usepackage{graphicx}\n\n% Pedantic typesetting - we like it!\n\\usepackage{microtype}\n\n\\usepackage{fixme}\n\n\\input{macros.tex}\n\n\\title{Programming distributed embedded devices using join-calculus}\n\\author{Philip Carlsen \\& Ulrik Rasmussen}\n\n\\begin{document}\n\n\\frontmatter\n\n\\maketitle\n\n\\begin{abstract}\n\\input{abstract.tex}\n\\end{abstract}\n\n\\clearpage\n\\chapter*{Preface}\n\\input{preface.tex}\n\n\\clearpage\n\n\\tableofcontents*\n\n\n\\mainmatter\n\n\\chapter{Introduction}\n\n\\input{chap/introduction.tex}\n\n\\bibliographystyle{plain}\n\\bibliography{bib/bibliography}\n\\end{document}\n"
+ document encoding="UTF-8" id="3" owner="1" suffix="1" title="introduction.tex"
+  chunk author="0" content="% vim:spell:spelllang=en_gb:\n\\section{Problem statement}\n\n\\section{Join-calculus}\n\n\\fixme{we may need a clearer definition of ``mobile'' and ``distributed''}\nJoin-calculus is a process calculus for modelling mobile and distributed\nsystems, communicating in an asynchronous way. It is described in\n\\cite{fournet1996reflexive} using an extension of the \\emph{Chemical Abstract\nMachine}\\cite{berry1989chemical} (or CHAM) as a model for computation. This\nextended model is called the \\emph{reflexive} CHAM.\n\nThe join-calculus can be seen as a concurrent extension of functional\nprogramming, and the calculus is closer to an actual programming language than\nother calculi, like the $\\pi$-calculus. The only values are \\emph{names}, which\nact both as port (or channel) names, and as transmitted values. For instance, if\n$x$ and $y$ are names, $\\S{x}{y}$ means that we send $y$ over $x$. A message\n$\\S{x}{y}$ is also called an \\emph{atom}, and multiple atoms can be combined\ninto \\emph{molecules} using `$|$'.\n\nWe denote a given state of the CHAM by $\\mathcal{R} \\vdash \\mathcal{M}$, where\n$\\mathcal{M}$ is a \\emph{solution} of molecules, and $\\mathcal{R}$ is a set of\nreductions.\n\n"
