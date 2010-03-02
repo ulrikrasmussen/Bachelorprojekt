@@ -1,4 +1,4 @@
-module Language(Expr(..), Pat(..), Join(..), Def(..), Proc(..)) where
+module Language(Expr(..), Pat(..), Join(..), Def(..), Atom(..), Proc(..)) where
 
 import Data.List (intersperse)
 
@@ -23,36 +23,35 @@ instance Show Pat where
   show (SuccP e) = "S " ++ show e
 
 data Join = VarJ String [Pat]
-          | AndJ Join Join
     deriving (Eq)
 
 instance Show Join where
     show (VarJ v ps) =
      v ++ "(" ++ (concat $ intersperse ", " (map show ps)) ++ ")"
 
-data Def  = EmptyD
-          | ReactionD Join Proc
-          | OrD Def Def
+data Def  = ReactionD [Join] Proc
     deriving (Eq)
 
 instance Show Def where
-  show EmptyD = "T"
-  show (ReactionD j p) = show j ++ " |> " ++ show p
-  show (OrD d1 d2) = show d1 ++ " or " ++ show d2
+  show (ReactionD j p) = (concat $ intersperse " & " (map show j)) ++ " |> " ++ show p
 
-data Proc = InertP
-          | MsgP String [Expr]
-          | AndP Proc Proc
-          | DefP Def Proc
-          | MatchP Expr [(Pat, Proc)]
-    deriving (Eq)
+newtype Proc = Proc [Atom]
+   deriving (Eq)
 
 instance Show Proc where
-  show InertP = "0"
+    show (Proc as) = concat $ intersperse " & " (map show as)
+
+data Atom = InertA
+          | MsgP String [Expr]
+          | DefA [Def] Proc
+          | MatchA Expr [(Pat, Proc)]
+    deriving (Eq)
+
+instance Show Atom where
+  show InertA = "0"
   show (MsgP s es) =
     s ++ "(" ++ (concat $ intersperse ", " (map show es)) ++ ")"
-  show (AndP p1 p2) = show p1 ++ " & " ++ show p2
-  show (DefP d p) = "def " ++ show d ++ " in " ++ show p
-  show (MatchP e mps) = "match " ++ show e ++ " with " ++
-    (concat $ intersperse " | " (map showmp mps))
+  show (DefA d p) = "def " ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ show p
+  show (MatchA e mps) = "(match " ++ show e ++ " with " ++
+    (concat $ intersperse " | " (map showmp mps)) ++ ")"
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc

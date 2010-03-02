@@ -7,9 +7,13 @@ import Control.Applicative
 import Text.ParserCombinators.Parsec hiding ((<|>), many, optional)
 import Text.ParserCombinators.Parsec.Expr
 
+lexeme :: Parser a -> Parser a
 lexeme p = p <* many space
+
+lexeme' :: Parser a -> Parser a
 lexeme' p = p <* many1 space
 
+parens :: Parser a -> Parser a
 parens p = char '(' *> many space *> p <* char ')'
 
 identifier :: Parser String
@@ -27,27 +31,30 @@ pat  =   ZeroP <$ (lexeme $ char 'Z')
      <|> VarP  <$> (lexeme identifier)
      <?> "Pattern"
 
-joinP :: Parser Join
-joinP = chainl1 (lexeme varj) (AndJ <$ (lexeme $ char '&'))
+joins :: Parser [Join]
+joins = (lexeme varj) `sepBy` (lexeme $ char '&')
   where varj = VarJ <$> identifier <*> (parens $ pat `sepBy` (lexeme $ char ','))
 
-def :: Parser Def
-def = chainl (lexeme reaction) (OrD <$ (lexeme $ string "or")) EmptyD
-    <?> "Definition"
-  where reaction = ReactionD <$> joinP <* (lexeme $ string "|>") <*> proc
+defs :: Parser [Def]
+defs = (lexeme reaction) `sepBy` (lexeme' $ string "or")
+     <?> "Definition"
+  where reaction = ReactionD <$> joins <* (lexeme $ string "|>") <*> proc
 
 proc :: Parser Proc
-proc = chainl1 proc' (AndP <$ (lexeme $ char '&')) <?> "Process"
-  where proc' = (try defp)
+proc =  (Proc . concat <$> atoms)
+  where atoms = (((:[]) <$> atom)
+                  <|> (concat <$> (lexeme $ parens atoms)))
+                  `sepBy` (lexeme $ char '&')
+        atom = (try defp)
               <|> (try matchp)
               <|> MsgP <$> identifier
                        <*> (lexeme (parens $ expr `sepBy` (lexeme $ char ',')))
-              <|> InertP <$ (lexeme $ char '0')
-        defp = DefP <$  (lexeme' $ string "def")
-                    <*> def
+              <|> InertA <$ (lexeme $ char '0')
+        defp = DefA <$  (lexeme' $ string "def")
+                    <*> defs
                     <*  (lexeme' $ string "in")
                     <*> proc
-        matchp = MatchP <$  (lexeme' $ string "match")
+        matchp = MatchA <$  (lexeme' $ string "match")
                         <*> expr
                         <*  (lexeme' $ string "with")
                         <*> matchPair `sepBy` (lexeme $ char '|')
