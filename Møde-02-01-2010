@@ -1,0 +1,26 @@
+Hvor meget skal vi gå i dybden med at beskrive vores teoretiske fundament,
+CHAM og distributed John., i introduktionen?
+
+%.. Det, ^^^^, er vel i virkeligheden hovedspørgsmålet.. i hvert fald det, vi har tænkt 
+% mest over tror jeg
+
+Er næste skridt at se på design af et sprog? Er det en god idé at basere det på
+en skrællet ML/Haskell?
+	Eventuelt bestående af følgende elementer:
+		* Algebraiske datatyper
+		* Pattern Matching, normal plus i join-mønstre (indsæt eksempel) (check)
+		    data X = A Int | B Float
+
+		    def x<A v> | y<> := ...
+		        x<B v>       := ...
+		    
+		* Control statements(er det ikke det, det hedder?)
+		* Aritmetiske expressions
+		* Typeinferens
+
+	Blandt ting der er skrællede væk er værd at notere:
+		* Funktioner (uden sideeffekter.. referer du til at reaktioner egentlig er funktioner med sideeffekter? Det kan man godt sige. Hmm, jeg må nok hellere udtænke et eksempel på et tidspunkt.)
+		* Exception handling (ud over den som der er direkte support for i join-calculus mht. fejlede locations)
+		* (Typeklasser?.. hvis nu vi tog udgangspunkt i Haskell fremfor ML..) 
+		
+		
