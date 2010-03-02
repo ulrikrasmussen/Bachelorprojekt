@@ -61,4 +61,5 @@ proc =  (Proc . concat <$> atoms)
         matchPair = (,) <$> lexeme pat
                         <*  (lexeme $ string "->")
                         <*> proc
+
 test = parseFromFile (proc <* eof) "test.join"
