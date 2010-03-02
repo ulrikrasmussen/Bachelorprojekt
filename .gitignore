@@ -1,3 +1,7 @@
-report.*
-!report.tex
+*.aux
+*.log
+*.toc
+*.bbl
+*.pdf
 *.swp
+!papers/*/*.pdf
