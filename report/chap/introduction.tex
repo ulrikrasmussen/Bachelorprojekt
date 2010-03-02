@@ -1,11 +1,54 @@
 % vim:spell:spelllang=en_gb:
-\section{Problem statement}
-
 \section{Join-calculus}
 
-\fixme{we may need a clearer definition of ``mobile'' and ``distributed''}
-Join-calculus is a process calculus for modelling mobile and distributed
-systems, communicating in an asynchronous way. It is described in
+Join-calculus is a process calculus for modelling distributed systems,
+communicating in an asynchronous way. It is described in
 \cite{fournet1996reflexive} using an extension of the \emph{Chemical Abstract
-Machine}\cite{berry1989chemical} (or CHAM) as a model for computation: The
-\emph{reflexive} CHAM.
+Machine}\cite{berry1989chemical} (or CHAM) as a model for computation. This
+extended model is called the \emph{reflexive} CHAM.
+
+The join-calculus can be seen as a concurrent extension of functional
+programming, and the calculus is closer to an actual programming language than
+other process calculi, like the $\pi$-calculus. The only values are
+\emph{names}, which
+act both as port (or channel) names, and as transmitted values. For instance, if
+$x$ and $y$ are names, $\S x<y>$ means that we send $y$ over $x$. A message
+$\S x<y>$ is also called an \emph{atom}, and multiple atoms can be combined
+into \emph{molecules} using `$|$'.
+
+In this section, we will briefly explain the workings of the reflexive CHAM
+using examples.
+We denote a given state of the CHAM by $\mathcal{R} \vdash \mathcal{M}$, where
+$\mathcal{M}$ is a multiset of molecules, and $\mathcal{R}$ is a set of
+molecule reaction rules. The CHAM states are related by a bidirectional
+\emph{heating relation}, `$\HeatCool$'. Two states related by
+`$\HeatCool$' are structurally equivalent, and therefore interchangeable.
+One equivalence states that we can combine the molecules of a solution in all
+possible ways:
+$$
+  \vdash \S x<> | \S y<> \ \HeatCool{} \vdash \S x<>, \S y<>
+$$
+Appropriate application of heating and cooling allows molecules to take part in
+reactions, that subsequently consumes them from the solution.
+
+If there exists a rule in $\mathcal{R}$ that matches a given molecule, the rule
+can be applied:
+$$
+  \S x<a> | \S y<> \triangleright \S z<a> \vdash \S x<v> | \S y<>
+  \React \S x<a> | \S y<> \triangleright \S z<a> \vdash \S z<v>
+$$
+Note that reductions are defined up to substitution of the transmitted values.
+
+It is possible for a molecule to define new reduction rules. The syntax of
+molecules is extended to include definitions:
+$$
+  \jdef{\S x<> \triangleright \S y<>}{\S x<> | \S z<>}
+$$
+
+A heating relation adds the definition to the set of rules. If the above
+definition is placed in $\mathcal{M}$, we get
+$$
+ \emptyset \vdash \Def \S x<> \triangleright \S y<> in \S x<> | \S z<>.
+ \HeatCool \S x<> \triangleright \S y<> \vdash \S x<> | \S z<>
+ \React \S x<> \triangleright \S y<> \vdash \S y<> | \S z<>
+$$
