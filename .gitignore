@@ -2,6 +2,7 @@
 *.log
 *.toc
 *.bbl
+*.blg
 *.pdf
 *.swp
 !papers/*/*.pdf
