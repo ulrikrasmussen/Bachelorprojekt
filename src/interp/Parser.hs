@@ -1,4 +1,4 @@
-module Parser() where
+module Parser(program, runParser) where
 
 import Language
 
@@ -61,5 +61,8 @@ proc =  (Proc . concat <$> atoms)
         matchPair = (,) <$> lexeme pat
                         <*  (lexeme $ string "->")
                         <*> proc
+
+program :: Parser Proc
+program = proc <* eof
 
 test = parseFromFile (proc <* eof) "test.join"

@@ -1,6 +1,4 @@
 def add(Z, y, k)   |> k(y)
  or add(S x, y, k) |> add(x, S y, k)
  or k(x) & f()     |> g(x, Z)
- in match S S Z with
-      Z   -> x() & (add(Z, Z, r))
-    | S y -> add(y, S S Z, r)
+ in f() & add(S S Z, S S Z, k)

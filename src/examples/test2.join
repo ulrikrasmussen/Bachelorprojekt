@@ -1,0 +1,5 @@
+def x() |> y() in
+    x() & def x(y) |> match y with
+                        S x -> x(x)
+                      | Z -> x(y)
+          in x(k)
