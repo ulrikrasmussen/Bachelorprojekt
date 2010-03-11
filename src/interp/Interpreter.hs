@@ -50,6 +50,7 @@ interp :: (MonadJoin m, Functor m) => m ()
 interp = do
   (Context ds as _) <- getC
   heatAtoms
+  applyReactions
   (Context ds' as' _) <- getC
   when (ds /= ds' && as /= as') interp
 
@@ -60,6 +61,10 @@ heatAtoms = do
     context <- getC
     putC $ context { cDefs = cDefs context ++ ds', cAtoms = as' }
     return ()
+
+applyReactions :: (MonadJoin m, Functor m) => m ()
+applyReactions = do
+   skinkeLinke 
 
 heatAtom :: (MonadJoin m, Functor m) => Atom -> m ([Def], [Atom])
 heatAtom InertA        = return ([],[])
