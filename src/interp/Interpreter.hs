@@ -7,6 +7,7 @@ import Language
 import Control.Monad
 import Control.Applicative
 import Control.Monad.State
+import Control.Arrow (first,second)
 
 import Data.List
 import qualified Data.Map as M
@@ -28,13 +29,24 @@ instance Show Context where
                ++ "\n\nAtoms:\n\t" ++ (concat . intersperse "\n\t" $ map show (cAtoms context))
 
 class (Monad m) => MonadJoin m where
-  getC :: m Context
-  putC :: Context -> m ()
+  getDefs :: m [Def]
+  rmDef :: Def -> m ()
+  putDef :: Def -> m ()
+  getAtoms :: m [Atom]
+  rmAtom :: Atom -> m ()
+  putAtom :: Atom -> m ()
+
   getFreshNames :: Int -> m [String]
 
 instance MonadJoin JoinM where
-  getC = get
-  putC = put
+  getDefs = gets cDefs
+  rmDef def = modify $ \s -> s { cDefs = delete def $ cDefs s }
+  putDef def = modify $ \s -> s { cDefs = def : cDefs s }
+
+  getAtoms = gets cAtoms
+  rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
+  putAtom atm = modify $ \s -> s { cAtoms = atm : cAtoms s }
+
   getFreshNames n = do
     (fns, fns') <- gets (splitAt n . cFreshNames)
     modify $ \s -> s {cFreshNames = fns'}
@@ -44,34 +56,47 @@ initContext :: [Def] -> [Atom] -> Context
 initContext ds as = Context ds as ['#' : show i | i <- [1..]]
 
 runInterpreter :: Proc -> Context
-runInterpreter (Proc atms) = execState (runJoinM interp) (initContext [] atms)
+runInterpreter (Proc atms) = execState (runJoinM $ interp 10) (initContext [] atms)
 
-interp :: (MonadJoin m, Functor m) => m ()
-interp = do
-  (Context ds as _) <- getC
-  heatAtoms
-  applyReactions
-  (Context ds' as' _) <- getC
-  when (ds /= ds' && as /= as') interp
+interp :: (MonadJoin m, Functor m) => Int -> m ()
+interp 0 = return ()
+interp n = do
+  mapM heatAtom =<< getAtoms
+  mapM applyReaction =<< getDefs
+  interp $ n - 1
 
-heatAtoms :: (MonadJoin m, Functor m) => m ()
-heatAtoms = do
-    atoms <- cAtoms <$> getC
-    (ds', as') <- foldl1 (\(a,b) (c,d) -> (a++c, b++d)) <$> mapM heatAtom atoms
-    context <- getC
-    putC $ context { cDefs = cDefs context ++ ds', cAtoms = as' }
-    return ()
+applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
+applyReaction d@(ReactionD js p) =
+  sequence <$> mapM matchJoin js >>=
+  maybe (return ()) (\xs ->
+    do let (sigma, atoms) = first M.unions $ unzip xs
+       mapM_ rmAtom atoms
+       mapM_ putAtom $ (subst sigma <$> (pAtoms p))
+    )
 
-applyReactions :: (MonadJoin m, Functor m) => m ()
-applyReactions = do
-   skinkeLinke 
+matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
+matchJoin (VarJ var pats) = do
+  mAtom <- find (chanIs var) <$> getAtoms
+  return $ do atom@(MsgP _ es) <- mAtom
+              sigma <- matchPatterns es
+              return (sigma, atom)
+   where chanIs v (MsgP v' _) = v == v'
+         chanIs v _           = False
 
-heatAtom :: (MonadJoin m, Functor m) => Atom -> m ([Def], [Atom])
-heatAtom InertA        = return ([],[])
-heatAtom m@(MsgP _ _)  = return ([],[m])
+         matchPatterns es = M.unions <$> (sequence $ zipWith matchPat pats es)
+
+         matchPat (VarP s) e = Just $ M.fromList [(s, e)]
+         matchPat (ZeroP) (ZeroE) = Just $ M.empty
+         matchPat (SuccP p) (SuccE e) = matchPat p e
+         matchPat _ _ = Nothing
+
+heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
+heatAtom InertA        = rmAtom InertA
+heatAtom m@(MsgP _ _)  = return ()
 heatAtom d@(DefA ds p)   = do
-    let dvs = concatMap definedVars ds
-    dvs' <- concatMap definedVars . cDefs <$> getC
-    let ivs = dvs `intersect` dvs'
-    sigma <- M.fromList . zipWith (\l r -> (l, l ++ r)) ivs <$> (getFreshNames $ length ivs)
-    return (subst sigma <$> ds, pAtoms $ sigma `subst` p)
+    rmAtom d
+    dvs <- concatMap definedVars <$> getDefs
+    let ivs = (concatMap definedVars ds) `intersect` dvs
+    sigma <- M.fromList . zipWith (\l r -> (l, VarE $ l ++ r)) ivs <$> (getFreshNames $ length ivs)
+    mapM_ putDef (subst sigma <$> ds)
+    mapM_ putAtom $ (pAtoms $ sigma `subst` p)

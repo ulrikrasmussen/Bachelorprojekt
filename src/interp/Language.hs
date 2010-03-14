@@ -17,12 +17,12 @@ import Data.List (intersperse, (\\))
 import Data.Generics
 import qualified Data.Map as M
 
-type Sigma = M.Map String String
+type Sigma = M.Map String Expr
 
 class Subst a where subst :: Sigma -> a -> a
 
-instance Subst [Char] where
-  subst sigma v = maybe v id $ M.lookup v sigma
+--instance Subst [Char] where
+--  subst sigma v = maybe v id $ M.lookup v sigma
 
 data Expr = VarE String
           | ZeroE
@@ -37,7 +37,7 @@ instance Show Expr where
 instance Subst Expr where
     subst sigma expr =
       case expr of
-        VarE v -> VarE $ sigma `subst` v
+        ve@(VarE v) -> maybe ve id $ M.lookup v sigma
         ZeroE -> ZeroE
         SuccE e -> SuccE $ sigma `subst` e
 
@@ -52,10 +52,10 @@ instance Show Pat where
   show ZeroP = "Z"
   show (SuccP e) = "S " ++ show e
 
-instance Subst Pat where
-  subst sigma (VarP v) = VarP $ sigma `subst` v
-  subst sigma ZeroP = ZeroP
-  subst sigma (SuccP e) = SuccP $ sigma `subst` e
+--instance Subst Pat where
+--  subst sigma (VarP v) = VarP $ sigma `subst` v
+--  subst sigma ZeroP = ZeroP
+--  subst sigma (SuccP e) = SuccP $ sigma `subst` e
 
 
 data Join = VarJ String [Pat]
@@ -66,7 +66,8 @@ instance Show Join where
      v ++ "(" ++ (concat $ intersperse ", " (map show ps)) ++ ")"
 
 instance Subst Join where
-  subst sigma (VarJ v ps) = VarJ (sigma `subst` v) (subst sigma <$> ps)
+  subst sigma vj@(VarJ v ps) = 
+   maybe vj (\(VarE v') -> VarJ v' ps) $ M.lookup v sigma
 
 
 data Def  = ReactionD [Join] Proc
@@ -107,7 +108,10 @@ instance Show Atom where
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc
 
 instance Subst Atom where
-  subst sigma (MsgP s es) = MsgP (sigma `subst` s) (subst sigma <$> es)
+  subst sigma (MsgP s es) = 
+    let es' = subst sigma <$> es
+    in  maybe (MsgP s es')
+              (\(VarE s') -> MsgP s' es') $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
     let sigma' = foldl (flip M.delete) sigma (concatMap definedVars ds)
