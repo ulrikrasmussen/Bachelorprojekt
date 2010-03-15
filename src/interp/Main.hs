@@ -15,9 +15,9 @@ testProgram = parseString "def x() |> y() or y() |> x() in x() & def x() |> y() 
 
 openJF f = do res <- parseFromFile program f
               case res of
-                 Left e -> error "could not parse"
+                 Left e -> error $ show e
                  Right p -> return p
 
 run n = do
-  testProg <- openJF "../examples/mult.join"
+  testProg <- openJF "../examples/list.join"
   putStrLn . show $ runInterpreter testProg n

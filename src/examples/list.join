@@ -1,0 +1,13 @@
+def list(f, o, k) |> def k0()   |> f(S S S S S S Z, o, k1)
+                      or k1(xs) |> f(S  Z, xs, k2)
+                      or k2(xs) |> f(S S Z, xs, k3)
+                      or k3(xs) |> f(S S S Z, xs, k)
+                      in k0()
+ or nil(f, o, k)   |> k(o)
+ or add(Z, x, k)   |> k(x)
+ or add(S x, y, k) |> add(x, S y, k)
+ or head(list, k)  |> def aux(x,xs,k) |> k(x)
+                       in list(aux, nil, k)
+ or tails(list, k) |> def aux(x,xs,k) |>
+                       in list(aux, nil, k)
+ in head(list, o)

@@ -29,10 +29,18 @@ data Expr = VarE String
           | SuccE Expr
     deriving (Eq, Data, Typeable)
 
+--instance Show Expr where
+--  show (VarE v) = v
+--  show ZeroE = "Z"
+--  show (SuccE e) = "S " ++ show e
+
 instance Show Expr where
-  show (VarE v) = v
-  show ZeroE = "Z"
-  show (SuccE e) = "S " ++ show e
+    show (VarE v) = v
+    show ZeroE = "0"
+    show succExpr = show' 0 succExpr
+      where show' n (SuccE e)= show' (n+1) e
+            show' n ZeroE = show n
+            show' n (VarE v) = v ++ " + " ++ show n
 
 instance Subst Expr where
     subst sigma expr =
@@ -48,9 +56,12 @@ data Pat  = VarP String
     deriving (Eq, Data, Typeable)
 
 instance Show Pat where
-  show (VarP v) = v
-  show ZeroP = "Z"
-  show (SuccP e) = "S " ++ show e
+    show (VarP v) = v
+    show ZeroP = "0"
+    show succPat = show' 0 succPat
+      where show' n (SuccP e)= show' (n+1) e
+            show' n ZeroP = show n
+            show' n (VarP v) = v ++ " + " ++ show n
 
 --instance Subst Pat where
 --  subst sigma (VarP v) = VarP $ sigma `subst` v

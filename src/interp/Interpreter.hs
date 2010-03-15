@@ -108,10 +108,11 @@ heatAtom d@(DefA ds p) = do
   mapM_ putDef (subst sigma <$> ds)
   mapM_ putAtom $ (pAtoms $ sigma `subst` p)
 
--- TODO: This is horribly ugly.
 heatAtom m@(MatchA e ps) =
   let (pats, procs) = unzip ps
-      procs' = (zipWith (\proc -> maybe Nothing (\sigma -> Just $ subst sigma <$> (pAtoms proc))) procs (flip matchPat e <$> pats))
+      procs' = zipWith (\proc -> maybe Nothing (\sigma -> Just $ subst sigma <$> (pAtoms proc)))
+                       procs
+                       (flip matchPat e <$> pats)
       firstProc = getFirst . mconcat $ First <$> procs'
   in case firstProc of
        Nothing -> error $ "Pattern match is not exhaustive"

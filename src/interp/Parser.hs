@@ -17,7 +17,7 @@ parens :: Parser a -> Parser a
 parens p = char '(' *> many space *> p <* char ')'
 
 identifier :: Parser String
-identifier = (:) <$> lower <*> many (upper <|> lower)
+identifier = (:) <$> lower <*> many (alphaNum <|> char '\'')
 
 expr :: Parser Expr
 expr =   ZeroE <$ (lexeme $ char 'Z')
