@@ -8,6 +8,4 @@ def list(f, o, k) |> def k0()   |> f(S S S S S S Z, o, k1)
  or add(S x, y, k) |> add(x, S y, k)
  or head(list, k)  |> def aux(x,xs,k) |> k(x)
                        in list(aux, nil, k)
- or tails(list, k) |> def aux(x,xs,k) |>
-                       in list(aux, nil, k)
  in head(list, o)
