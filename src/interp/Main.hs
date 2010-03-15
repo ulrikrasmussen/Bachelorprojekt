@@ -18,6 +18,6 @@ openJF f = do res <- parseFromFile program f
                  Left e -> error "could not parse"
                  Right p -> return p
 
-main = do
-  testProg <- openJF "../examples/test.join"
-  putStrLn . show $ runInterpreter testProg
+run n = do
+  testProg <- openJF "../examples/mult.join"
+  putStrLn . show $ runInterpreter testProg n

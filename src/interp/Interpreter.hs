@@ -10,6 +10,7 @@ import Control.Monad.State
 import Control.Arrow (first,second)
 
 import Data.List
+import Data.Monoid
 import qualified Data.Map as M
 
 --instance Applicative (State Context) where
@@ -55,15 +56,20 @@ instance MonadJoin JoinM where
 initContext :: [Def] -> [Atom] -> Context
 initContext ds as = Context ds as ['#' : show i | i <- [1..]]
 
-runInterpreter :: Proc -> Context
-runInterpreter (Proc atms) = execState (runJoinM $ interp 10) (initContext [] atms)
+runInterpreter :: Proc -> Int -> Context
+runInterpreter (Proc atms) n = execState (runJoinM $ interp n) (initContext [] atms)
 
 interp :: (MonadJoin m, Functor m) => Int -> m ()
 interp 0 = return ()
 interp n = do
-  mapM heatAtom =<< getAtoms
-  mapM applyReaction =<< getDefs
+  atoms <- getAtoms
+  defs <- getDefs
+  mapM heatAtom atoms
+  mapM applyReaction defs
+  atoms' <- getAtoms
+  defs' <- getDefs
   interp $ n - 1
+--  when (atoms /= atoms' || defs /= defs') $ interp n
 
 applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
 applyReaction d@(ReactionD js p) =
@@ -82,21 +88,31 @@ matchJoin (VarJ var pats) = do
               return (sigma, atom)
    where chanIs v (MsgP v' _) = v == v'
          chanIs v _           = False
+         matchPatterns es     = M.unions <$> (sequence $ zipWith matchPat pats es)
 
-         matchPatterns es = M.unions <$> (sequence $ zipWith matchPat pats es)
-
-         matchPat (VarP s) e = Just $ M.fromList [(s, e)]
-         matchPat (ZeroP) (ZeroE) = Just $ M.empty
-         matchPat (SuccP p) (SuccE e) = matchPat p e
-         matchPat _ _ = Nothing
+matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
+matchPat (VarP s) e = Just $ M.fromList [(s, e)]
+matchPat (ZeroP) (ZeroE) = Just $ M.empty
+matchPat (SuccP p) (SuccE e) = matchPat p e
+matchPat _ _ = Nothing
 
 heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
 heatAtom InertA        = rmAtom InertA
+
 heatAtom m@(MsgP _ _)  = return ()
-heatAtom d@(DefA ds p)   = do
-    rmAtom d
-    dvs <- concatMap definedVars <$> getDefs
-    let ivs = (concatMap definedVars ds) `intersect` dvs
-    sigma <- M.fromList . zipWith (\l r -> (l, VarE $ l ++ r)) ivs <$> (getFreshNames $ length ivs)
-    mapM_ putDef (subst sigma <$> ds)
-    mapM_ putAtom $ (pAtoms $ sigma `subst` p)
+
+heatAtom d@(DefA ds p) = do
+  rmAtom d
+  let ivs = (concatMap definedVars ds)
+  sigma <- M.fromList . zipWith (\l r -> (l, VarE $ l ++ r)) ivs <$> (getFreshNames $ length ivs)
+  mapM_ putDef (subst sigma <$> ds)
+  mapM_ putAtom $ (pAtoms $ sigma `subst` p)
+
+-- TODO: This is horribly ugly.
+heatAtom m@(MatchA e ps) =
+  let (pats, procs) = unzip ps
+      procs' = (zipWith (\proc -> maybe Nothing (\sigma -> Just $ subst sigma <$> (pAtoms proc))) procs (flip matchPat e <$> pats))
+      firstProc = getFirst . mconcat $ First <$> procs'
+  in case firstProc of
+       Nothing -> error $ "Pattern match is not exhaustive"
+       Just proc -> rmAtom m >> mapM_ putAtom proc
