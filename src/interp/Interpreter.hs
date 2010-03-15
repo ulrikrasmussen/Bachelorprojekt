@@ -68,8 +68,8 @@ interp n = do
   mapM applyReaction defs
   atoms' <- getAtoms
   defs' <- getDefs
-  interp $ n - 1
---  when (atoms /= atoms' || defs /= defs') $ interp n
+  if (n > 0) then interp $ n - 1
+             else when (atoms /= atoms' || defs /= defs') $ interp n
 
 applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
 applyReaction d@(ReactionD js p) =

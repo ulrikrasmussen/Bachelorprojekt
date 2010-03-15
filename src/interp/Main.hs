@@ -19,5 +19,5 @@ openJF f = do res <- parseFromFile program f
                  Right p -> return p
 
 run n = do
-  testProg <- openJF "../examples/list.join"
+  testProg <- openJF "../examples/fib.join"
   putStrLn . show $ runInterpreter testProg n
