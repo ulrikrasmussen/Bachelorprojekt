@@ -1,0 +1,8 @@
+def add(Z, x, k) |> k(x)
+ or add(S x, y, k) |> add(x, S y, k)
+ or mult(x, y, k) |> match x with
+                       Z -> k(Z)
+                     | S Z -> k(y)
+                     | S x -> def r(z) |> add(y, z, k)
+                               in mult(x, y, r)
+ in mult(S S S Z, S S Z, s) & add(S S Z, S Z, t)
