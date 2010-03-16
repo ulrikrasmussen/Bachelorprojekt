@@ -1,10 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module Language( Expr(..)
+               , SExpr(..)
                , Pat(..)
                , Join(..)
                , Def(..)
                , Atom(..)
+               , Instr(..)
                , Proc(..)
                , definedVars
                , subst
@@ -29,10 +31,20 @@ data Expr = VarE String
           | SuccE Expr
     deriving (Eq, Data, Typeable)
 
---instance Show Expr where
---  show (VarE v) = v
---  show ZeroE = "Z"
---  show (SuccE e) = "S " ++ show e
+data SExpr = VarS String
+           | ZeroS
+           | SuccS SExpr
+           | CallS String [SExpr]
+    deriving (Eq, Data, Typeable)
+
+instance Show SExpr where
+    show (VarS v) = v
+    show ZeroS = "0"
+    show (SuccS e) = show' 1 e
+      where show' n (SuccS e) = show' (n+1) e
+            show' n ZeroS = show n
+            show' n e = show e ++ " + " ++ show n
+    show (CallS v es) = v ++ "(" ++ (concat . intersperse "," . map show $ es) ++ ")"
 
 instance Show Expr where
     show (VarE v) = v
@@ -70,11 +82,14 @@ instance Show Pat where
 
 
 data Join = VarJ String [Pat]
+          | SyncJ String [Pat]
     deriving (Eq, Data, Typeable)
 
 instance Show Join where
     show (VarJ v ps) =
-     v ++ "(" ++ (concat $ intersperse ", " (map show ps)) ++ ")"
+     v ++ "<" ++ (concat $ intersperse ", " (map show ps)) ++ ">"
+    show (SyncJ v ps) =
+     v ++ "(" ++ (concat . intersperse ", " . map show $ ps) ++ ")"
 
 instance Subst Join where
   subst sigma vj@(VarJ v ps) = 
@@ -104,25 +119,27 @@ instance Subst Proc where
 
 
 data Atom = InertA
-          | MsgP String [Expr]
+          | MsgA String [Expr]
           | DefA [Def] Proc
           | MatchA Expr [(Pat, Proc)]
+          | InstrA [Instr]
     deriving (Eq, Data, Typeable)
 
 instance Show Atom where
   show InertA = "0"
-  show (MsgP s es) =
-    s ++ "(" ++ (concat $ intersperse ", " (map show es)) ++ ")"
+  show (MsgA s es) =
+    s ++ "<" ++ (concat $ intersperse ", " (map show es)) ++ ">"
   show (DefA d p) = "def " ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ show p
   show (MatchA e mps) = "(match " ++ show e ++ " with " ++
     (concat $ intersperse " | " (map showmp mps)) ++ ")"
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc
+  show (InstrA is) = "{" ++ (concat . intersperse "; " . map show $ is) ++ "}"
 
 instance Subst Atom where
-  subst sigma (MsgP s es) = 
+  subst sigma (MsgA s es) = 
     let es' = subst sigma <$> es
-    in  maybe (MsgP s es')
-              (\(VarE s') -> MsgP s' es') $ M.lookup s sigma
+    in  maybe (MsgA s es')
+              (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
     let sigma' = foldl (flip M.delete) sigma (concatMap definedVars ds)
@@ -132,6 +149,23 @@ instance Subst Atom where
             let sigma' = foldl (flip M.delete) sigma (receivedVars pat)
             in  (pat, sigma' `subst` proc)
 
+data Instr = LetI Pat SExpr
+           | RunI Proc
+           | DoI String [SExpr]
+           | MatchI SExpr [(Pat, [Instr])]
+           | ReturnI [SExpr] String
+    deriving (Eq, Data, Typeable)
+
+instance Show Instr where
+    show (LetI p e) = "let " ++ show p ++ " = " ++ show e
+    show (RunI p) = "run " ++ show p
+    show (DoI v es) = "do " ++ v ++ "(" ++ (concat . intersperse "," $ map show es) ++ ")"
+    show (MatchI e mps) = "match " ++ show e ++ " with " ++ 
+        (concat $ intersperse " | " (map showmp mps))
+        where showmp (pat, is) = show pat ++ " -> " ++ "{" ++ showis is ++ "}"
+              showis = concat . intersperse ";\n" . map show
+    show (ReturnI es v) = "return (" ++ (concat . intersperse "," $ map show es)
+                                     ++ ") to " ++ v
 
 -- Note: This must not contain duplicates (because the vars are received in the same scope)
 class ReceivedVars e where receivedVars :: e -> [String]
@@ -167,7 +201,7 @@ instance FreeVars Proc where
 
 instance FreeVars Atom where
   freeVars (InertA) = []
-  freeVars (MsgP m es) = m : concatMap freeVars es
+  freeVars (MsgA m es) = m : concatMap freeVars es
   freeVars (DefA ds p) = (freeVars p ++ concatMap freeVars ds) \\ concatMap definedVars ds
   freeVars (MatchA e mps) = freeVars e ++ (concatMap freeVars' mps)
     where freeVars' (pat, proc) = freeVars proc \\ receivedVars pat

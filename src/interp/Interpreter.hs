@@ -83,10 +83,10 @@ applyReaction d@(ReactionD js p) =
 matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
 matchJoin (VarJ var pats) = do
   mAtom <- find (chanIs var) <$> getAtoms
-  return $ do atom@(MsgP _ es) <- mAtom
+  return $ do atom@(MsgA _ es) <- mAtom
               sigma <- matchPatterns es
               return (sigma, atom)
-   where chanIs v (MsgP v' _) = v == v'
+   where chanIs v (MsgA v' _) = v == v'
          chanIs v _           = False
          matchPatterns es     = M.unions <$> (sequence $ zipWith matchPat pats es)
 
@@ -99,7 +99,7 @@ matchPat _ _ = Nothing
 heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
 heatAtom InertA        = rmAtom InertA
 
-heatAtom m@(MsgP _ _)  = return ()
+heatAtom m@(MsgA _ _)  = return ()
 
 heatAtom d@(DefA ds p) = do
   rmAtom d
