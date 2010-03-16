@@ -1,0 +1,74 @@
+To implement syntactic sugar for supporting implicit CPS, we need to extend the
+syntax. Our current syntax is:
+
+Expr ::= Z
+       | S Expr
+       | x
+
+Pat  ::= Z
+       | S Pat
+       | x
+
+Join ::= x(Pat*)
+       | Join & Join
+
+Def ::= Join |> Proc
+      | Def or Def
+
+Proc ::= 0
+       | x(Expr*)
+       | def Def in Proc
+       | match Expr with Pat_1 -> Proc_1 | Pat_2 -> Proc_2 | ... | Pat_n -> Proc_n
+
+
+We extend the syntax to distinguish between two kinds of messages: Synchronous
+and asynchronous. A synchronous message has the form
+
+  x(m1,m2,...,mn)
+
+and an asynchronous message has the form
+
+  x<m1,m2,...,mn>
+
+The syntax will now have the following form:
+
+Expr  ::= Z                                     (Zero)
+        | S Expr                                (Successor)
+        | x                                     (Variable)
+
+SExpr ::= x(SExpr*)                             (Synchronous call)*
+        | Z                                     (Synchronous zero)*
+        | S SExpr                               (Synchronous successor)*
+        | x                                     (Synchronous variable)*
+
+Pat   ::= Z                                     (Zero)
+        | S Pat                                 (Successor)
+        | x                                     (Variable)
+
+Join  ::= x(Pat*)                               (Synchronous join pattern)*
+        | x<Pat*>                               (Asynchronous join pattern)*
+        | Join & Join                           (Conjunction)
+
+Def   ::= Join |> Proc                          (Reaction)
+        | Def or Def                            (Conjunction)
+
+Proc  ::= 0                                     (Inert)
+        | x<Expr*>                              (Asynchronous message)*
+        | { Inst* }                             (Instruction list)*
+        | def Def in Proc                       (Scoped definition)
+        | match Expr with ..                    (Match pattern)
+
+Inst  ::= let Pat = SExpr                       (Synchronous assignment)*
+        | run Proc                              (Spawn asynchronous process)*
+        | do x(SExpr*)                          (Synchronous call)*
+        | match SExpr with                      (Synchronous match pattern)*
+            Pat_1 -> { Inst* }_1
+          | Pat_2 -> { Inst* }_2
+        | return (SExpr*) to f                  (Implicit continuation)*
+
+
+Desugaring rules
+----------------
+
+We define a desugaring operation {| |} as follows. Unless otherwise stated,
+variables x,y,z range over names, and variables s,t,u range over metavariables.
