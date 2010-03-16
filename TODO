@@ -1,17 +1,12 @@
 Current tasks
 =============
 
-  * Determine relevance of the new article (preview) in
-    [research/join-calculus/Compiling Pattern Matching in Join-Patterns.pdf]
+* Implement syntactic sugar for programming with CPS (Ulrik)
 
-  * Push the revised version of the synopsis to github (Ulrik.. :p)
+* Implement a garbage collector for defs (Philip)
 
-  * Discuss the CHAM and Join Calculus (JC) and others (BRICS), with the
-    intention of producing a 'digest' for Andrzej, along with some thoughts on
-    the design of the programming language, or at least some thoughts on what
-    is required of it by the environment, that the programs execute in
-    (computationally as well as physically)
+* Implement locations and mobility.
 
-As all this should be done before tuesday, it seems that our weekend is
-earmarked for article reading.
+* Implement algebraic datatypes (not yet).
 
+* Implement first-class arithmetic operations (not yet).
