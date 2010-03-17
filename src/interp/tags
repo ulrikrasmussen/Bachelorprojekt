@@ -1,0 +1,53 @@
+Atom	./Language.hs	109;"	t
+Context	Interpreter.hs	23;"	d	file:
+Context	Interpreter.hs	23;"	t
+Def	./Language.hs	87;"	t
+DefA	./Language.hs	111;"	d
+DefinedVars	./Language.hs	150;"	c	file:
+Expr	./Language.hs	29;"	t
+FreeVars	./Language.hs	158;"	c	file:
+InertA	./Language.hs	109;"	d
+J	Interpreter.hs	20;"	d	file:
+Join	./Language.hs	75;"	t
+JoinM	Interpreter.hs	20;"	t	file:
+MatchA	./Language.hs	112;"	d
+MonadJoin	Interpreter.hs	32;"	c	file:
+MsgA	./Language.hs	110;"	d
+Pat	./Language.hs	55;"	t
+Proc	./Language.hs	99;"	d
+Proc	./Language.hs	99;"	t
+ReactionD	./Language.hs	87;"	d
+ReceivedVars	./Language.hs	140;"	c	file:
+Sigma	./Language.hs	22;"	t
+Subst	./Language.hs	24;"	c	file:
+SuccE	./Language.hs	31;"	d
+SuccP	./Language.hs	57;"	d
+VarE	./Language.hs	29;"	d
+VarJ	./Language.hs	75;"	d
+VarP	./Language.hs	55;"	d
+ZeroE	./Language.hs	30;"	d
+ZeroP	./Language.hs	56;"	d
+applyReaction	Interpreter.hs	75;"	v	file:
+cAtoms	Interpreter.hs	24;"	v	file:
+cDefs	Interpreter.hs	23;"	v	file:
+cFreshNames	Interpreter.hs	25;"	v	file:
+definedVars	./Language.hs	150;"	v
+freeVars	./Language.hs	158;"	v
+garbageCollect	Interpreter.hs	127;"	v	file:
+getAtoms	Interpreter.hs	36;"	v	file:
+getDefs	Interpreter.hs	33;"	v	file:
+getFreshNames	Interpreter.hs	40;"	v	file:
+heatAtom	Interpreter.hs	101;"	v	file:
+initContext	Interpreter.hs	57;"	v	file:
+interp	Interpreter.hs	63;"	v	file:
+matchJoin	Interpreter.hs	85;"	v	file:
+matchPat	Interpreter.hs	95;"	v	file:
+pAtoms	./Language.hs	99;"	v
+putAtom	Interpreter.hs	38;"	v	file:
+putDef	Interpreter.hs	35;"	v	file:
+receivedVars	./Language.hs	140;"	v
+rmAtom	Interpreter.hs	37;"	v	file:
+rmDef	Interpreter.hs	34;"	v	file:
+runInterpreter	Interpreter.hs	60;"	v
+runJoinM	Interpreter.hs	20;"	v	file:
+subst	./Language.hs	24;"	v

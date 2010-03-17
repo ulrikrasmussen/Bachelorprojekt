@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Interpreter(runInterpreter, Context) where
+--module Interpreter(runInterpreter, Context) where
+module Interpreter where
 
 import Language
 
@@ -10,6 +11,7 @@ import Control.Monad.State
 import Control.Arrow (first,second)
 
 import Data.List
+import Data.Maybe
 import Data.Monoid
 import qualified Data.Map as M
 
@@ -22,12 +24,15 @@ newtype JoinM a = J { runJoinM :: State Context a  }
 
 data Context = Context { cDefs :: [Def]
                        , cAtoms :: [Atom]
-                       , cFreshNames :: [String] }
+                       , cFreshNames :: [String]
+                       , cLog :: [String]
+                       }
  deriving (Eq)
 
 instance Show Context where
   show context = "Defs:\n\t" ++ (concat . intersperse "\n\t" $ map show (cDefs context))
                ++ "\n\nAtoms:\n\t" ++ (concat . intersperse "\n\t" $ map show (cAtoms context))
+               ++ "\n\nLog:\n\t" ++ (concat . reverse . intersperse "\n\t" $ (cLog context))
 
 class (Monad m) => MonadJoin m where
   getDefs :: m [Def]
@@ -36,6 +41,9 @@ class (Monad m) => MonadJoin m where
   getAtoms :: m [Atom]
   rmAtom :: Atom -> m ()
   putAtom :: Atom -> m ()
+  replaceDefs :: [Def] -> m ()
+  debug :: String -> m ()
+  cleanDebug :: m()
 
   getFreshNames :: Int -> m [String]
 
@@ -48,13 +56,18 @@ instance MonadJoin JoinM where
   rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
   putAtom atm = modify $ \s -> s { cAtoms = atm : cAtoms s }
 
+  replaceDefs defs = modify $ \s -> s {cDefs = defs}
+
+  debug msg = modify $ \s -> s{cLog = msg : (cLog s)}
+  cleanDebug = modify $ \s -> s{cLog = []}
+
   getFreshNames n = do
     (fns, fns') <- gets (splitAt n . cFreshNames)
     modify $ \s -> s {cFreshNames = fns'}
     return fns
 
 initContext :: [Def] -> [Atom] -> Context
-initContext ds as = Context ds as ['#' : show i | i <- [1..]]
+initContext ds as = Context ds as ['#' : show i | i <- [1..]] []
 
 runInterpreter :: Proc -> Int -> Context
 runInterpreter (Proc atms) n = execState (runJoinM $ interp n) (initContext [] atms)
@@ -62,6 +75,7 @@ runInterpreter (Proc atms) n = execState (runJoinM $ interp n) (initContext [] a
 interp :: (MonadJoin m, Functor m) => Int -> m ()
 interp 0 = return ()
 interp n = do
+  garbageCollect
   atoms <- getAtoms
   defs <- getDefs
   mapM heatAtom atoms
@@ -80,13 +94,14 @@ applyReaction d@(ReactionD js p) =
        mapM_ putAtom $ (subst sigma <$> (pAtoms p))
     )
 
+{- Check whether a join pattern is matched by the atoms in the context -}
 matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
 matchJoin (VarJ var pats) = do
   mAtom <- find (chanIs var) <$> getAtoms
-  return $ do atom@(MsgP _ es) <- mAtom
+  return $ do atom@(MsgA _ es) <- mAtom
               sigma <- matchPatterns es
               return (sigma, atom)
-   where chanIs v (MsgP v' _) = v == v'
+   where chanIs v (MsgA v' _) = v == v'
          chanIs v _           = False
          matchPatterns es     = M.unions <$> (sequence $ zipWith matchPat pats es)
 
@@ -98,9 +113,7 @@ matchPat _ _ = Nothing
 
 heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
 heatAtom InertA        = rmAtom InertA
-
-heatAtom m@(MsgP _ _)  = return ()
-
+heatAtom m@(MsgA _ _)  = return ()
 heatAtom d@(DefA ds p) = do
   rmAtom d
   let ivs = (concatMap definedVars ds)
@@ -117,3 +130,40 @@ heatAtom m@(MatchA e ps) =
   in case firstProc of
        Nothing -> error $ "Pattern match is not exhaustive"
        Just proc -> rmAtom m >> mapM_ putAtom proc
+
+{-
+ - At first we mark all the MsgP:s in the context.
+ - Then we mark the defs that might be activated by the marked atoms
+ - and mark all the MsgP:s, that are potentially produced by these 
+ - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
+ -}
+garbageCollect :: (MonadJoin m, Functor m) => m ()
+garbageCollect = do
+  cleanDebug
+  --debug "running gc"
+  markedNames <- concatMap liveVars <$> getAtoms
+  --debug $ "markedNames: " ++ (show markedNames)
+  liveDefs <- gc' markedNames []
+  --debug $ "\n\tliveDefs: " ++ (show liveDefs)
+  mapM putDef liveDefs
+  replaceDefs liveDefs
+  where
+    defMatched :: Def -> [String] -> Bool
+    defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> elem nmJ nms) js
+
+    gc' :: (MonadJoin m, Functor m) => [String] -> [Def] -> m [Def]
+    gc' markedNames defs = do
+      --debug $ "gc'( \n\t\t" ++ (show markedNames ) ++ "   , \n\t\t" ++ (show defs)
+      markedDefs <- (mapM (\def -> if defMatched def markedNames 
+        then do 
+            rmDef def 
+            return(Just def)
+        else return Nothing ) =<< getDefs)
+      markedDefs <- return $ catMaybes markedDefs
+      --debug $ "markedDefs: " ++ (show markedDefs)
+      -- add the set of produceable names to the marked atoms
+      produceableAtoms <- return $ nub $ concatMap liveVars markedDefs 
+      if produceableAtoms /= [] 
+        then gc' (markedNames `union` produceableAtoms) 
+                 (defs `union` markedDefs) 
+        else return (defs `union` markedDefs)

@@ -8,7 +8,7 @@ import Text.ParserCombinators.Parsec
 parseString ::  [Char] -> Proc
 parseString str =
     case runParser program () "" str of
-        Left e -> error "could not parse"
+        Left e -> error $ show e
         Right p -> p
 
 testProgram = parseString "def x() |> y() or y() |> x() in x() & def x() |> y() in 0 & x()"
@@ -19,5 +19,5 @@ openJF f = do res <- parseFromFile program f
                  Right p -> return p
 
 run n = do
-  testProg <- openJF "../examples/fib.join"
+  testProg <- openJF "../examples/test.join"
   putStrLn . show $ runInterpreter testProg n

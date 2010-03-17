@@ -1,4 +1,5 @@
-module Parser(program, runParser) where
+--module Parser(program, runParser) where
+module Parser where
 
 import Language
 
@@ -47,7 +48,7 @@ proc =  (Proc . concat <$> atoms)
                   `sepBy` (lexeme $ char '&')
         atom = (try defp)
               <|> (try matchp)
-              <|> MsgP <$> identifier
+              <|> MsgA <$> identifier
                        <*> (lexeme (parens $ expr `sepBy` (lexeme $ char ',')))
               <|> InertA <$ (lexeme $ char '0')
         defp = DefA <$  (lexeme' $ string "def")

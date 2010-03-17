@@ -7,13 +7,16 @@ module Language( Expr(..)
                , Atom(..)
                , Proc(..)
                , definedVars
+               , freeVars
+               , receivedVars
+               , liveVars
                , subst
                , Sigma
                  ) where
 
 import Control.Arrow
 import Control.Applicative
-import Data.List (intersperse, (\\))
+import Data.List (intersperse, (\\), nub, union)
 import Data.Generics
 import qualified Data.Map as M
 
@@ -69,6 +72,7 @@ instance Show Pat where
 --  subst sigma (SuccP e) = SuccP $ sigma `subst` e
 
 
+{- A join pattern -}
 data Join = VarJ String [Pat]
     deriving (Eq, Data, Typeable)
 
@@ -104,14 +108,14 @@ instance Subst Proc where
 
 
 data Atom = InertA
-          | MsgP String [Expr]
+          | MsgA String [Expr]
           | DefA [Def] Proc
           | MatchA Expr [(Pat, Proc)]
     deriving (Eq, Data, Typeable)
 
 instance Show Atom where
   show InertA = "0"
-  show (MsgP s es) =
+  show (MsgA s es) =
     s ++ "(" ++ (concat $ intersperse ", " (map show es)) ++ ")"
   show (DefA d p) = "def " ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ show p
   show (MatchA e mps) = "(match " ++ show e ++ " with " ++
@@ -119,10 +123,10 @@ instance Show Atom where
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc
 
 instance Subst Atom where
-  subst sigma (MsgP s es) = 
+  subst sigma (MsgA s es) = 
     let es' = subst sigma <$> es
-    in  maybe (MsgP s es')
-              (\(VarE s') -> MsgP s' es') $ M.lookup s sigma
+    in  maybe (MsgA s es')
+              (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
     let sigma' = foldl (flip M.delete) sigma (concatMap definedVars ds)
@@ -167,7 +171,22 @@ instance FreeVars Proc where
 
 instance FreeVars Atom where
   freeVars (InertA) = []
-  freeVars (MsgP m es) = m : concatMap freeVars es
+  freeVars (MsgA m es) = m : concatMap freeVars es
   freeVars (DefA ds p) = (freeVars p ++ concatMap freeVars ds) \\ concatMap definedVars ds
   freeVars (MatchA e mps) = freeVars e ++ (concatMap freeVars' mps)
     where freeVars' (pat, proc) = freeVars proc \\ receivedVars pat
+
+class LiveVars a where liveVars :: a -> [String]
+
+instance LiveVars Proc where 
+  liveVars p = nub $ concatMap liveVars $ pAtoms p
+
+instance LiveVars Atom where 
+  liveVars (InertA) = []
+  liveVars m@(MsgA _ _) = freeVars m
+  liveVars (DefA ds p) = (nub $ concatMap liveVars ds) `union` ((liveVars p) \\ (nub $concatMap definedVars ds ))
+  liveVars (MatchA e mps) = (foldl union [] $ map liveVars' mps) \\ freeVars e
+    where liveVars' (pat, proc) = liveVars proc \\ receivedVars pat
+
+instance LiveVars Def where 
+  liveVars d@(ReactionD js p) = (liveVars p) \\ ((nub $ concatMap definedVars js) `union` (nub $ concatMap receivedVars js))
