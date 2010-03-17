@@ -1,4 +1,12 @@
 Current tasks
 =============
 
+* Implement syntactic sugar for programming with CPS (Ulrik)
 
+* Implement a garbage collector for defs (Philip)
+
+* Implement locations and mobility.
+
+* Implement algebraic datatypes (not yet).
+
+* Implement first-class arithmetic operations (not yet).
