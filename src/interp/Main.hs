@@ -22,3 +22,6 @@ openJF f = do res <- parseFromFile program f
 run n = do
   testProg <- openJF "../examples/test3.join"
   putStrLn . show $ runInterpreter (desugar testProg) n
+
+main = do
+    run $ -1

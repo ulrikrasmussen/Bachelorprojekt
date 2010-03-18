@@ -5,4 +5,5 @@
 *.blg
 *.pdf
 *.swp
+dist/
 !papers/*/*.pdf
