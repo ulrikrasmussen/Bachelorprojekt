@@ -23,5 +23,4 @@ run n = do
   testProg <- openJF "../examples/test3.join"
   putStrLn . show $ runInterpreter (desugar testProg) n
 
-main = do
-    run $ -1
+main = run $ -1
