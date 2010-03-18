@@ -1,0 +1,17 @@
+Name: Bachelorprojekt
+Cabal-Version: >= 1.2
+Build-type: Simple
+Version: 0.1
+Author: Ulrik Rasmussen and Philip Lykke Carlsen
+Synopsis: The bachelor thesis of Ulrik and Philip, about the Join calculus
+
+Executable interpreter
+  Build-Depends:
+    parsec >= 3.0,
+    containers >= 0.3,
+    containers >= 0.3,
+    mtl >= 1.1,
+    syb >= 0.1,
+    base >= 4.2.0
+  Main-Is: Main.hs
+  Hs-Source-Dirs: src/interp
