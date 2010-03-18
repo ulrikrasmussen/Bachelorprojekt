@@ -1,5 +1,4 @@
---module Parser(program, runParser) where
-module Parser where
+module Parser(program, runParser) where
 
 import Language
 
@@ -8,56 +7,76 @@ import Control.Applicative
 import Text.ParserCombinators.Parsec hiding ((<|>), many, optional)
 import Text.ParserCombinators.Parsec.Expr
 
+-- |'lexeme p' parses p followed by zero or more spaces
 lexeme :: Parser a -> Parser a
 lexeme p = p <* many space
 
-lexeme' :: Parser a -> Parser a
-lexeme' p = p <* many1 space
+-- |'lexeme1 p' parses p followed by one or more spaces
+lexeme1 :: Parser a -> Parser a
+lexeme1 p = p <* many1 space
 
+-- |'parens p' parses p inside parenthesis, allowing any number of spaces after
+-- the opening parenthesis.
 parens :: Parser a -> Parser a
 parens p = char '(' *> many space *> p <* char ')'
 
+-- |'angles p' parses p inside angle brackets, allowing any number of spaces
+-- after the opening bracket.
 angles :: Parser a -> Parser a
 angles p = char '<' *> many space *> p <* char '>'
 
-brackets :: Parser a -> Parser a
-brackets p = char '{' *> many space *> p <* char '}'
+-- |'braces p' parses p inside braces, allowing any number of spaces after the
+-- opening brace.
+braces :: Parser a -> Parser a
+braces p = char '{' *> many space *> p <* char '}'
 
+-- |Parses an identifier, which consists of one lowercase letter followed by
+-- zero or more alphanumeric letters (mixed case) or plings.
 identifier :: Parser String
-identifier = (:) <$> lower <*> many (alphaNum <|> char '\'')
+identifier = (:) <$> lower <*> many (alphaNum <|> char '\'') <?> "Identifier"
 
+-- |Parses an expression.
 expr :: Parser Expr
 expr =   ZeroE <$ (lexeme $ char 'Z')
      <|> SuccE <$ (lexeme $ char 'S') <*> expr
      <|> VarE  <$> (lexeme identifier)
      <?> "Expression"
 
+-- |Parses a sugared expression. This is the exact same parser as 'expr', but
+-- also includes synchronous calls.
 sexpr :: Parser SExpr
 sexpr =   ZeroS <$ (char 'Z')
       <|> SuccS <$ (lexeme $ char 'S') <*> sexpr
       <|> (do ident <- identifier
               (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
                <|> (pure $ VarS ident)))
+      <?> "Sugared expression"
 
+-- |Parses patterns (like expressions, but linear).
 pat :: Parser Pat
 pat  =   ZeroP <$ (lexeme $ char 'Z')
      <|> SuccP <$ (lexeme $ char 'S') <*> pat
      <|> VarP  <$> (lexeme identifier)
      <?> "Pattern"
 
+-- |Parses one or more join expressions, separated by '&'.
 joins :: Parser [Join]
-joins = (lexeme construction) `sepBy` (lexeme $ char '&')
+joins = (lexeme construction) `sepBy1` (lexeme $ char '&')
   where construction = do
           ident <- identifier
           (VarJ ident <$> (angles $ pats)
            <|> SyncJ ident <$> (parens $ pats))
         pats = pat `sepBy` (lexeme $ char ',')
 
+
+-- |Parses one or more definitions (reactions of the form J |> P) separated by
+-- 'or'.
 defs :: Parser [Def]
-defs = (lexeme reaction) `sepBy` (lexeme' $ string "or")
+defs = (lexeme reaction) `sepBy1` (lexeme1 $ string "or")
      <?> "Definition"
   where reaction = ReactionD <$> joins <* (lexeme $ string "|>") <*> proc
 
+-- |Parses a process, which is one or more atoms, separated by '&'
 proc :: Parser Proc
 proc =  (Proc . concat <$> atoms)
   where atoms = (((:[]) <$> lexeme atom)
@@ -67,38 +86,46 @@ proc =  (Proc . concat <$> atoms)
             <|> MsgA <$> identifier
                      <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
             <|> InertA <$ char '0'
-            <|> InstrA <$> (brackets $ lexeme instr `sepBy` (lexeme $ char ';'))
-        defp = DefA <$  try (lexeme' $ string "def")
+            <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
+            <?> "Atom"
+        -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
+        -- prefixed by 'def'.
+        defp = DefA <$  try (lexeme1 $ string "def")
                     <*> defs
-                    <*  (lexeme' $ string "in")
+                    <*  (lexeme1 $ string "in")
                     <*> proc
-        matchp = MatchA <$  try (lexeme' $ string "match")
+        -- A 'match' parser. We use lookahead on the 'match' keyword to allow identifiers
+        -- to be prefixed by 'match'.
+        matchp = MatchA <$  try (lexeme1 $ string "match")
                         <*> lexeme expr
-                        <*  (lexeme' $ string "with")
+                        <*  (lexeme1 $ string "with")
                         <*> matchPair `sepBy` (lexeme $ char '|')
         matchPair = (,) <$> lexeme pat
                         <*  (lexeme $ string "->")
                         <*> proc
 
+-- |Parses an instruction.
 instr :: Parser Instr
-instr =  LetI <$ (lexeme' $ string "let") <*> lexeme pat <* (lexeme $ char '=') <*> sexpr
-     <|> RunI <$ (try . lexeme' $ string "run") <*> proc
-     <|> DoI <$ (lexeme' $ string "do")
+instr =  LetI <$ (lexeme1 $ string "let") <*> lexeme pat <* (lexeme $ char '=') <*> sexpr
+     -- We use lookahead on the keyword 'run' to distinguish between that
+     -- keyword and the keyword 'return'.
+     <|> RunI <$ (try . lexeme1 $ string "run") <*> proc
+     <|> DoI <$ (lexeme1 $ string "do")
              <*> identifier
              <*> parens (lexeme sexpr `sepBy` (lexeme $ char ','))
-     <|> MatchI <$ (lexeme' $ string "match")
+     <|> MatchI <$ (lexeme1 $ string "match")
                 <*> lexeme sexpr
-                <* (lexeme' $ string "with")
+                <* (lexeme1 $ string "with")
                 <*> lexeme matchPair `sepBy` (lexeme $ char '|')
-     <|> ReturnI <$ (lexeme' $ string "return")
-                 <*>(lexeme' $ parens (lexeme sexpr `sepBy` (lexeme $ char ',')))
-                 <* (lexeme' $ string "to")
+     <|> ReturnI <$ (lexeme1 $ string "return")
+                 <*>(lexeme1 $ parens (lexeme sexpr `sepBy` (lexeme $ char ',')))
+                 <* (lexeme1 $ string "to")
                  <*> identifier
+     <?> "Instruction"
   where matchPair = (,) <$> lexeme pat
                         <* (lexeme $ string "->")
-                        <*> (brackets $ lexeme instr `sepBy` (lexeme $ char ';'))
+                        <*> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
 
+-- |Parses a complete program, which consists of one or more atoms
 program :: Parser Proc
 program = lexeme proc <* eof
-
-test = parseFromFile program "test.join"
