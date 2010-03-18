@@ -33,14 +33,14 @@ braces p = char '{' *> many space *> p <* char '}'
 -- |Parses an identifier, which consists of one lowercase letter followed by
 -- zero or more alphanumeric letters (mixed case) or plings.
 identifier :: Parser String
-identifier = (:) <$> lower <*> many (alphaNum <|> char '\'') <?> "Identifier"
+identifier = (:) <$> lower <*> many (alphaNum <|> char '\'') <?> "identifier"
 
 -- |Parses an expression.
 expr :: Parser Expr
 expr =   ZeroE <$ (lexeme $ char 'Z')
      <|> SuccE <$ (lexeme $ char 'S') <*> expr
      <|> VarE  <$> (lexeme identifier)
-     <?> "Expression"
+     <?> "expression"
 
 -- |Parses a sugared expression. This is the exact same parser as 'expr', but
 -- also includes synchronous calls.
@@ -50,14 +50,14 @@ sexpr =   ZeroS <$ (char 'Z')
       <|> (do ident <- identifier
               (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
                <|> (pure $ VarS ident)))
-      <?> "Sugared expression"
+      <?> "sugared expression"
 
 -- |Parses patterns (like expressions, but linear).
 pat :: Parser Pat
 pat  =   ZeroP <$ (lexeme $ char 'Z')
      <|> SuccP <$ (lexeme $ char 'S') <*> pat
      <|> VarP  <$> (lexeme identifier)
-     <?> "Pattern"
+     <?> "pattern"
 
 -- |Parses one or more join expressions, separated by '&'.
 joins :: Parser [Join]
@@ -87,7 +87,7 @@ proc =  (Proc . concat <$> atoms)
                      <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
             <|> InertA <$ char '0'
             <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
-            <?> "Atom"
+            <?> "atom"
         -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
         -- prefixed by 'def'.
         defp = DefA <$  try (lexeme1 $ string "def")
@@ -121,7 +121,7 @@ instr =  LetI <$ (lexeme1 $ string "let") <*> lexeme pat <* (lexeme $ char '=') 
                  <*>(lexeme1 $ parens (lexeme sexpr `sepBy` (lexeme $ char ',')))
                  <* (lexeme1 $ string "to")
                  <*> identifier
-     <?> "Instruction"
+     <?> "instruction"
   where matchPair = (,) <$> lexeme pat
                         <* (lexeme $ string "->")
                         <*> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
