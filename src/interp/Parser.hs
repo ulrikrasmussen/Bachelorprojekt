@@ -61,17 +61,17 @@ proc :: Parser Proc
 proc =  (Proc . concat <$> atoms)
   where atoms = (((:[]) <$> lexeme atom)
                   <|> (concat <$> (lexeme $ parens atoms))) `sepBy` (lexeme $ char '&')
-        atom = (try defp)
-            <|> (try matchp)
+        atom = defp
+            <|> matchp
             <|> MsgA <$> identifier
                      <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
             <|> InertA <$ char '0'
             <|> InstrA <$> (brackets $ lexeme instr `sepBy` (lexeme $ char ';'))
-        defp = DefA <$  (lexeme' $ string "def")
+        defp = DefA <$  try (lexeme' $ string "def")
                     <*> defs
                     <*  (lexeme' $ string "in")
                     <*> proc
-        matchp = MatchA <$  (lexeme' $ string "match")
+        matchp = MatchA <$  try (lexeme' $ string "match")
                         <*> lexeme expr
                         <*  (lexeme' $ string "with")
                         <*> matchPair `sepBy` (lexeme $ char '|')
