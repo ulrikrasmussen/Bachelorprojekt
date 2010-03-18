@@ -2,6 +2,7 @@ module Main() where
 
 import Parser
 import Language
+import Desugar
 import Interpreter
 import Text.ParserCombinators.Parsec
 
@@ -19,5 +20,5 @@ openJF f = do res <- parseFromFile program f
                  Right p -> return p
 
 run n = do
-  testProg <- openJF "../examples/fib.join"
-  putStrLn . show $ runInterpreter testProg n
+  testProg <- openJF "../examples/test3.join"
+  putStrLn . show $ runInterpreter (desugar testProg) n
