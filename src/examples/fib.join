@@ -1,12 +1,12 @@
-def add(Z, x, k)   |> k(x)
- or add(S x, y, k) |> add(x, S y, k)
- or mult(x, y, k)  |> match x with
-                        Z -> k(Z)
-                      | S Z -> k(y)
-                      | S x -> def r(z) |> add(y, z, k)
-                               in mult(x, y, r)
- or fib(S S n, k) |> def s(x) & t(y) |> add(x, y, k)
-                     in fib(S n, s) & fib(n, t)
- or fib(S Z, k)   |> k(S Z)
- or fib(Z, k)     |> k(S Z)
- in fib(S S S S S S S S S Z, o)
+def add<Z, x, k>   |> k<x>
+ or add<S x, y, k> |> add<x, S y, k>
+ or mult<x, y, k>  |> match x with
+                        Z -> k<Z>
+                      | S Z -> k<y>
+                      | S x -> def r<z> |> add<y, z, k>
+                               in mult<x, y, r>
+ or fib<S S n, k> |> def s<x> & t<y> |> add<x, y, k>
+                     in fib<S n, s> & fib<n, t>
+ or fib<S Z, k>   |> k<S Z>
+ or fib<Z, k>     |> k<S Z>
+ in fib<S S S S S S S S S Z, o>
