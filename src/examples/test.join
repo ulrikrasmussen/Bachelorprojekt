@@ -1,7 +1,4 @@
-def x(var) |> match var with
-                 S Z -> y(Z)
-               | Z   -> x(S Z) 
- or y(var) |> match var with
-                 S Z -> z()
-               | Z   -> y(S Z)
- or z() |> x(Z) in z()
+def add<Z, y, k>   |> k<y>
+ or add<S x, y, k> |> add<x, S y, k>
+ or k<x> & f<>     |> g<x, Z>
+ in f<> & add<S S Z, S S Z, k>
