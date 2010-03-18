@@ -21,6 +21,7 @@ import Control.Applicative
 import Data.List (intersperse, (\\), nub, union)
 import Data.Generics
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 type Sigma = M.Map String Expr
 
@@ -108,7 +109,7 @@ instance Show Def where
 
 instance Subst Def where
   subst sigma (ReactionD js p) =
-     let sigma' = foldl (flip M.delete) sigma (concatMap receivedVars js)
+     let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map receivedVars js)
      in ReactionD (subst sigma' <$> js) (sigma' `subst` p)
 
 
@@ -146,11 +147,11 @@ instance Subst Atom where
               (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
-    let sigma' = foldl (flip M.delete) sigma (concatMap definedVars ds)
+    let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map definedVars ds)
     in DefA (subst sigma' <$> ds) (sigma' `subst` p)
   subst sigma (MatchA e mps) = MatchA (sigma `subst` e) (substPat <$> mps)
     where substPat (pat, proc) =
-            let sigma' = foldl (flip M.delete) sigma (receivedVars pat)
+            let sigma' = foldl (flip M.delete) sigma (S.toList $ receivedVars pat)
             in  (pat, sigma' `subst` proc)
 
 data Instr = LetI Pat SExpr
@@ -172,43 +173,46 @@ instance Show Instr where
                                      ++ ") to " ++ v
 
 -- Note: This must not contain duplicates (because the vars are received in the same scope)
-class ReceivedVars e where receivedVars :: e -> [String]
+class ReceivedVars e where receivedVars :: e -> S.Set String
 
 instance ReceivedVars Pat where
-  receivedVars ZeroP = []
+  receivedVars ZeroP = S.empty
   receivedVars (SuccP p) = receivedVars p
-  receivedVars (VarP v) = [v]
+  receivedVars (VarP v) = S.singleton v
 
 instance ReceivedVars Join where
-  receivedVars (VarJ m ps) = concatMap receivedVars ps
+  receivedVars (VarJ m ps) = S.unions $ map receivedVars ps
 
-class DefinedVars e where definedVars :: e -> [String]
+class DefinedVars e where definedVars :: e -> S.Set String
 
 instance DefinedVars Join where
-  definedVars (VarJ m ps) = [m]
+  definedVars (VarJ m ps) = S.singleton m
 
 instance DefinedVars Def where
-  definedVars (ReactionD j p) = concatMap definedVars j
+  definedVars (ReactionD j p) = S.unions $ map definedVars j
 
-class FreeVars e where freeVars :: e -> [String]
+class FreeVars e where freeVars :: e -> S.Set String
 
 instance FreeVars Expr where
-  freeVars (ZeroE)   = []
+  freeVars (ZeroE)   = S.empty
   freeVars (SuccE e) = freeVars e
-  freeVars (VarE v)  = [v]
+  freeVars (VarE v)  = S.singleton v
 
 instance FreeVars Def where
-  freeVars (ReactionD j p) = concatMap definedVars j ++ (freeVars p \\ concatMap receivedVars j)
+  freeVars (ReactionD j p) =
+    S.unions (map definedVars j)
+        `S.union` (freeVars p `S.difference` S.unions (map receivedVars j))
 
 instance FreeVars Proc where
-  freeVars (Proc as) = concatMap freeVars as
+  freeVars (Proc as) = S.unions $ map freeVars as
 
 instance FreeVars Atom where
-  freeVars (InertA) = []
-  freeVars (MsgA m es) = m : concatMap freeVars es
-  freeVars (DefA ds p) = (freeVars p ++ concatMap freeVars ds) \\ concatMap definedVars ds
-  freeVars (MatchA e mps) = freeVars e ++ (concatMap freeVars' mps)
-    where freeVars' (pat, proc) = freeVars proc \\ receivedVars pat
+  freeVars (InertA) = S.empty
+  freeVars (MsgA m es) = m `S.insert` S.unions (map freeVars es)
+  freeVars (DefA ds p) = (freeVars p `S.union` S.unions (map freeVars ds))
+    `S.difference` S.unions (map definedVars ds)
+  freeVars (MatchA e mps) = freeVars e `S.union` (S.unions $ map freeVars' mps)
+    where freeVars' (pat, proc) = freeVars proc `S.union` receivedVars pat
 
 class LiveVars a where liveVars :: a -> [String]
 
@@ -217,10 +221,10 @@ instance LiveVars Proc where
 
 instance LiveVars Atom where 
   liveVars (InertA) = []
-  liveVars m@(MsgA _ _) = freeVars m
-  liveVars (DefA ds p) = (nub $ concatMap liveVars ds) `union` ((liveVars p) \\ (nub $concatMap definedVars ds ))
-  liveVars (MatchA e mps) = (foldl union [] $ map liveVars' mps) \\ freeVars e
-    where liveVars' (pat, proc) = liveVars proc \\ receivedVars pat
+  liveVars m@(MsgA _ _) = S.toList $ freeVars m
+  liveVars (DefA ds p) = (nub $ concatMap liveVars ds) `union` ((liveVars p) \\ (S.toList . S.unions $ map definedVars ds ))
+  liveVars (MatchA e mps) = (foldl union [] $ map liveVars' mps) \\ S.toList (freeVars e)
+    where liveVars' (pat, proc) = liveVars proc \\ S.toList (receivedVars pat)
 
 instance LiveVars Def where 
-  liveVars d@(ReactionD js p) = (liveVars p) \\ ((nub $ concatMap definedVars js) `union` (nub $ concatMap receivedVars js))
+  liveVars d@(ReactionD js p) = (liveVars p) \\ ((S.toList . S.unions $ map definedVars js) `union` (S.toList . S.unions $ map receivedVars js))

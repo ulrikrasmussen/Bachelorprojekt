@@ -14,6 +14,7 @@ import Data.List
 import Data.Maybe
 import Data.Monoid
 import qualified Data.Map as M
+import qualified Data.Set as S
 
 --instance Applicative (State Context) where
 --    pure = return
@@ -74,7 +75,7 @@ runInterpreter (Proc atms) n = execState (runJoinM $ interp n) (initContext [] a
 
 interp :: (MonadJoin m, Functor m) => Int -> m ()
 interp 0 = return ()
-interp n = do
+interp n = {-# SCC "interp" #-} do
   garbageCollect
   atoms <- getAtoms
   defs <- getDefs
@@ -116,7 +117,7 @@ heatAtom InertA        = rmAtom InertA
 heatAtom m@(MsgA _ _)  = return ()
 heatAtom d@(DefA ds p) = do
   rmAtom d
-  let ivs = (concatMap definedVars ds)
+  let ivs = (S.toList . S.unions $ map definedVars ds)
   sigma <- M.fromList . zipWith (\l r -> (l, VarE $ l ++ r)) ivs <$> (getFreshNames $ length ivs)
   mapM_ putDef (subst sigma <$> ds)
   mapM_ putAtom $ (pAtoms $ sigma `subst` p)
@@ -138,7 +139,7 @@ heatAtom m@(MatchA e ps) =
  - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
  -}
 garbageCollect :: (MonadJoin m, Functor m) => m ()
-garbageCollect = do
+garbageCollect = {-# SCC "garbageCollect" #-} do
   cleanDebug
   --debug "running gc"
   markedNames <- concatMap liveVars <$> getAtoms
@@ -147,9 +148,9 @@ garbageCollect = do
   --debug $ "\n\tliveDefs: " ++ (show liveDefs)
   mapM putDef liveDefs
   replaceDefs liveDefs
-  where
+  where 
     defMatched :: Def -> [String] -> Bool
-    defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> elem nmJ nms) js
+    defMatched (ReactionD js _) nms = {-# SCC "defMatched" #-} and $ map (\(VarJ nmJ _) -> elem nmJ nms) js
 
     gc' :: (MonadJoin m, Functor m) => [String] -> [Def] -> m [Def]
     gc' markedNames defs = do
