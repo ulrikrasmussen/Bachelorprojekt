@@ -19,8 +19,8 @@ openJF f = do res <- parseFromFile program f
                  Left e -> error $ show e
                  Right p -> return p
 
-run n = do
-  testProg <- openJF "../examples/test3.join"
+run f n = do
+  testProg <- openJF $ "../examples/" ++ f
   putStrLn . show $ runInterpreter (desugar testProg) n
 
-main = run $ -1
+main = run "cps.join" $ -1

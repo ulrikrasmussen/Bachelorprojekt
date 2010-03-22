@@ -14,7 +14,7 @@ newtype DesugarM a = D (State [String] a)
     deriving (Monad, Functor, Applicative)
 
 desugar :: Proc -> Proc
-desugar (Proc as) = Proc $ runDesugar (mapM desAtom as)
+desugar (Proc as) = Proc . concat $ runDesugar (mapM desAtom as)
 
 -- We mangle implicit continuations based on the name of the synchronous function name.
 -- As long as the function name is in scope, so is the continuation name.
@@ -73,16 +73,20 @@ desInstr mk ((MatchI e mps):is) =
   do is' <- desInstr mk is
      [l, m, var_e] <- getFresh 3
      e' <- desExp e l
-     mps' <- mapM (\(pat, is) -> (,) pat <$> (Proc <$> desInstr (Just m) is)) mps
-     return $ [DefA [ReactionD [VarJ l [VarP var_e]]
-                               (Proc $ [MatchA (VarE var_e) mps'])
-                    ,ReactionD [VarJ m []]
-                               (Proc $ is')]
-                    (Proc [e'])]
+     let mk' = if (is == []) then Nothing else Just m
+     mps' <- mapM (\(pat, is) -> (,) pat <$> (Proc <$> desInstr mk' is)) mps
+     return [DefA [ReactionD [VarJ l [VarP var_e]]
+                             (Proc $ [MatchA (VarE var_e) mps'])
+                  ,ReactionD [VarJ m []]
+                             (Proc $ is')]
+                  (Proc [e'])]
 
 desInstr mk ((ReturnI [] f):is) =
   do is' <- desInstr mk is
      return $ (MsgA (contName f) []):is'
+desInstr Nothing [ReturnI [CallS f' es'] f] = -- tail call optimization
+  do c' <- desExp (CallS f' es') (contName f)
+     return  [c']
 desInstr mk ((ReturnI es f):is) =
   do is' <- desInstr mk is
      chans <- getFresh $ length es
@@ -93,20 +97,25 @@ desInstr mk ((ReturnI es f):is) =
                              (Proc $ (MsgA (contName f) $ map VarE vars):is')]
                   (Proc es')]
 
-desAtom :: Atom -> DesugarM Atom
-desAtom (DefA defs (Proc as)) = DefA <$> mapM desDef defs <*> (Proc <$> mapM desAtom as)
-desAtom (MatchA e mps) =
-    MatchA e <$> mapM (\(pat, (Proc as)) -> (,) pat <$> (Proc <$> mapM desAtom as)) mps
+desAtom :: Atom -> DesugarM [Atom]
+desAtom (DefA defs (Proc as)) =
+  do defs' <- mapM desDef defs
+     as' <- concat <$> mapM desAtom as
+     return [DefA defs' (Proc as')]
+desAtom (MatchA e mps) = do
+    mps' <- mapM (\(pat, (Proc as)) -> (,) pat <$> (Proc . concat <$> mapM desAtom as)) mps
+    return [MatchA e mps']
 desAtom (InstrA is) =
-   do [k] <- getFresh 1
-      is' <- desInstr (Just k) is
-      return $ DefA [ReactionD [VarJ k []] (Proc $ [InertA])]
-                    (Proc $ is')
-desAtom a = return a
+   do --[k] <- getFresh 1
+      is' <- desInstr Nothing is
+--      return $ DefA [ReactionD [VarJ k []] (Proc $ [InertA])]
+--                    (Proc $ is')
+      return is'
+desAtom a = return [a]
 
 desDef :: Def -> DesugarM Def
 desDef (ReactionD js (Proc as)) =
-  ReactionD (map desJoin js) <$> (Proc <$> mapM desAtom as)
+  ReactionD (map desJoin js) <$> (Proc . concat <$> mapM desAtom as)
 
 desJoin :: Join -> Join
 desJoin (SyncJ f ps) = VarJ f (ps ++ [VarP $ contName f])
