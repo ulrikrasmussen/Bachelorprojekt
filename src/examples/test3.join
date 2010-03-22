@@ -3,6 +3,6 @@ def add(Z, x)   |> { return (x) to add }
  or fib(Z)      |> { return (S Z) to fib }
  or fib(S Z)    |> { return (S Z) to fib }
  or fib(S S x)  |> { return (add(fib(x), fib(S x))) to fib }
- in { let x = fib(S S S S S S S S S Z);
+ in { let x = fib(S S S S S S S S S S S S Z);
       run finished<x>
     }

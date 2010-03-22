@@ -142,7 +142,7 @@ garbageCollect :: (MonadJoin m, Functor m) => m ()
 garbageCollect = {-# SCC "garbageCollect" #-} do
   cleanDebug
   --debug "running gc"
-  markedNames <- S.unions . map liveVars <$> getAtoms
+  markedNames <- S.unions . map freeVars <$> getAtoms
   --debug $ "markedNames: " ++ (show markedNames)
   liveDefs <- gc' markedNames []
   --debug $ "\n\tliveDefs: " ++ (show liveDefs)
@@ -150,7 +150,7 @@ garbageCollect = {-# SCC "garbageCollect" #-} do
   replaceDefs liveDefs
   where
     defMatched :: Def -> S.Set String -> Bool
-    defMatched (ReactionD js _) nms = {-# SCC "defMatched" #-} and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
+    defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
 
     gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
     gc' markedNames defs = do

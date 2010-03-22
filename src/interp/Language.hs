@@ -11,7 +11,6 @@ module Language( Expr(..)
                , definedVars
                , freeVars
                , receivedVars
-               , liveVars
                , subst
                , Sigma
                  ) where
