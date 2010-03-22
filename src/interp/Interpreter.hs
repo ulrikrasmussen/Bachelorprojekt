@@ -135,7 +135,7 @@ heatAtom m@(MatchA e ps) =
 {-
  - At first we mark all the MsgP:s in the context.
  - Then we mark the defs that might be activated by the marked atoms
- - and mark all the MsgP:s, that are potentially produced by these 
+ - and mark all the MsgP:s, that are potentially produced by these
  - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
  -}
 garbageCollect :: (MonadJoin m, Functor m) => m ()
@@ -148,23 +148,23 @@ garbageCollect = {-# SCC "garbageCollect" #-} do
   --debug $ "\n\tliveDefs: " ++ (show liveDefs)
   mapM putDef liveDefs
   replaceDefs liveDefs
-  where 
+  where
     defMatched :: Def -> S.Set String -> Bool
     defMatched (ReactionD js _) nms = {-# SCC "defMatched" #-} and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
 
     gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
     gc' markedNames defs = do
       --debug $ "gc'( \n\t\t" ++ (show markedNames ) ++ "   , \n\t\t" ++ (show defs)
-      markedDefs <- (mapM (\def -> if defMatched def markedNames 
-        then do 
-            rmDef def 
+      markedDefs <- (mapM (\def -> if defMatched def markedNames
+        then do
+            rmDef def
             return(Just def)
         else return Nothing ) =<< getDefs)
       markedDefs <- return $ catMaybes markedDefs
       --debug $ "markedDefs: " ++ (show markedDefs)
       -- add the set of produceable names to the marked atoms
-      let produceableAtoms = S.unions $ map liveVars markedDefs 
+      let produceableAtoms = S.unions $ map freeVars markedDefs
       if not $ produceableAtoms == S.empty
-        then gc' (markedNames `S.union` produceableAtoms) 
-                 (defs `union` markedDefs) 
+        then gc' (markedNames `S.union` produceableAtoms)
+                 (defs `union` markedDefs)
         else return (defs `union` markedDefs)

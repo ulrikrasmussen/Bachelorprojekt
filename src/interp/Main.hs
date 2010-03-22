@@ -5,6 +5,7 @@ import Language
 import Desugar
 import Interpreter
 import Text.ParserCombinators.Parsec
+import System
 
 parseString ::  [Char] -> Proc
 parseString str =
@@ -20,7 +21,9 @@ openJF f = do res <- parseFromFile program f
                  Right p -> return p
 
 run f n = do
-  testProg <- openJF $ "../examples/" ++ f
+  testProg <- openJF $ f
   putStrLn . show $ runInterpreter (desugar testProg) n
 
-main = run "cps.join" $ -1
+main = do
+  [f] <- getArgs
+  run f $ -1
