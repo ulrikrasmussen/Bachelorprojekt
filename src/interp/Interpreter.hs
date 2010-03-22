@@ -139,10 +139,9 @@ heatAtom m@(MatchA e ps) =
  - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
  -}
 garbageCollect :: (MonadJoin m, Functor m) => m ()
-garbageCollect = {-# SCC "garbageCollect" #-} do
+garbageCollect = do
   markedNames <- S.unions . map freeVars <$> getAtoms
   liveDefs <- gc' markedNames []
-  mapM putDef liveDefs
   replaceDefs liveDefs
   where
     defMatched :: Def -> S.Set String -> Bool
@@ -150,12 +149,12 @@ garbageCollect = {-# SCC "garbageCollect" #-} do
 
     gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
     gc' markedNames defs = do
-      markedDefs <- (mapM (\def -> if defMatched def markedNames
-        then do
-            rmDef def
-            return(Just def)
-        else return Nothing ) =<< getDefs)
-      markedDefs <- return $ catMaybes markedDefs
+      mMarkedDefs <- mapM (\def ->
+           if defMatched def markedNames
+             then do rmDef def
+                     return (Just def)
+             else return Nothing) =<< getDefs
+      let markedDefs = catMaybes mMarkedDefs
       -- add the set of produceable names to the marked atoms
       let produceableAtoms = S.unions $ map freeVars markedDefs
       if not $ produceableAtoms == S.empty
