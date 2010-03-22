@@ -142,17 +142,17 @@ garbageCollect :: (MonadJoin m, Functor m) => m ()
 garbageCollect = {-# SCC "garbageCollect" #-} do
   cleanDebug
   --debug "running gc"
-  markedNames <- concatMap liveVars <$> getAtoms
+  markedNames <- S.unions . map liveVars <$> getAtoms
   --debug $ "markedNames: " ++ (show markedNames)
   liveDefs <- gc' markedNames []
   --debug $ "\n\tliveDefs: " ++ (show liveDefs)
   mapM putDef liveDefs
   replaceDefs liveDefs
   where 
-    defMatched :: Def -> [String] -> Bool
-    defMatched (ReactionD js _) nms = {-# SCC "defMatched" #-} and $ map (\(VarJ nmJ _) -> elem nmJ nms) js
+    defMatched :: Def -> S.Set String -> Bool
+    defMatched (ReactionD js _) nms = {-# SCC "defMatched" #-} and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
 
-    gc' :: (MonadJoin m, Functor m) => [String] -> [Def] -> m [Def]
+    gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
     gc' markedNames defs = do
       --debug $ "gc'( \n\t\t" ++ (show markedNames ) ++ "   , \n\t\t" ++ (show defs)
       markedDefs <- (mapM (\def -> if defMatched def markedNames 
@@ -163,8 +163,8 @@ garbageCollect = {-# SCC "garbageCollect" #-} do
       markedDefs <- return $ catMaybes markedDefs
       --debug $ "markedDefs: " ++ (show markedDefs)
       -- add the set of produceable names to the marked atoms
-      produceableAtoms <- return $ nub $ concatMap liveVars markedDefs 
-      if produceableAtoms /= [] 
-        then gc' (markedNames `union` produceableAtoms) 
+      let produceableAtoms = S.unions $ map liveVars markedDefs 
+      if not $ produceableAtoms == S.empty
+        then gc' (markedNames `S.union` produceableAtoms) 
                  (defs `union` markedDefs) 
         else return (defs `union` markedDefs)

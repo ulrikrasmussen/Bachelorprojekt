@@ -214,17 +214,17 @@ instance FreeVars Atom where
   freeVars (MatchA e mps) = freeVars e `S.union` (S.unions $ map freeVars' mps)
     where freeVars' (pat, proc) = freeVars proc `S.union` receivedVars pat
 
-class LiveVars a where liveVars :: a -> [String]
+class LiveVars a where liveVars :: a -> S.Set String
 
 instance LiveVars Proc where 
-  liveVars p = nub $ concatMap liveVars $ pAtoms p
+  liveVars p = S.unions $ map liveVars $ pAtoms p
 
 instance LiveVars Atom where 
-  liveVars (InertA) = []
-  liveVars m@(MsgA _ _) = S.toList $ freeVars m
-  liveVars (DefA ds p) = (nub $ concatMap liveVars ds) `union` ((liveVars p) \\ (S.toList . S.unions $ map definedVars ds ))
-  liveVars (MatchA e mps) = (foldl union [] $ map liveVars' mps) \\ S.toList (freeVars e)
-    where liveVars' (pat, proc) = liveVars proc \\ S.toList (receivedVars pat)
+  liveVars (InertA) = S.empty
+  liveVars m@(MsgA _ _) = freeVars m
+  liveVars (DefA ds p) = (S.unions $ map liveVars ds) `S.union` ((liveVars p) `S.difference` (S.unions $ map definedVars ds ))
+  liveVars (MatchA e mps) = (S.unions $ map liveVars' mps) `S.difference` freeVars e
+    where liveVars' (pat, proc) = liveVars proc `S.difference` receivedVars pat
 
 instance LiveVars Def where 
-  liveVars d@(ReactionD js p) = (liveVars p) \\ ((S.toList . S.unions $ map definedVars js) `union` (S.toList . S.unions $ map receivedVars js))
+  liveVars d@(ReactionD js p) = (liveVars p) `S.difference` ((S.unions $ map definedVars js) `S.union` (S.unions $ map receivedVars js))
