@@ -216,15 +216,15 @@ instance FreeVars Atom where
 
 class LiveVars a where liveVars :: a -> S.Set String
 
-instance LiveVars Proc where 
+instance LiveVars Proc where
   liveVars p = S.unions $ map liveVars $ pAtoms p
 
-instance LiveVars Atom where 
+instance LiveVars Atom where
   liveVars (InertA) = S.empty
   liveVars m@(MsgA _ _) = freeVars m
   liveVars (DefA ds p) = (S.unions $ map liveVars ds) `S.union` ((liveVars p) `S.difference` (S.unions $ map definedVars ds ))
   liveVars (MatchA e mps) = (S.unions $ map liveVars' mps) `S.difference` freeVars e
     where liveVars' (pat, proc) = liveVars proc `S.difference` receivedVars pat
 
-instance LiveVars Def where 
+instance LiveVars Def where
   liveVars d@(ReactionD js p) = (liveVars p) `S.difference` ((S.unions $ map definedVars js) `S.union` (S.unions $ map receivedVars js))
