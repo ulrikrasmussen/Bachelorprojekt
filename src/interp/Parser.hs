@@ -106,7 +106,11 @@ proc =  (Proc . concat <$> atoms)
 
 -- |Parses an instruction.
 instr :: Parser Instr
-instr =  LetI <$ (lexeme1 $ string "let") <*> lexeme pat <* (lexeme $ char '=') <*> sexpr
+instr =  LetI <$ (lexeme1 $ string "let")
+              <*> ((:[]) <$> lexeme pat
+                   <|> (lexeme . parens $ lexeme pat `sepBy` lexeme (char ',')))
+              <*  (lexeme $ char '=')
+              <*> sexpr
      -- We use lookahead on the keyword 'run' to distinguish between that
      -- keyword and the keyword 'return'.
      <|> RunI <$ (try . lexeme1 $ string "run") <*> proc
@@ -118,7 +122,8 @@ instr =  LetI <$ (lexeme1 $ string "let") <*> lexeme pat <* (lexeme $ char '=') 
                 <* (lexeme1 $ string "with")
                 <*> lexeme matchPair `sepBy` (lexeme $ char '|')
      <|> ReturnI <$ (lexeme1 $ string "return")
-                 <*>(lexeme1 $ parens (lexeme sexpr `sepBy` (lexeme $ char ',')))
+                 <*>((lexeme $ parens (lexeme sexpr `sepBy` (lexeme $ char ',')))
+                    <|> (:[]) <$> lexeme sexpr)
                  <* (lexeme1 $ string "to")
                  <*> identifier
      <?> "instruction"

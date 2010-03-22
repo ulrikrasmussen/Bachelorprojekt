@@ -54,11 +54,11 @@ desExp (CallS v es) k =
 desInstr :: Maybe Continuation -> [Instr] -> DesugarM [Atom]
 desInstr mk [] = maybe (return [InertA])
                        (\k -> return [MsgA k []]) mk
-desInstr mk ((LetI pat e):is) =
+desInstr mk ((LetI pats e):is) =
   do is' <- desInstr mk is
      [k] <- getFresh 1
      e' <- desExp e k
-     return $ [DefA [ReactionD [VarJ k [pat]] (Proc is')]
+     return $ [DefA [ReactionD [VarJ k pats] (Proc is')]
                     (Proc [e'])]
 desInstr mk ((RunI (Proc as)):is) = (as ++) <$> desInstr mk is
 

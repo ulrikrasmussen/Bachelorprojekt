@@ -141,7 +141,7 @@ instance Show Atom where
   show (InstrA is) = "{" ++ (concat . intersperse "; " . map show $ is) ++ "}"
 
 instance Subst Atom where
-  subst sigma (MsgA s es) = 
+  subst sigma (MsgA s es) =
     let es' = subst sigma <$> es
     in  maybe (MsgA s es')
               (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
@@ -154,7 +154,7 @@ instance Subst Atom where
             let sigma' = foldl (flip M.delete) sigma (S.toList $ receivedVars pat)
             in  (pat, sigma' `subst` proc)
 
-data Instr = LetI Pat SExpr
+data Instr = LetI [Pat] SExpr
            | RunI Proc
            | DoI String [SExpr]
            | MatchI SExpr [(Pat, [Instr])]
@@ -165,7 +165,7 @@ instance Show Instr where
     show (LetI p e) = "let " ++ show p ++ " = " ++ show e
     show (RunI p) = "run " ++ show p
     show (DoI v es) = "do " ++ v ++ "(" ++ (concat . intersperse "," $ map show es) ++ ")"
-    show (MatchI e mps) = "match " ++ show e ++ " with " ++ 
+    show (MatchI e mps) = "match " ++ show e ++ " with " ++
         (concat $ intersperse " | " (map showmp mps))
         where showmp (pat, is) = show pat ++ " -> " ++ "{" ++ showis is ++ "}"
               showis = concat . intersperse ";\n" . map show
