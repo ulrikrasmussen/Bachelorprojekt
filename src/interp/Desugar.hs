@@ -41,6 +41,7 @@ desExp (SuccS e) k =
      return $ DefA [ReactionD [VarJ l [VarP v]]
                               (Proc [MsgA k [SuccE (VarE v)]])]
                    (Proc [e'])
+desExp (CallS v []) k = return $ MsgA v [VarE k]
 desExp (CallS v es) k =
   do chans <- getFresh $ length es
      vars <- getFresh $ length es
@@ -78,7 +79,10 @@ desInstr mk ((MatchI e mps):is) =
                     ,ReactionD [VarJ m []]
                                (Proc $ is')]
                     (Proc [e'])]
-     
+
+desInstr mk ((ReturnI [] f):is) =
+  do is' <- desInstr mk is
+     return $ (MsgA (contName f) []):is'
 desInstr mk ((ReturnI es f):is) =
   do is' <- desInstr mk is
      chans <- getFresh $ length es
