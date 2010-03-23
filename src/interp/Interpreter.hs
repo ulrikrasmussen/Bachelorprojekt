@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Interpreter where
+module Interpreter(runInterpreter, defaultConfig, InterpConfig(..)) where
 
 import Language
 
@@ -12,22 +12,25 @@ import Control.Arrow (first,second)
 import Data.List
 import Data.Maybe
 import Data.Monoid
+import Data.Ord
 import qualified Data.Map as M
 import qualified Data.Set as S
 
---instance Applicative (State Context) where
---    pure = return
---    (<*>) = ap
+import qualified System.Random as R
+
+instance Applicative (State Context) where
+    pure = return
+    (<*>) = ap
 
 newtype JoinM a = J { runJoinM :: State Context a  }
-    deriving (Monad, MonadState Context, Functor)
+    deriving (Monad, MonadState Context, Functor, Applicative)
 
 data Context = Context { cDefs :: [Def]
                        , cAtoms :: [Atom]
                        , cFreshNames :: [String]
                        , cLog :: [String]
+                       , cStdGen :: R.StdGen
                        }
- deriving (Eq)
 
 instance Show Context where
   show context = "Defs:\n\t" ++ (concat . intersperse "\n\t" $ map show (cDefs context))
@@ -42,10 +45,12 @@ class (Monad m) => MonadJoin m where
   rmAtom :: Atom -> m ()
   putAtom :: Atom -> m ()
   replaceDefs :: [Def] -> m ()
+  replaceAtoms :: [Atom] -> m ()
   debug :: String -> m ()
   cleanDebug :: m()
 
   getFreshNames :: Int -> m [String]
+  getStdGen :: m R.StdGen
 
 instance MonadJoin JoinM where
   getDefs = gets cDefs
@@ -56,6 +61,7 @@ instance MonadJoin JoinM where
   rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
   putAtom atm = modify $ \s -> s { cAtoms = atm : cAtoms s }
 
+  replaceAtoms atoms = modify $ \s -> s {cAtoms = atoms}
   replaceDefs defs = modify $ \s -> s {cDefs = defs}
 
   debug msg = modify $ \s -> s{cLog = msg : (cLog s)}
@@ -66,26 +72,38 @@ instance MonadJoin JoinM where
     modify $ \s -> s {cFreshNames = fns'}
     return fns
 
-initContext :: [Def] -> [Atom] -> Context
-initContext ds as = Context ds as ['#' : show i | i <- [1..]] []
+  getStdGen = do
+    (sg, sg') <- R.split <$> gets cStdGen
+    modify $ \s -> s {cStdGen = sg'}
+    return sg
+
+initContext :: [Def] -> [Atom] -> R.StdGen -> Context
+initContext ds as stdGen = Context ds as ['#' : show i | i <- [1..]] [] stdGen
 
 data InterpConfig = IC {
     runGC :: Bool
   , gcInterval :: Integer
   , breakAt :: Maybe Integer
+  , nondeterministic :: Bool
 }
 
 defaultConfig = IC {
     runGC = True
   , gcInterval = 1
   , breakAt = Nothing
+  , nondeterministic = False
 }
 
-runInterpreter :: InterpConfig -> Proc -> Context
-runInterpreter conf (Proc atms) = execState (runJoinM $ interp 0 conf) (initContext [] atms)
+runInterpreter :: InterpConfig -> Proc -> IO Context
+runInterpreter conf (Proc atms) = do
+  stdGen <- R.getStdRandom R.split
+  return $ execState (runJoinM $ interp 0 conf) (initContext [] atms stdGen)
 
+interp :: (MonadJoin m, Functor m, Applicative m)
+                => Integer -> InterpConfig -> m ()
 interp n conf = do
   when (runGC conf) $ garbageCollect
+  when (nondeterministic conf) $ scrambleContext
   atoms <- getAtoms
   defs <- getDefs
   mapM heatAtom atoms
@@ -94,6 +112,13 @@ interp n conf = do
   defs' <- getDefs
   maybe (when (atoms /= atoms' || defs /= defs') $ interp (n+1) conf)
         (\breakPoint -> when (breakPoint /= n) $ interp (n+1) conf) $ breakAt conf
+
+scrambleContext :: (MonadJoin m, Functor m, Applicative m) => m ()
+scrambleContext = do
+  replaceDefs =<< scramble <$> getStdGen <*> getDefs
+  replaceAtoms =<< scramble <$> getStdGen <*> getAtoms
+   where scramble stdGen xs =
+            map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
 applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
 applyReaction d@(ReactionD js p) =
