@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
---module Interpreter(runInterpreter, Context) where
 module Interpreter where
 
 import Language
@@ -70,12 +69,11 @@ instance MonadJoin JoinM where
 initContext :: [Def] -> [Atom] -> Context
 initContext ds as = Context ds as ['#' : show i | i <- [1..]] []
 
-runInterpreter :: Proc -> Int -> Context
-runInterpreter (Proc atms) n = execState (runJoinM $ interp n) (initContext [] atms)
+runInterpreter :: Proc -> Context
+runInterpreter (Proc atms) = execState (runJoinM interp) (initContext [] atms)
 
-interp :: (MonadJoin m, Functor m) => Int -> m ()
-interp 0 = return ()
-interp n = {-# SCC "interp" #-} do
+interp :: (MonadJoin m, Functor m) => m ()
+interp = do
   garbageCollect
   atoms <- getAtoms
   defs <- getDefs
@@ -83,8 +81,7 @@ interp n = {-# SCC "interp" #-} do
   mapM applyReaction defs
   atoms' <- getAtoms
   defs' <- getDefs
-  if (n > 0) then interp $ n - 1
-             else when (atoms /= atoms' || defs /= defs') $ interp n
+  when (atoms /= atoms' || defs /= defs') $ interp
 
 applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
 applyReaction d@(ReactionD js p) =

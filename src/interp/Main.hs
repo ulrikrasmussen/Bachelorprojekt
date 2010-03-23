@@ -20,10 +20,10 @@ openJF f = do res <- parseFromFile program f
                  Left e -> error $ show e
                  Right p -> return p
 
-run f n = do
+run f = do
   testProg <- openJF $ f
-  putStrLn . show $ runInterpreter (desugar testProg) n
+  putStrLn . show $ runInterpreter (desugar testProg)
 
 main = do
   [f] <- getArgs
-  run f $ -1
+  run f
