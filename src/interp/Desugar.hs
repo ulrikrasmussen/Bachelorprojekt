@@ -31,29 +31,29 @@ type Continuation = String
 -- Desugar synchronous expressions. To keep the code simple, we compute
 -- expressions in 'chains', where each constructor or value computes any
 -- subexpressions and sends its result on its continuation.
-desExp :: SExpr -> Continuation -> DesugarM Atom
+desExp :: Continuation -> SExpr -> DesugarM Atom
 
-desExp (VarS v) k = return $ MsgA k [VarE v]
-desExp (ZeroS) k = return $ MsgA k [ZeroE]
-desExp (SuccS e) k =
+desExp k (VarS v) = return $ MsgA k [VarE v]
+desExp k (ZeroS) = return $ MsgA k [ZeroE]
+desExp k (SuccS e) =
   do [l, v] <- getFresh 2
-     e' <- desExp e l
+     e' <- desExp l e
      return $ DefA [ReactionD [VarJ l [VarP v]]
                               (Proc [MsgA k [SuccE (VarE v)]])]
                    (Proc [e'])
 
 -- | A call without any arguments is simply a message with the current
 -- continuation.
-desExp (CallS v []) k = return $ MsgA v [VarE k]
+desExp k (CallS v []) = return $ MsgA v [VarE k]
 
 -- | A call with values requires us to compute the values first (in parallel),
 -- and then sending the results and the current continuation to the called
 -- function.
-desExp (CallS v es) k =
+desExp k (CallS v es) =
   do chans <- getFresh $ length es
      vars <- getFresh $ length es
      let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
-     es' <- zipWithM desExp es chans
+     es' <- zipWithM desExp chans es
      return $ DefA [ReactionD joins
                               (Proc [MsgA v (map VarE vars ++ [VarE k])])]
                    (Proc $ es')
@@ -73,7 +73,7 @@ desInstr mk [] = maybe (return [InertA])
 desInstr mk ((LetI pats e):is) =
   do is' <- desInstr mk is
      [k] <- getFresh 1
-     e' <- desExp e k
+     e' <- desExp k e
      return $ [DefA [ReactionD [VarJ k pats] (Proc is')]
                     (Proc [e'])]
 
@@ -84,7 +84,7 @@ desInstr mk ((RunI (Proc as)):is) = (as ++) <$> desInstr mk is
 desInstr mk ((DoI f es):is) =
   do is' <- desInstr mk is
      [k, dummy] <- getFresh 2
-     f' <- desExp (CallS f es) k
+     f' <- desExp k (CallS f es)
      return $ [DefA [ReactionD [VarJ k [VarP dummy]] (Proc is')]
                     (Proc [f'])]
 
@@ -94,7 +94,7 @@ desInstr mk ((DoI f es):is) =
 desInstr mk ((MatchI e mps):is) =
   do is' <- desInstr mk is
      [l, m, var_e] <- getFresh 3
-     e' <- desExp e l
+     e' <- desExp l e
      -- mk' is the continuation we give to each branch. If there are no
      -- instructions after this match instruction, we pass the current
      -- continuation. Otherwise, we pass a synchronisation continuation, m,
@@ -118,7 +118,7 @@ desInstr mk ((ReturnI [] f):is) =
 -- and the last statement is a synchronous call, we can safely evaluate the
 -- call and pass the continuation of the return-to function.
 desInstr Nothing [ReturnI [CallS f' es'] f] =
-  do c' <- desExp (CallS f' es') (contName f)
+  do c' <- desExp (contName f) (CallS f' es')
      return  [c']
 
 -- |When we return one or more values, we need to evaluate them first. We
@@ -128,7 +128,7 @@ desInstr mk ((ReturnI es f):is) =
   do is' <- desInstr mk is
      chans <- getFresh $ length es
      vars <- getFresh $ length es
-     es' <- zipWithM desExp es chans
+     es' <- zipWithM desExp chans es
      let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
      return [DefA [ReactionD joins
                              (Proc $ (MsgA (contName f) $ map VarE vars):is')]
