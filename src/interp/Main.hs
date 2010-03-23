@@ -20,9 +20,11 @@ openJF f = do res <- parseFromFile program f
                  Left e -> error $ show e
                  Right p -> return p
 
+interpConf = defaultConfig
+
 run f = do
   testProg <- openJF $ f
-  putStrLn . show $ runInterpreter (desugar testProg)
+  putStrLn . show $ runInterpreter interpConf (desugar testProg)
 
 main = do
   [f] <- getArgs

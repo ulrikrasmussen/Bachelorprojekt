@@ -69,19 +69,31 @@ instance MonadJoin JoinM where
 initContext :: [Def] -> [Atom] -> Context
 initContext ds as = Context ds as ['#' : show i | i <- [1..]] []
 
-runInterpreter :: Proc -> Context
-runInterpreter (Proc atms) = execState (runJoinM interp) (initContext [] atms)
+data InterpConfig = IC {
+    runGC :: Bool
+  , gcInterval :: Integer
+  , breakAt :: Maybe Integer
+}
 
-interp :: (MonadJoin m, Functor m) => m ()
-interp = do
-  garbageCollect
+defaultConfig = IC {
+    runGC = True
+  , gcInterval = 1
+  , breakAt = Nothing
+}
+
+runInterpreter :: InterpConfig -> Proc -> Context
+runInterpreter conf (Proc atms) = execState (runJoinM $ interp 0 conf) (initContext [] atms)
+
+interp n conf = do
+  when (runGC conf) $ garbageCollect
   atoms <- getAtoms
   defs <- getDefs
   mapM heatAtom atoms
   mapM applyReaction defs
   atoms' <- getAtoms
   defs' <- getDefs
-  when (atoms /= atoms' || defs /= defs') $ interp
+  maybe (when (atoms /= atoms' || defs /= defs') $ interp (n+1) conf)
+        (\breakPoint -> when (breakPoint /= n) $ interp (n+1) conf) $ breakAt conf
 
 applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
 applyReaction d@(ReactionD js p) =
