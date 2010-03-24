@@ -80,12 +80,6 @@ instance Show Pat where
             show' n ZeroP = show n
             show' n (VarP v) = v ++ " + " ++ show n
 
---instance Subst Pat where
---  subst sigma (VarP v) = VarP $ sigma `subst` v
---  subst sigma ZeroP = ZeroP
---  subst sigma (SuccP e) = SuccP $ sigma `subst` e
---}
-
 {- A join pattern -}
 data Join = VarJ String [Pat]
           | SyncJ String [Pat]
