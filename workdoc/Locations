@@ -1,0 +1,56 @@
+Overvejelser vedrørende implementationen af Locations og Mobility
+=================================================================
+
+Afviklingsmiljø og problemer
+----------------------------
+
+Systemet skal kunne afvikles på fysisk mobile enheder, der er i trådløs kontakt
+med hinanden, uden nogen central kommunikationsinfrastruktur.
+
+Det betyder, at runtime-systemet skal kunne tage højde for at de andre enheder
+kan komme uden for netværkets rækkevidde, eller at den optimale route fra en
+enhed til en anden skifter, efterhånden som enhederne flyttes.
+
+Ydermere kan fysiske enheder gå ned, hvilket er noget andet end at de kommer
+uden for rækkevidde.
+
+###Locations
+
+
+Locations kan flytte sig fra enhed til enhed. Det komplicerer GC, da de DEFS
+der matcher på navne, der undslipper den definerende enhed, ikke kan spildopsamles
+før alle der kender navnet er færdige med at bruge det.
+
+Medmindre:
+  man siger at en J |> P er levende, hviss det er muligt at producere hele J
+  På denne måde kan man spildopsamle:
+
+    b[fib(n) |> {... return f to fib} ..]
+
+    ..
+
+    a[ res<r> & alive<> |> { run print(r) }
+    or timeout<> & alive<> |> { run print("timed out")}
+    in {run fib<100, res>; run sleep(10); run timeout<>} & alive<>]
+
+    Hm.. kan man ovehovedet lave fib< X, res>, hvis fib er sukret?
+
+  Det her adresserer dog ikke det onde problem med def-closures :-/
+
+Yderligere kan der ske følgende: (c[],a[],d[] er fysisk adskilte maskiner)
+
+c[ fac(n) |> {.. return n! to fac}]
+a[.. b[.. in  .. {.. fac(X);..} & { go(d) ..}]
+d[..]
+
+Altså, at b[] sender en fac<> til c[], og flytter sig til d[] mens c[] regner.
+Når c[] så endelig er klar til at returnere, skal den vide, at b[] nu ligger
+i d[].
+
+Mulige løsninger og kompromisser
+--------------------------------
+
+Out of range: Lad programmøren specificere en timeout på svar, som en
+sprogudvidelse. fx .. a[..]10sec
+
+
