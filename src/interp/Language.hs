@@ -158,7 +158,7 @@ instance Subst Atom where
 
 --}
 
-data Instr = LetI Pat SExpr
+data Instr = LetI [Pat] SExpr
            | RunI Proc
            | DoI String [SExpr]
            | MatchI SExpr [(Pat, [Instr])]
