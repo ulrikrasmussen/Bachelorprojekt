@@ -102,6 +102,7 @@ instance Subst Join where
 
 
 data Def  = ReactionD [Join] Proc
+          | LocationD String [Def] Proc
     deriving (Eq, Data, Typeable)
 
 instance Show Def where
@@ -124,8 +125,8 @@ instance Subst Proc where
 
 
 data Atom = InertA
-          | MsgA String [Expr]
-          | DefA [Def] Proc
+          | MsgA   String [Expr]
+          | DefA   [Def] Proc
           | MatchA Expr [(Pat, Proc)]
           | InstrA [Instr]
     deriving (Eq, Data, Typeable)
