@@ -1,4 +1,4 @@
--- vim:set foldmethod=marker foldmarker=--{,--}
+-- vim:set foldmethod=marker foldmarker=--{,--}:
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module Language( Expr(..)
