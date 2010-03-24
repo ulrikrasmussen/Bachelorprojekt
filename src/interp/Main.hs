@@ -13,7 +13,7 @@ parseString str =
         Left e -> error $ show e
         Right p -> p
 
-testProgram = parseString "def x() |> y() or y() |> x() in x() & def x() |> y() in 0 & x()"
+testProgram = parseString "def x<> |> f<> or a[ u() |> h<> in d<> ] in x<>"
 
 openJF f = do res <- parseFromFile program f
               case res of

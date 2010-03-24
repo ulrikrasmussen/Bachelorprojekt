@@ -72,9 +72,15 @@ joins = (lexeme construction) `sepBy1` (lexeme $ char '&')
 -- |Parses one or more definitions (reactions of the form J |> P) separated by
 -- 'or'.
 defs :: Parser [Def]
-defs = (lexeme reaction) `sepBy1` (lexeme1 $ string "or")
+defs = (lexeme def) `sepBy1` (lexeme1 $ string "or")
      <?> "Definition"
-  where reaction = ReactionD <$> joins <* (lexeme $ string "|>") <*> proc
+  where def = ReactionD <$> (try joins) <* (lexeme $ string "|>") <*> proc
+            <|> LocationD <$> identifier 
+                <* (lexeme $ char '[') <*> defs <* (lexeme1 $ string "in") <*> proc <* char ']'
+
+
+                -- (lexeme $ string "[" *> defs) <*> 
+                -- (lexeme1 $ string "in" *> proc <* (string "]"))
 
 -- |Parses a process, which is one or more atoms, separated by '&'
 proc :: Parser Proc
