@@ -190,6 +190,7 @@ instance DefinedVars Join where
 
 instance DefinedVars Def where
   definedVars (ReactionD j p) = S.unions $ map definedVars j
+  definedVars (LocationD a ds p) = a `S.insert` S.unions (map definedVars ds)
 
 class FreeVars e where freeVars :: e -> S.Set String
 
@@ -202,6 +203,9 @@ instance FreeVars Def where
   freeVars (ReactionD j p) =
     S.unions (map definedVars j)
         `S.union` (freeVars p `S.difference` S.unions (map receivedVars j))
+  freeVars (LocationD a ds p) =
+    a `S.insert` S.unions (map freeVars ds)
+      `S.union` freeVars p
 
 instance FreeVars Proc where
   freeVars (Proc as) = S.unions $ map freeVars as
