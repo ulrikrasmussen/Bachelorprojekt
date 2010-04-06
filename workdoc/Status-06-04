@@ -1,0 +1,12 @@
+Status pr. 6./4.
+================
+
+Branches:
+  -master   : Indeholder en implementation af core calculus + syntaktisk sukker
+  -cps      : Arbejdsområde for sukringen af cps. Er merget med master
+  -locations: Det er muligt at parse syntaksen der er forbundet med locations.
+
+Om locations & mobility
+-----------------------
+
+Vi har valgt at implementere den distribuerede del således at hver location kører i en separat fortolker (altså i sin egen kontekst), og den overordnede fortolkning sker så ved at hver fortolker kører 1 trin og returnerer listen af atomer, der skal sendes til andre locations. Dette klares ved at navne bliver udvidet med et location tag, så den ydre fortolker kan route dem.
