@@ -20,11 +20,25 @@ join-calculus based language would prove useful for expressing programs that
 essentially does the same as a distributed query.
 
 
-Example setup
--------------
+Example scenario
+----------------
 The example is heavily inspired by `bonnet2001towards`_, and evolves around a
-factory warehouse settings where each item has a stick-on sensor that measures
-the temperature. There are also sensors on the walls and ceilings.
+factory warehouse setting where each item has a stick-on sensor that measures
+the temperature. There are also sensors on the walls and ceilings. All sensors
+has a unique id. By querying the central processing nodes, it is possible to
+retrieve coordinates for a given sensor id (determined by triangulation or
+proximity to known reference points).
+
+We will try to implement some of the same queries mentioned in the article:
+
+- From all sensors, continuously return all temperatures over a given
+  threshold.
+
+- From all sensors on a given floor, continously return the average temperature
+  measured over the last minute.
+
+- When two sensors in close proximity to each other in a given time window
+  measure a temperature above a given threshold, generate an event.
 
 
 Assumptions about the underlying system
