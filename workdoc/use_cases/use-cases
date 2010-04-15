@@ -1,0 +1,169 @@
+We present here some use cases for a language based on the distributed join
+calculus.
+
+Since we don't have a mature, compiled language, we will not focus too much on
+memory and processor constraints on the processing nodes in this use case, since
+the resource usage depends a lot on the implementation. We may assume, however,
+that the number of active messages and join patterns on each device is in some
+way proportional to the actual usage of memory resources, and that the number
+of reduction steps required to arrive at a result is proportional to the usage
+of computational resources.
+
+
+Distributed queries in sensor networks
+======================================
+In `bonnet2001towards`_, the concept of sensor databases is introduced, in which
+a set of sensors is queried using an extension of SQL, enabling the user to
+extract very specific datasets from the network. The queries are executed in a
+distributed fashion, so the sensors only transmit data relevant to the query.
+For high-resolution sensors generating vast amounts of data, processing the
+data locally is cheaper than transmitting it for offline processing, leading to
+a more efficient usage of resources for bandwidth and battery constrained
+devices.
+
+The `COUGAR project`_ has already done a lot of research in this area, and
+a complete system for executing declarative queries in a distributed fashion
+has already been created. However, it would be interesting to see if a
+join-calculus based language would prove useful for expressing programs that
+essentially does the same as a distributed query. The paper mentioned that one
+of the challenges of implementing distributed queries was dealing with the
+asynchronicity of events, which we hope will be easy to express in a
+join-calculus based language.
+
+
+Example scenario
+----------------
+The example is heavily inspired by `bonnet2001towards`_, and evolves around a
+factory warehouse setting where each item has a stick-on sensor that measures
+the temperature. There are also sensors on the walls and ceilings. All sensors
+has a unique id. By querying the central processing nodes, it is possible to
+retrieve some measure of the position of a given sensor id (determined by
+triangulation or proximity to known reference points).
+
+We will try to implement some of the same queries mentioned in the article:
+
+- From all sensors, continuously return all temperatures over a given
+  threshold.
+
+- From all sensors on a given floor, continously return the average temperature
+  measured over the last minute.
+
+- When two sensors in close proximity to each other in a given time window
+  measure a temperature above a given threshold, generate an event.
+
+
+Assumptions about the underlying system
+---------------------------------------
+We will assume a network topology with one or more central processing nodes
+which is connected to the sensors in a star pattern, using unreliable
+communication channels (i.e. some sort of radio protocol). The runtime system
+will assure that messages are delivered atomically between phyiscal units, as
+long as they have an established communication channel. However, units may
+temporarily come out of contact and become unavailable for extended periods of
+time.
+
+We will start out with assuming a static network, where nodes doesn't move
+around. Each central node knows the names of all its sensors. The central
+processing nodes will always be available, so queries will get initiated in
+these by an external client.
+
+
+Doing I/O
+---------
+We will begin by defining how the sensors will read data from the outside
+world. Since the join-calculus has no way of doing I/O, we have to define some
+"magic" messages that forms an API for reading temperature values.
+
+We read the temperature via explicit probing. We let the API contain a
+synchronous message, ``read_temperature``, that takes a continuation and
+returns a single sample on it as soon as it is available.  This message can be
+used in the synchronous subset of the language::
+
+  def loop(t, c) & running<> |>
+        {
+          run running<>;
+          let temp = read_temperature();
+          return loop(t+temp, c+1) to loop
+        }
+   or timeout<> & running<>  |> done<>
+   or loop(t, c) & done<>    |> { return (t/c) to loop }
+   in {
+        run start_timer<10, timeout>;
+        run running<>;
+        print("Average temperature: " ^ loop(0, 0))
+      }
+
+In the example above, we assume that we have string operations as well as
+integer and floating point arithmetics. The code repeatedly reads from the
+temperature sensor as fast as possible in 10 seconds, and then prints out the
+average temperature measured.
+
+
+A programmable sensor
+---------------------
+Each sensor is running a minimal program capable of identifying the sensor with
+a central node::
+
+  def connect(ping, master) |>
+    def here[
+             load_reader(r) |>
+               {
+                 r(here, read_temperature);
+                 return () to load_reader
+               }
+          or ping_back<> |>
+               def pinging<> & ack<> |> start_timer<60, ping_back>
+                or pinging<> & timeout<> |> halt<>
+                in pinging<> & ping<ack> & start_timer<5, timeout>
+          in ping_back<>
+        ]
+     in {
+          run { fail(here); run init<> };
+          master(sensor_id(), load_reader);
+          return () to connect
+        }
+
+   or init<> |>
+        {
+          let servers = search();
+          match try_connnect(servers) with
+            True -> {  }
+          | False -> { run start_timer<10, init> }
+        }
+
+   or try_connect([])   |> { return (False) to try_connect }
+   or try_connect((p, m):ms) |> { connect(p, m); return (True) to try_connect }
+
+   in init<>
+
+The ``init`` process is the first process to start. This uses an API message,
+``search``, to get a list of servers within reach. Each element in the list is
+a tuple with two messages defined on the server: A ping message, and a message
+for registering the sensor with the server.
+
+The process ``try_connect`` attempts to connect to each server, and stops when
+it succeeds, returning True. We haven't decided on how to handle timeouts yet,
+so for now, only the first server is tried, with an infinite timeout.
+
+``connect`` defines a new location which will become the root location for all
+processes that migrates to the sensor. The location contains a ``ping_back``
+process that repeatedly sends the ``ping`` message to the server and waits for
+a response. If the ping times out, the location is halted (effectively stopping
+all processes that may have been sent to the sensor). A process outside the
+``here``-location handles when the location fails and automatically spawns the
+``init`` process again.
+
+When a sensor connects to a server, it sends its unique id (received using the
+API message ``sensor_id``) and the name ``load_reader``.
+
+
+.. _bonnet2001towards: @conference{bonnet2001towards,
+          title={{Towards sensor database systems}},
+          author={Bonnet, P. and Gehrke, J. and Seshadri, P.},
+          booktitle={Mobile Data Management},
+          pages={3--14},
+          year={2001},
+          organization={Springer}
+        }
+
+.. _COUGAR project: http://www.cs.cornell.edu/bigreddata/cougar/index.php
