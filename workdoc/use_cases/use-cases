@@ -111,10 +111,11 @@ a central node::
                 or pinging<> & timeout<> |> halt<>
                 in pinging<> & ping<ack> & start_timer<5, timeout>
           or halt_here<> |> { halt }
+          or read_temp_here() |> { return (read_temperature()) to read_temp_here }
           in 0
         ]
      in {
-          let success = master(sensor_id(), here, read_temperature);
+          let success = master(sensor_id(), here, read_temp_here);
           case success of
             True -> { run ping_back<> & fail<here, init> }
           | False -> { run halt_here<> };
@@ -154,6 +155,10 @@ message to read temperature values from the sensor. If the connection succeeds,
 a ping process and a fail handler for the location is started - the ping
 process halts the location on a timeout, and the fail handler restarts the
 ``init`` process when the location fails.
+
+
+Querying sensors
+----------------
 
 
 
