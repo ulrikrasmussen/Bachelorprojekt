@@ -156,10 +156,59 @@ a ping process and a fail handler for the location is started - the ping
 process halts the location on a timeout, and the fail handler restarts the
 ``init`` process when the location fails.
 
+Note that in this use case, we exploit the ability to halt locations to ensure
+that any processes that may have migrated to the sensor is killed when we loose
+connection to the server. We also "wrap" our exported API calls in messages
+defined in the ``here`` location. This ensures that the exposed interface is
+invalidated whenever the location is killed, ensuring that no process can
+continue reading from the sensor from an external location (which would destroy
+the purpose of migrating queries to the sensors in the first place).
+
+
+Programming the central nodes
+-----------------------------
+Each central node is running an instance of the following program::
+
+  def register(id, loc, read_temp) & sensors<xs> |>
+      {
+        run sensors<(id, loc, read_temp):xs>;
+        return (True) to register
+      }
+   or ping() |> return () to ping
+
+   or runQuery(constructor) & sensors<xs> |>
+      sensors<xs>
+      & def here[
+              in {
+                   let mkQ = constructor(here);
+                   
+                 }
+            ]
+         in ...
+
 
 Querying sensors
 ----------------
+(This part is not finished yet, and hasn't been thought through). A query is a
+program that takes the following form::
 
+  def mkCollector(cloc) |>
+      def collector[
+            mkSensorQuery(sloc, read_temp) |>
+                def sensorQuery[
+                       T in { go(sloc); ... }
+                    ]
+                 in 0
+            in { go(cloc); ... }
+          ]
+   in { return (mkSensorQuery) to mkCollector }
+
+``mkCollector`` instantiates a process that will receive data from all of the
+sensors, combine it in some way and return the result to the user. We also
+define a ``collector`` location that migrates to a given location (this would
+be a location on one of the central nodes). ``mkCollector`` returns a message
+that instantiates a process to be executed on each sensor, given a location on
+the sensor to migrate to, and an interface for reading data.
 
 
 .. _bonnet2001towards: @conference{bonnet2001towards,
