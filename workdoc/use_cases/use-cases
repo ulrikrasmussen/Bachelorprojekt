@@ -2,12 +2,11 @@ We present here some use cases for a language based on the distributed join
 calculus.
 
 Since we don't have a mature, compiled language, we will not focus too much on
-memory and processor constraints on the processing nodes in this use case, since
-the resource usage depends a lot on the implementation. We may assume, however,
-that the number of active messages and join patterns on each device is in some
-way proportional to the actual usage of memory resources, and that the number
-of reduction steps required to arrive at a result is proportional to the usage
-of computational resources.
+memory and processor constraints, since the resource usage depends a lot on the
+implementation. We may assume, however, that the number of active messages and
+join patterns on each device is in some way proportional to the actual usage of
+memory resources, and that the number of reduction steps required to arrive at
+a result is proportional to the usage of computational resources.
 
 
 Distributed queries in sensor networks
@@ -36,7 +35,7 @@ Example scenario
 The example is heavily inspired by `bonnet2001towards`_, and evolves around a
 factory warehouse setting where each item has a stick-on sensor that measures
 the temperature. There are also sensors on the walls and ceilings. All sensors
-has a unique id. By querying the central processing nodes, it is possible to
+has a unique id. By querying the central processing node, it is possible to
 retrieve some measure of the position of a given sensor id (determined by
 triangulation or proximity to known reference points).
 
@@ -54,18 +53,18 @@ We will try to implement some of the same queries mentioned in the article:
 
 Assumptions about the underlying system
 ---------------------------------------
-We will assume a network topology with one or more central processing nodes
-which is connected to the sensors in a star pattern, using unreliable
-communication channels (i.e. some sort of radio protocol). The runtime system
-will assure that messages are delivered atomically between phyiscal units, as
-long as they have an established communication channel. However, units may
+We will assume a network topology with a central processing node which is
+connected to the sensors in a star pattern, using unreliable communication
+channels (i.e. some sort of radio protocol). The runtime system will assure
+that messages are delivered atomically between phyiscal units, as long as they
+have an established communication channel. However, sensor nodes may
 temporarily come out of contact and become unavailable for extended periods of
 time.
 
-We will start out with assuming a static network, where nodes doesn't move
-around. Each central node knows the names of all its sensors. The central
-processing nodes will always be available, so queries will get initiated in
-these by an external client.
+We will start out by assuming a static network, where nodes doesn't move
+around. The central node knows the names of all its sensors. The central
+processing node will always be available, so queries will get initiated in this
+by an external client.
 
 
 Doing I/O
