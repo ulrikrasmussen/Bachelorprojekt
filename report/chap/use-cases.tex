@@ -47,8 +47,8 @@ article:
 
 \begin{itemize}
 \item
-  From all sensors, continuously return all temperatures over a given
-  threshold.
+  From all the sensors, continuously return all temperatures over a
+  given threshold.
 
 \item
   From all sensors on a given floor, continously return the average
@@ -76,7 +76,10 @@ move around. The central node knows the names of all its sensors.
 The central processing node will always be available, so queries
 will get initiated in this by an external client.
 
-\subsection{Doing I/O}
+
+\subsection{Implementation}
+
+\subsubsection{Doing I/O}
 
 We will begin by defining how the sensors will read data from the
 outside world. Since the join-calculus has no way of doing I/O, we
@@ -110,27 +113,35 @@ well as integer and floating point arithmetics. The code repeatedly
 reads from the temperature sensor as fast as possible in 10
 seconds, and then prints out the average temperature measured.
 
-\subsection{A programmable sensor}
+\subsubsection{A programmable sensor}
 
 Each sensor is running a minimal program capable of identifying the
 sensor with a central node:
 
 \begin{verbatim}
-def connect(ping, master) |>
+def connect(ping, register) |>
   def here[
            ping_back<> |>
-             def pinging<> & ack<> |> start_timer<60, ping_back>
-              or pinging<> & timeout<> |> halt<>
-              in pinging<> & ping<ack> & start_timer<5, timeout>
+             def pinging<> & ack<> |>
+                    start_timer<60, ping_back>
+              or pinging<> & timeout<> |>
+                    halt<>
+              in pinging<>
+               & ping<ack>
+               & start_timer<5, timeout>
+
         or halt_here<> |> { halt }
         or read_temp_here() |>
            {
-             return (read_temperature()) to read_temp_here
+             return (read_temperature())
+                    to read_temp_here
            }
         in 0
       ]
    in {
-        let success = master(sensor_id(), here, read_temp_here);
+        let success = register(sensor_id(),
+                               here,
+                               read_temp_here);
         case success of
           True -> { run ping_back<> & fail<here, init> }
         | False -> { run halt_here<> };
@@ -145,11 +156,16 @@ def connect(ping, master) |>
         | False -> { run start_timer<10, init> }
       }
 
- or try_connect([])   |> { return (False) to try_connect }
- or try_connect((p, m):ms) |> {
-       match connect(p, m) with
-         True  -> return (True) to try_connect
-       | False -> return (try_connect(ms)) to try_connect
+ or try_connect([])   |>
+    {
+       return (False) to try_connect
+    }
+ or try_connect((p, r):ms) |> {
+       match connect(p, r) with
+         True  -> { return (True)
+                           to try_connect }
+       | False -> { return (try_connect(ms))
+                           to try_connect }
     }
 
  in init<>
@@ -184,7 +200,7 @@ process can continue reading from the sensor from an external
 location (which would destroy the purpose of migrating queries to
 the sensors in the first place).
 
-\subsection{Programming the central nodes}
+\subsubsection{Programming the central nodes}
 
 Each central node is running an instance of the following program:
 
