@@ -1,0 +1,226 @@
+We present here some use cases for a language based on the
+distributed join calculus.
+
+Since we don't have a mature, compiled language, we will not focus
+too much on memory and processor constraints, since the resource
+usage depends a lot on the implementation. We may assume, however,
+that the number of active messages and join patterns on each device
+is in some way proportional to the actual usage of memory
+resources, and that the number of reduction steps required to
+arrive at a result is proportional to the usage of computational
+resources.
+
+\section{Distributed queries in sensor networks}
+
+In \cite{bonnet2001towards}, the concept of sensor databases is introduced, in
+which a set of sensors is queried using an extension of SQL, enabling the user
+to extract very specific datasets from the network. The queries are executed in
+a distributed fashion, so the sensors only transmit data relevant to the query.
+For high-resolution sensors generating vast amounts of data, processing the
+data locally is cheaper than transmitting it for offline processing, leading to
+a more efficient usage of resources for bandwidth and battery constrained
+devices.
+
+The COUGAR project\cite{COUGAR} has already done a lot of research in this
+area, and a complete system for executing declarative queries in a distributed
+fashion has already been created. However, it would be interesting to see if a
+join-calculus based language would prove useful for expressing programs that
+essentially does the same as a distributed query. The paper mentioned that one
+of the challenges of implementing distributed queries was dealing with the
+asynchronicity of events, which we hope will be easy to express in a
+join-calculus based language.
+
+\subsection{Example scenario}
+
+The example is heavily inspired by \cite{bonnet2001towards}, and evolves around
+a factory warehouse setting where each item has a stick-on sensor that measures
+the temperature. There are also sensors on the walls and ceilings. All sensors
+has a unique id. By querying the central processing node, it is possible to
+retrieve some measure of the position of a given sensor id (determined by
+triangulation or proximity to known reference points).
+
+We will try to implement some of the same queries mentioned in the article:
+
+\begin{itemize}
+\item
+  From all sensors, continuously return all temperatures over a given
+  threshold.
+
+\item
+  From all sensors on a given floor, continously return the average
+  temperature measured over the last minute.
+
+\item
+  When two sensors in close proximity to each other in a given time
+  window measure a temperature above a given threshold, generate an
+  event.
+
+\end{itemize}
+\subsection{Assumptions about the underlying system}
+
+We will assume a network topology with a central processing node
+which is connected to the sensors in a star pattern, using
+unreliable communication channels (i.e. some sort of radio
+protocol). The runtime system will assure that messages are
+delivered atomically between phyiscal units, as long as they have
+an established communication channel. However, sensor nodes may
+temporarily come out of contact and become unavailable for extended
+periods of time.
+
+We will start out by assuming a static network, where nodes doesn't
+move around. The central node knows the names of all its sensors.
+The central processing node will always be available, so queries
+will get initiated in this by an external client.
+
+\subsection{Doing I/O}
+
+We will begin by defining how the sensors will read data from the
+outside world. Since the join-calculus has no way of doing I/O, we
+have to define some "magic" messages that forms an API for reading
+temperature values.
+
+We read the temperature via explicit probing. We let the API
+contain a synchronous message, \verb!read_temperature!, that takes
+a continuation and returns a single sample on it as soon as it is
+available. This message can be used in the synchronous subset of
+the language:
+
+\begin{verbatim}
+def loop(t, c) & running<> |>
+      {
+        run running<>;
+        let temp = read_temperature();
+        return loop(t+temp, c+1) to loop
+      }
+ or timeout<> & running<>  |> done<>
+ or loop(t, c) & done<>    |> { return (t/c) to loop }
+ in {
+      run start_timer<10, timeout>;
+      run running<>;
+      print("Average temperature: " ^ loop(0, 0))
+    }
+\end{verbatim}
+In the example above, we assume that we have string operations as
+well as integer and floating point arithmetics. The code repeatedly
+reads from the temperature sensor as fast as possible in 10
+seconds, and then prints out the average temperature measured.
+
+\subsection{A programmable sensor}
+
+Each sensor is running a minimal program capable of identifying the
+sensor with a central node:
+
+\begin{verbatim}
+def connect(ping, master) |>
+  def here[
+           ping_back<> |>
+             def pinging<> & ack<> |> start_timer<60, ping_back>
+              or pinging<> & timeout<> |> halt<>
+              in pinging<> & ping<ack> & start_timer<5, timeout>
+        or halt_here<> |> { halt }
+        or read_temp_here() |> { return (read_temperature()) to read_temp_here }
+        in 0
+      ]
+   in {
+        let success = master(sensor_id(), here, read_temp_here);
+        case success of
+          True -> { run ping_back<> & fail<here, init> }
+        | False -> { run halt_here<> };
+        return success to connect
+      }
+
+ or init<> |>
+      {
+        let servers = search();
+        match try_connnect(servers) with
+          True -> { }
+        | False -> { run start_timer<10, init> }
+      }
+
+ or try_connect([])   |> { return (False) to try_connect }
+ or try_connect((p, m):ms) |> {
+       match connect(p, m) with
+         True  -> return (True) to try_connect
+       | False -> return (try_connect(ms)) to try_connect
+    }
+
+ in init<>
+\end{verbatim}
+The \verb!init! process is the first process to start. This uses an
+API message, \verb!search!, to get a list of servers within reach.
+Each element in the list is a tuple with two messages defined on
+the server: A ping message, and a message for registering the
+sensor with the server.
+
+The process \verb!try_connect! attempts to connect to each server,
+and stops when it succeeds, returning True.
+
+\verb!connect! defines a new location, \verb!here!, which will
+become the root location for all processes that migrates to the
+sensor. By using the message \verb!master!, the process tries to
+register the sensor with the server, sending the sensor id, the
+name of the \verb!here! location and the name of the API message to
+read temperature values from the sensor. If the connection
+succeeds, a ping process and a fail handler for the location is
+started - the ping process halts the location on a timeout, and the
+fail handler restarts the \verb!init! process when the location
+fails.
+
+Note that in this use case, we exploit the ability to halt
+locations to ensure that any processes that may have migrated to
+the sensor is killed when we loose connection to the server. We
+also "wrap" our exported API calls in messages defined in the
+\verb!here! location. This ensures that the exposed interface is
+invalidated whenever the location is killed, ensuring that no
+process can continue reading from the sensor from an external
+location (which would destroy the purpose of migrating queries to
+the sensors in the first place).
+
+\subsection{Programming the central nodes}
+
+Each central node is running an instance of the following program:
+
+\begin{verbatim}
+def register(id, loc, read_temp) & sensors<xs> |>
+    {
+      run sensors<(id, loc, read_temp):xs>;
+      return (True) to register
+    }
+ or ping() |> return () to ping
+
+ or runQuery(constructor) & sensors<xs> |>
+    sensors<xs>
+    & def here[
+            in {
+                 let mkQ = constructor(here);
+
+               }
+          ]
+       in ...
+\end{verbatim}
+\subsection{Querying sensors}
+
+(This part is not finished yet, and hasn't been thought through). A
+query is a program that takes the following form:
+
+\begin{verbatim}
+def mkCollector(cloc) |>
+    def collector[
+          mkSensorQuery(sloc, read_temp) |>
+              def sensorQuery[
+                     T in { go(sloc); ... }
+                  ]
+               in 0
+          in { go(cloc); ... }
+        ]
+ in { return (mkSensorQuery) to mkCollector }
+\end{verbatim}
+\verb!mkCollector! instantiates a process that will receive data
+from all of the sensors, combine it in some way and return the
+result to the user. We also define a \verb!collector! location that
+migrates to a given location (this would be a location on one of
+the central nodes). \verb!mkCollector! returns a message that
+instantiates a process to be executed on each sensor, given a
+location on the sensor to migrate to, and an interface for reading
+data.
+
