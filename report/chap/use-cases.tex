@@ -12,34 +12,38 @@ resources.
 
 \section{Distributed queries in sensor networks}
 
-In \cite{bonnet2001towards}, the concept of sensor databases is introduced, in
-which a set of sensors is queried using an extension of SQL, enabling the user
-to extract very specific datasets from the network. The queries are executed in
-a distributed fashion, so the sensors only transmit data relevant to the query.
-For high-resolution sensors generating vast amounts of data, processing the
-data locally is cheaper than transmitting it for offline processing, leading to
-a more efficient usage of resources for bandwidth and battery constrained
-devices.
+In \cite{bonnet2001towards}, the concept of sensor databases is
+introduced, in which a set of sensors is queried using an extension of
+SQL, enabling the user to extract very specific datasets from the
+network. The queries are executed in a distributed fashion, so the
+sensors only transmit data relevant to the query.  For high-resolution
+sensors generating vast amounts of data, processing the data locally
+is cheaper than transmitting it for offline processing, leading to a
+more efficient usage of resources for bandwidth and battery
+constrained devices.
 
-The COUGAR project\cite{COUGAR} has already done a lot of research in this
-area, and a complete system for executing declarative queries in a distributed
-fashion has already been created. However, it would be interesting to see if a
-join-calculus based language would prove useful for expressing programs that
-essentially does the same as a distributed query. The paper mentioned that one
-of the challenges of implementing distributed queries was dealing with the
-asynchronicity of events, which we hope will be easy to express in a
-join-calculus based language.
+The COUGAR project\cite{COUGAR} has already done a lot of research in
+this area, and a complete system for executing declarative queries in
+a distributed fashion has already been created. However, it would be
+interesting to see if a join-calculus based language would prove
+useful for expressing programs that essentially does the same as a
+distributed query. The paper mentioned that one of the challenges of
+implementing distributed queries was dealing with the asynchronicity
+of events, which we hope will be easy to express in a join-calculus
+based language.
 
 \subsection{Example scenario}
 
-The example is heavily inspired by \cite{bonnet2001towards}, and evolves around
-a factory warehouse setting where each item has a stick-on sensor that measures
-the temperature. There are also sensors on the walls and ceilings. All sensors
-has a unique id. By querying the central processing node, it is possible to
-retrieve some measure of the position of a given sensor id (determined by
+The example is heavily inspired by \cite{bonnet2001towards}, and
+evolves around a factory warehouse setting where each item has a
+stick-on sensor that measures the temperature. There are also
+sensors on the walls and ceilings. All sensors has a unique id. By
+querying the central processing node, it is possible to retrieve
+some measure of the position of a given sensor id (determined by
 triangulation or proximity to known reference points).
 
-We will try to implement some of the same queries mentioned in the article:
+We will try to implement some of the same queries mentioned in the
+article:
 
 \begin{itemize}
 \item
@@ -100,6 +104,7 @@ def loop(t, c) & running<> |>
       print("Average temperature: " ^ loop(0, 0))
     }
 \end{verbatim}
+
 In the example above, we assume that we have string operations as
 well as integer and floating point arithmetics. The code repeatedly
 reads from the temperature sensor as fast as possible in 10
@@ -118,7 +123,10 @@ def connect(ping, master) |>
               or pinging<> & timeout<> |> halt<>
               in pinging<> & ping<ack> & start_timer<5, timeout>
         or halt_here<> |> { halt }
-        or read_temp_here() |> { return (read_temperature()) to read_temp_here }
+        or read_temp_here() |>
+           {
+             return (read_temperature()) to read_temp_here
+           }
         in 0
       ]
    in {
@@ -198,6 +206,8 @@ def register(id, loc, read_temp) & sensors<xs> |>
           ]
        in ...
 \end{verbatim}
+
+
 \subsection{Querying sensors}
 
 (This part is not finished yet, and hasn't been thought through). A
@@ -215,6 +225,7 @@ def mkCollector(cloc) |>
         ]
  in { return (mkSensorQuery) to mkCollector }
 \end{verbatim}
+
 \verb!mkCollector! instantiates a process that will receive data
 from all of the sensors, combine it in some way and return the
 result to the user. We also define a \verb!collector! location that
@@ -223,4 +234,3 @@ the central nodes). \verb!mkCollector! returns a message that
 instantiates a process to be executed on each sensor, given a
 location on the sensor to migrate to, and an interface for reading
 data.
-
