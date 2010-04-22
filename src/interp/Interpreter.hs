@@ -180,6 +180,7 @@ garbageCollect = do
   where
     defMatched :: Def -> S.Set String -> Bool
     defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
+    defMatched (LocationD _ _ _) _ = True
 
     gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
     gc' markedNames defs = do
