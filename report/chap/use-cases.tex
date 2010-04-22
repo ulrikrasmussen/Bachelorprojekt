@@ -64,20 +64,70 @@ article:
 
 We will assume a network topology with a central processing node
 which is connected to the sensors in a star pattern, using
-unreliable communication channels (i.e. some sort of radio
-protocol). The runtime system will assure that messages are
-delivered atomically between phyiscal units, as long as they have
-an established communication channel. However, sensor nodes may
-temporarily come out of contact and become unavailable for extended
-periods of time.
+unreliable communication channels (i.e. some sort of radio protocol).  
+With regards to networking, it is assumed that the runtime system
+on each node communicates via some sort of reliable network protocol á
+la TCP, such that there is no notion of packet loss from the
+programmer's point of view.
+However, sensor nodes may temporarily come out of contact and become
+unavailable for extended periods of time.
 
 We will start out by assuming a static network, where nodes doesn't
 move around. The central node knows the names of all its sensors.
 The central processing node will always be available, so queries
 will get initiated in this by an external client.
 
+It is also assumed that there is a built in name-exchange facility,
+such that the network can be bootstrapped. The \texttt{search()}
+synchronus call is the incarnation of this facility in our case.
+This call returns a list of pairs, where each pair contains names for
+pinging a server and registering with the server.
 
 \subsection{Implementation}
+
+\subsubsection{Communication protocols and code conventions}
+
+Initially, query programs enter the server node from a client node
+through a set of names, that the server node exports.
+Then, as sensors register themselves with the server node, the query
+programs are uploaded from the server to the sensors.
+
+In order for this to work, a correct query program is supposed to 
+behave in a certain way with regards to distribution and internal
+structure, because process migration in the join calculus happens only 
+the initiative of the process, that is to migrate.
+Conceptually, a query program is structured in two parts: One that 
+treats the sensor data inside the sensor itself, and a second part
+that runs on the server node that collects and filters the data from
+the sensors and eventually aggregate these to the client.
+The interface of the query programs is more explicitly specified below.
+\fixme{insert reference to specification}
+
+When a new sensor appears in the network, it enters the registration
+phase, where the sensor exports the names used for accessing the 
+sensor hardware, and the sensor-part of the query program migrates to
+the sensor.
+While the sensor is active and registered, any exchange of sensor data
+happens only on the initiative of the sensor part of the query
+program.
+
+When the communication between a sensor and the server times out, the
+default behaviour is to reboot the sensor back into the registration
+phase.
+Depending on the running queries however, this may not be desirable,
+especially for long running queries.\fixme{Decide on a solution!}
+One way around this would be to allow the query program to determine
+the length of the timespan before a timeout, while still eventually 
+having the sensor reboot when the timeout is reached.
+
+Since everything is asynchronus, the server and the sensor may each
+have a slightly different idea of just when a timeout occurs, and it
+is possible, that the sensor notices a timeout before the server and
+therefore attempts to register again, even though the server still
+considers the sensor as registered. In this case the server should
+just re-register the sensor and delete its old reference.\fixme{ Also
+treat the case where the server times out before the sensor, even
+though it seems improbable (impossible)}
 
 \subsubsection{Doing I/O}
 
@@ -226,27 +276,53 @@ def register(id, loc, read_temp) & sensors<xs> |>
 
 \subsection{Querying sensors}
 
-(This part is not finished yet, and hasn't been thought through). A
-query is a program that takes the following form:
+All queries are programs which must implement a certain interface to be
+compatible with our sensor framework. We will call such a program a well-formed
+query program. An example of such a program (which does nothing) is seen below:
 
 \begin{verbatim}
-def mkCollector(cloc) |>
-    def collector[
-          mkSensorQuery(sloc, read_temp) |>
-              def sensorQuery[
+def mkReducer(cloc) |>
+    def reducer[
+          mkFilter(sloc, read_temp) |>
+              def filter[
                      T in { go(sloc); ... }
                   ]
-               in 0
+               in { return () to mkSensorQuery }
           in { go(cloc); ... }
         ]
- in { return (mkSensorQuery) to mkCollector }
+     in { return (mkFilter) to mkReducer }
+ in ...
 \end{verbatim}
 
-\verb!mkCollector! instantiates a process that will receive data
-from all of the sensors, combine it in some way and return the
-result to the user. We also define a \verb!collector! location that
-migrates to a given location (this would be a location on one of
-the central nodes). \verb!mkCollector! returns a message that
-instantiates a process to be executed on each sensor, given a
-location on the sensor to migrate to, and an interface for reading
-data.
+The client sends the the synchronous message \verb!mkReducer! message
+to the central node, which takes care of distributing the program to all
+registered sensors in the following way:
+\begin{enumerate}
+ \item
+   The boot program on the central node calls \verb!mkReducer!, sending the name
+   of a location that resides on the central node with it.
+ \item
+   This instantiates a new location, \verb!reducer!, which migrates to the
+   location given to \verb!mkReducer! (physically moving the \verb!reducer! to
+   the central node).
+ \item
+   Inside the \verb!reducer! location, the name \verb!mkFilter! is defined.
+   This name is sent back to the caller of \verb!mkReducer! (the boot program on
+   the central node).
+ \item
+   The boot program has a list of all the registered sensors. For each sensor,
+   the boot program calls \verb!mkFilter!, sending with it the name of a
+   location on the sensor and the name of a synchronous message for reading
+   temperature values on the sensor.
+ \item
+   This instantiates a new location, \verb!filter! which migrates to the
+   location given to \verb!mkFilter! (phyiscally moving instances of
+   \verb!filter! to each sensor).
+\end{enumerate}
+
+When this process is done, the query program is deployed. Each of the
+\verb!filter! locations will read values from its respective sensors, and send
+messages back to the \verb!reducer! location which combines the data. Since
+the \verb!reducer! location is defined in the scope of the client program,
+it can send back results to the client using message names obtained from the
+scope.

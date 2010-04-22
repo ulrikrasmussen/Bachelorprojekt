@@ -1,0 +1,25 @@
+Dokumentet skal:
+
+ * Udspecificere den protokol som sensornetværket skal benytte, beskrevet uden
+   direkte brug af join-calculus-termer. Herunder:
+   [DONE] - Hvordan kommer en sensor i kontakt med den centrale server?
+   [DONE] - Hvad sker der når en sensor kommer ud af kontakt med serveren? Hvordan
+     håndterer serveren at en sådan sensor pludselig dukker op igen?
+   - Hvad skal der ske hvis dele af sensornetværket forsvinder imens en
+     forespørgsel kører? Dette afhænger formentlig af typen af forespørgsel, og
+     skal derfor være en del af frameworket, så brugeren ikke skal kode adfæren
+     eksplicit...pas
+
+ [DONE] * Forklare hvordan klienten skal sende forespørgsler (i form af programmer)
+   til den centrale server, og hvordan disse distribueres til sensorer.
+   [DONE] - Hvad er et velformet program?
+
+ * Implementation (foreløbligt i pseudo-join) af hele moletjavsen.
+   - Implementation af det statiske sensor-program.
+   - Implementation af det statiske server-program.
+   - Implementation af nogle eksempelforespørgsler, som overholder kravet for
+     velformethed defineret i ovenstående hovedpunkt.
+
+ * Forklaring af hvordan vi modellerer scenariet.
+   - Hvordan repræsenteres sensornetværket i simulatoren?
+   - Hvordan bootes simulationen?
