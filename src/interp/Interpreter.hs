@@ -45,9 +45,9 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        }
 
 instance Show Context where
-  show context = "Defs:\n\t" ++ (concat . intersperse "\n\t" $ map show (cDefs context))
-               ++ "\n\nAtoms:\n\t" ++ (concat . intersperse "\n\t" $ map show (cAtoms context))
-               ++ "\n\nLog:\n\t" ++ (concat . reverse . intersperse "\n\t" $ (cLog context))
+  show context =      "Loc  :\t" ++ (concat . intersperse "." $ cLocation context)
+               ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
+               ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
 
 instance Eq Context where
   a == b = cDefs a == cDefs b && cAtoms a == cAtoms b
@@ -130,7 +130,7 @@ defaultConfig = IC {
 runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
   stdGen <- R.getStdGen
-  return $ runInterpreter' 0 [initContext [] as ["@a", rootLocation] stdGen]
+  return $ runInterpreter' 0 [initContext [] as [rootLocation] stdGen]
    where runInterpreter' n ctx =
            let ctx' = map (execInterp conf) ctx
                continue = runInterpreter' (n+1) ctx'
