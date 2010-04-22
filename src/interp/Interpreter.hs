@@ -7,6 +7,7 @@ import Language
 import Control.Monad
 import Control.Applicative
 import Control.Monad.State
+import Control.Monad.Error
 import Control.Arrow (first,second)
 
 import Data.List
@@ -18,24 +19,39 @@ import qualified Data.Set as S
 
 import qualified System.Random as R
 
+rootLocation = "@root"
+
 instance Applicative (State Context) where
     pure = return
     (<*>) = ap
 
-newtype JoinM a = J { runJoinM :: State Context a  }
-    deriving (Monad, MonadState Context, Functor, Applicative)
+instance Applicative (ErrorT String (State Context)) where
+    pure = return
+    (<*>) = ap
 
-data Context = Context { cDefs :: [Def]
-                       , cAtoms :: [Atom]
-                       , cFreshNames :: [String]
-                       , cLog :: [String]
-                       , cStdGen :: R.StdGen
+newtype JoinM a = J { runJoinM :: ErrorT String (State Context) a  }
+    deriving (Monad, MonadState Context, MonadError String, Functor, Applicative)
+
+data Context = Context { cDefs :: [Def] -- ^ Active definitions
+                       , cAtoms :: [Atom] -- ^ Active atoms
+                       , cFreshNames :: [String] -- ^ Infinite stream of fresh names
+                       , cLog :: [String] -- ^ Debug log
+                       , cStdGen :: R.StdGen -- ^ StdGen for non-determinism
+                       , cLocation :: [String] -- ^ Location path. Root is the
+                                               -- last element, the local
+                                               -- name of the context is the
+                                               -- first.
+                       , cFail :: Bool -- ^ Indicates if the context is in a failed state.
                        }
 
 instance Show Context where
   show context = "Defs:\n\t" ++ (concat . intersperse "\n\t" $ map show (cDefs context))
                ++ "\n\nAtoms:\n\t" ++ (concat . intersperse "\n\t" $ map show (cAtoms context))
                ++ "\n\nLog:\n\t" ++ (concat . reverse . intersperse "\n\t" $ (cLog context))
+
+instance Eq Context where
+  a == b = cDefs a == cDefs b && cAtoms a == cAtoms b
+         && cLocation a == cLocation b && cFail a == cFail b
 
 class (Monad m) => MonadJoin m where
   getDefs :: m [Def]
@@ -51,6 +67,9 @@ class (Monad m) => MonadJoin m where
 
   getFreshNames :: Int -> m [String]
   getStdGen :: m R.StdGen
+  getLocation :: m String
+  isFailed :: m Bool
+  setFail :: m ()
 
 instance MonadJoin JoinM where
   getDefs = gets cDefs
@@ -77,8 +96,22 @@ instance MonadJoin JoinM where
     modify $ \s -> s {cStdGen = sg'}
     return sg
 
-initContext :: [Def] -> [Atom] -> R.StdGen -> Context
-initContext ds as stdGen = Context ds as ['#' : show i | i <- [1..]] [] stdGen
+  getLocation = gets $ head . cLocation
+
+  isFailed = gets cFail
+
+  setFail = do modify $ \s -> s{cFail = True}
+               throwError "Location failed"
+
+
+initContext ::    [Def]    -- initial definitions
+              -> [Atom]    -- initial atoms
+              -> [String]  -- initial location
+              -> R.StdGen  -- random seed
+              -> Context
+
+initContext ds as loc stdGen = Context ds as freshNames [] stdGen loc False
+    where freshNames = ["#" ++ head loc ++ "." ++ show i | i <- [1..]]
 
 data InterpConfig = IC {
     runGC :: Bool
@@ -94,24 +127,32 @@ defaultConfig = IC {
   , nondeterministic = False
 }
 
-runInterpreter :: InterpConfig -> Proc -> IO Context
-runInterpreter conf (Proc atms) = do
-  stdGen <- R.getStdRandom R.split
-  return $ execState (runJoinM $ interp 0 conf) (initContext [] atms stdGen)
+runInterpreter :: InterpConfig -> Proc -> IO [Context]
+runInterpreter conf (Proc as) = do
+  stdGen <- R.getStdGen
+  return $ runInterpreter' 0 [initContext [] as ["@a", rootLocation] stdGen]
+   where runInterpreter' n ctx =
+           let ctx' = map (execInterp conf) ctx
+               continue = runInterpreter' (n+1) ctx'
+            in maybe (if ctx /= ctx' then continue else ctx)
+                     (\breakPoint -> if breakPoint /= n then continue else ctx)
+                     (breakAt conf)
 
+-- Executes a single step of the interpreter. If the context is in a failed state,
+-- nothing happens.
+execInterp :: InterpConfig -> Context -> Context
+execInterp conf context
+    | cFail context = context
+    | otherwise     = execState (runErrorT . runJoinM $ interp conf) context
+
+-- |Performs a single step of interpretation
 interp :: (MonadJoin m, Functor m, Applicative m)
-                => Integer -> InterpConfig -> m ()
-interp n conf = do
+                => InterpConfig -> m ()
+interp conf = do
   when (runGC conf) $ garbageCollect
   when (nondeterministic conf) $ scrambleContext
-  atoms <- getAtoms
-  defs <- getDefs
-  mapM heatAtom atoms
-  mapM applyReaction defs
-  atoms' <- getAtoms
-  defs' <- getDefs
-  maybe (when (atoms /= atoms' || defs /= defs') $ interp (n+1) conf)
-        (\breakPoint -> when (breakPoint /= n) $ interp (n+1) conf) $ breakAt conf
+  mapM_ heatAtom =<< getAtoms
+  mapM_ applyReaction =<< getDefs
 
 scrambleContext :: (MonadJoin m, Functor m, Applicative m) => m ()
 scrambleContext = do
