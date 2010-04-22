@@ -128,6 +128,7 @@ applyReaction d@(ReactionD js p) =
        mapM_ rmAtom atoms
        mapM_ putAtom $ (subst sigma <$> (pAtoms p))
     )
+applyReaction (LocationD _ _ _) = return ()
 
 {- Check whether a join pattern is matched by the atoms in the context -}
 matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
