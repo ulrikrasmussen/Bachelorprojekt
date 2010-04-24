@@ -79,6 +79,7 @@ instance Show Pat where
       where show' n (SuccP e)= show' (n+1) e
             show' n ZeroP = show n
             show' n (VarP v) = v ++ " + " ++ show n
+--}
 
 {- A join pattern -}
 data Join = VarJ String [Pat]
