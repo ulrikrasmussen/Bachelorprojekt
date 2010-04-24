@@ -1,3 +1,4 @@
+-- vim:set foldmethod=marker foldmarker=--{,--}:
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Interpreter(runInterpreter, defaultConfig, InterpConfig(..)) where
@@ -20,6 +21,15 @@ import qualified Data.Set as S
 import qualified System.Random as R
 
 rootLocation = "@root"
+
+--{ Helper functions
+
+-- | Generates a list of fresh StdGens
+repStdGens ::  (R.RandomGen b) => Int -> b -> [b]
+repStdGens n stdGen = snd . foldl (.) id funs $ (stdGen,[])
+  where funs = replicate n (\(g,xs) -> (snd . R.next $ g, g:xs))
+
+--}
 
 instance Applicative (State Context) where
     pure = return
@@ -129,14 +139,26 @@ defaultConfig = IC {
 
 runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
-  stdGen <- R.getStdGen
-  return $ runInterpreter' 0 [initContext [] as [rootLocation] stdGen]
-   where runInterpreter' n ctx =
-           let ctx' = map (execInterp conf) ctx
-               continue = runInterpreter' (n+1) ctx'
-            in maybe (if ctx /= ctx' then continue else ctx)
-                     (\breakPoint -> if breakPoint /= n then continue else ctx)
-                     (breakAt conf)
+  (stdGen1, stdGen2) <- R.split <$> R.getStdGen
+  return $ runInterpreter' stdGen2 0 [initContext [] as [rootLocation] stdGen1]
+   where runInterpreter' stdGen n ctx =
+           let (stdGen', stdGen'') = R.split stdGen
+               ctx' = concatMap (heatLocations stdGen'' . execInterp conf) ctx
+            in if maybe (ctx /= ctx') (n/=) (breakAt conf)
+                  then runInterpreter' stdGen' (n+1) ctx'
+                  else ctx
+
+         heatLocations stdGen context =
+           let (locations, defs) = partition isLocationD $ cDefs context
+               stdGens = repStdGens (length locations) stdGen
+               context' = context {cDefs = defs}
+            in context' : zipWith (mkContext $ cLocation context) stdGens locations
+
+         mkContext locString stdGen (LocationD name ds (Proc as)) =
+            initContext ds as (name:locString) stdGen
+
+         isLocationD (LocationD _ _ _) = True
+         isLocationD _ = False
 
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.
