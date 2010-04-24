@@ -114,8 +114,8 @@ instance Subst Def where
      let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map receivedVars js)
      in ReactionD (subst sigma' <$> js) (sigma' `subst` p)
   subst sigma (LocationD loc ds p) =
-     let sigma' = foldl (flip M.delete) sigma (loc:(S.toList . S.unions $ map definedVars ds))
-     in LocationD loc (subst sigma' <$> ds) (sigma' `subst` p)
+     let loc' = maybe loc (\(VarE loc') -> loc') $ M.lookup loc sigma
+     in LocationD loc' (subst sigma <$> ds) (sigma `subst` p)
 --}
 
 newtype Proc = Proc {pAtoms :: [Atom]}
