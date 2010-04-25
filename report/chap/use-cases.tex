@@ -79,7 +79,7 @@ will get initiated in this by an external client.
 
 It is also assumed that there is a built in name-exchange facility,
 such that the network can be bootstrapped. The \texttt{search()}
-synchronus call is the incarnation of this facility in our case.
+synchronous call is the incarnation of this facility in our case.
 This call returns a list of pairs, where each pair contains names for
 pinging a server and registering with the server.
 
@@ -94,35 +94,37 @@ programs are uploaded from the server to the sensors.
 
 In order for this to work, a correct query program is supposed to 
 behave in a certain way with regards to distribution and internal
-structure, because process migration in the join calculus happens only 
-the initiative of the process, that is to migrate.
+structure, because process migration in the join calculus only happens on 
+the initiative of the process that is to migrate, and cannot be controlled
+or observed by the surrounding environment.
 Conceptually, a query program is structured in two parts: One that 
 treats the sensor data inside the sensor itself, and a second part
 that runs on the server node that collects and filters the data from
-the sensors and eventually aggregate these to the client.
-The interface of the query programs is more explicitly specified below.
-\fixme{insert reference to specification}
+the sensors and eventually aggregate these to the client. We will refer
+to these two parts as the \emph{reducer} and \emph{filter} parts, respectively.
+The interface of the query programs is more explicitly specified later
+in this section.
 
 When a new sensor appears in the network, it enters the registration
 phase, where the sensor exports the names used for accessing the 
-sensor hardware, and the sensor-part of the query program migrates to
+sensor hardware, and the filter-part of the query program migrates to
 the sensor.
 While the sensor is active and registered, any exchange of sensor data
-happens only on the initiative of the sensor part of the query
+happens only on the initiative of the filter part of the query
 program.
 
 When the communication between a sensor and the server times out, the
 default behaviour is to reboot the sensor back into the registration
 phase.
-Depending on the running queries however, this may not be desirable,
+However, depending on the type of query being run, this may not be desirable,
 especially for long running queries.\fixme{Decide on a solution!}
 One way around this would be to allow the query program to determine
 the length of the timespan before a timeout, while still eventually 
 having the sensor reboot when the timeout is reached.
 
-Since everything is asynchronus, the server and the sensor may each
+Since everything is asynchronous, the server and the sensor may each
 have a slightly different idea of just when a timeout occurs, and it
-is possible, that the sensor notices a timeout before the server and
+is possible that the sensor notices a timeout before the server and
 therefore attempts to register again, even though the server still
 considers the sensor as registered. In this case the server should
 just re-register the sensor and delete its old reference.\fixme{ Also
@@ -133,7 +135,7 @@ though it seems improbable (impossible)}
 
 We will begin by defining how the sensors will read data from the
 outside world. Since the join-calculus has no way of doing I/O, we
-have to define some "magic" messages that forms an API for reading
+have to define some ``magic'' messages that forms an API for reading
 temperature values.
 
 We read the temperature via explicit probing. We let the API
@@ -165,8 +167,11 @@ seconds, and then prints out the average temperature measured.
 
 \subsubsection{A programmable sensor}
 
+We need to run a static program on each sensor, which forms a framework
+for the query programs to use.
 Each sensor is running a minimal program capable of identifying the
-sensor with a central node:
+sensor with the central node, and continuously verifies the
+connectivity with the central node using a ping process.
 
 \begin{verbatim}
 def connect(ping, register) |>
@@ -220,6 +225,7 @@ def connect(ping, register) |>
 
  in init<>
 \end{verbatim}
+
 The \verb!init! process is the first process to start. This uses an
 API message, \verb!search!, to get a list of servers within reach.
 Each element in the list is a tuple with two messages defined on
@@ -275,6 +281,7 @@ def register(id, loc, read_temp) & sensors<xs> |>
 
 
 \subsection{Querying sensors}
+\label{querying_sensors}
 
 All queries are programs which must implement a certain interface to be
 compatible with our sensor framework. We will call such a program a well-formed

@@ -40,7 +40,7 @@
 \frontmatter
 
 \maketitle
-
+\iffalse
 \begin{abstract}
 \input{abstract.tex}
 \end{abstract}
@@ -53,12 +53,12 @@
 
 \tableofcontents*
 
-
+\fi
 \mainmatter
-
+\iffalse
 \chapter{Introduction}
 \input{chap/introduction.tex}
-
+\fi
 \chapter{Use Cases}
 \input{chap/use-cases.tex}
 
