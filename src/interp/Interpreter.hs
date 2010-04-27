@@ -52,6 +52,7 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                                                -- name of the context is the
                                                -- first.
                        , cFail :: Bool -- ^ Indicates if the context is in a failed state.
+                       , cExternalNames :: [String] -- ^ Names in other contexts.
                        }
 
 instance Show Context where
@@ -117,10 +118,20 @@ instance MonadJoin JoinM where
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
               -> [String]  -- initial location
+              -> [String]  -- external names
               -> R.StdGen  -- random seed
               -> Context
 
-initContext ds as loc stdGen = Context ds as freshNames [] stdGen loc False
+initContext ds as loc extNames stdGen = Context {
+        cDefs = ds
+      , cAtoms = as
+      , cFreshNames = freshNames
+      , cLog = []
+      , cStdGen = stdGen
+      , cLocation = loc
+      , cFail = False
+      , cExternalNames = extNames
+      }
     where freshNames = ["#" ++ head loc ++ "#" ++ show i | i <- [1..]]
 
 data InterpConfig = IC {
@@ -140,7 +151,7 @@ defaultConfig = IC {
 runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
   (stdGen1, stdGen2) <- R.split <$> R.getStdGen
-  return $ runInterpreter' stdGen2 0 [initContext [] as [rootLocation] stdGen1]
+  return $ runInterpreter' stdGen2 0 [initContext [] as [rootLocation] [] stdGen1]
    where runInterpreter' stdGen n ctx =
            let (stdGen', stdGen'') = R.split stdGen
                ctx' = concatMap (heatLocations stdGen'' . execInterp conf) ctx
@@ -155,7 +166,7 @@ runInterpreter conf (Proc as) = do
             in context' : zipWith (mkContext $ cLocation context) stdGens locations
 
          mkContext locString stdGen (LocationD name ds (Proc as)) =
-            initContext ds as (name:locString) stdGen
+            initContext ds as (name:locString) [] stdGen
 
          isLocationD (LocationD _ _ _) = True
          isLocationD _ = False
