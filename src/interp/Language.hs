@@ -6,6 +6,8 @@ module Language( Expr(..)
                , Pat(..)
                , Join(..)
                , Def(..)
+               , isLocationD
+               , isReactionD
                , Atom(..)
                , Instr(..)
                , Proc(..)
@@ -102,6 +104,13 @@ instance Subst Join where
 data Def  = ReactionD [Join] Proc
           | LocationD String [Def] Proc
     deriving (Eq, Data, Typeable)
+
+--{ Utility functions
+isLocationD (LocationD _ _ _) = True
+isLocationD _ = False
+isReactionD (ReactionD _ _) = True
+isReactionD _ = False
+--}
 
 --{ Instances
 instance Show Def where

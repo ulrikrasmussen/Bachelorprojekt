@@ -168,9 +168,6 @@ runInterpreter conf (Proc as) = do
          mkContext locString stdGen (LocationD name ds (Proc as)) =
             initContext ds as (name:locString) [] stdGen
 
-         isLocationD (LocationD _ _ _) = True
-         isLocationD _ = False
-
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.
 execInterp :: InterpConfig -> Context -> Context
