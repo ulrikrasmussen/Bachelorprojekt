@@ -52,7 +52,9 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                                                -- name of the context is the
                                                -- first.
                        , cFail :: Bool -- ^ Indicates if the context is in a failed state.
-                       , cExternalNames :: [String] -- ^ Names in other contexts.
+                       , cExportedNames :: [String] -- ^ Names exported to other contexts.
+                                                    --   Defs for these cannot be garbage
+                                                    --   collected.
                        }
 
 instance Show Context where
@@ -118,11 +120,11 @@ instance MonadJoin JoinM where
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
               -> [String]  -- initial location
-              -> [String]  -- external names
+              -> [String]  -- exported names
               -> R.StdGen  -- random seed
               -> Context
 
-initContext ds as loc extNames stdGen = Context {
+initContext ds as loc exports stdGen = Context {
         cDefs = ds
       , cAtoms = as
       , cFreshNames = freshNames
@@ -130,7 +132,7 @@ initContext ds as loc extNames stdGen = Context {
       , cStdGen = stdGen
       , cLocation = loc
       , cFail = False
-      , cExternalNames = extNames
+      , cExportedNames = exports
       }
     where freshNames = ["#" ++ head loc ++ "#" ++ show i | i <- [1..]]
 
@@ -166,7 +168,8 @@ runInterpreter conf (Proc as) = do
             in context' : zipWith (mkContext $ cLocation context) stdGens locations
 
          mkContext locString stdGen (LocationD name ds (Proc as)) =
-            initContext ds as (name:locString) [] stdGen
+            let exports = S.unions . map definedVars $ filter isReactionD ds
+             in initContext ds as (name:locString) (S.toList exports) stdGen
 
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.
