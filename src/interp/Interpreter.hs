@@ -52,14 +52,13 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                                                -- name of the context is the
                                                -- first.
                        , cFail :: Bool -- ^ Indicates if the context is in a failed state.
-                       , cExportedNames :: [String] -- ^ Names exported to other contexts.
-                                                    --   Defs for these cannot be garbage
-                                                    --   collected.
+                       , cExportedNames :: S.Set String -- ^ Names exported to other contexts.
+                                                        --   Defs for these cannot be garbage
+                                                        --   collected.
                        }
 
 instance Show Context where
   show context =      "Loc  :\t" ++ (concat . intersperse "." $ cLocation context)
-               ++ "\n\nExps :\t" ++ (concat . intersperse "," $ cExportedNames context)
                ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
 
@@ -80,6 +79,8 @@ class (Monad m) => MonadJoin m where
   cleanDebug :: m()
 
   getFreshNames :: Int -> m [String]
+  getExportedNames :: m (S.Set String)
+  setExportedNames :: S.Set String -> m ()
   getStdGen :: m R.StdGen
   getLocation :: m String
   isFailed :: m Bool
@@ -104,6 +105,10 @@ instance MonadJoin JoinM where
     (fns, fns') <- gets (splitAt n . cFreshNames)
     modify $ \s -> s {cFreshNames = fns'}
     return fns
+
+  getExportedNames = gets cExportedNames
+
+  setExportedNames exports = modify $ \s -> s { cExportedNames = exports }
 
   getStdGen = do
     (sg, sg') <- R.split <$> gets cStdGen
@@ -133,7 +138,7 @@ initContext ds as loc exports stdGen = Context {
       , cStdGen = stdGen
       , cLocation = loc
       , cFail = False
-      , cExportedNames = exports
+      , cExportedNames = S.fromList exports
       }
     where freshNames = ["#" ++ head loc ++ "#" ++ show i | i <- [1..]]
 
@@ -170,7 +175,7 @@ runInterpreter conf (Proc as) = do
                          (S.unions . map freeVars $ locations)
                context' = context {cDefs = defs,
                                    cExportedNames = cExportedNames context
-                                                   ++ S.toList exports}
+                                                   `S.union` exports}
             in context' : zipWith (mkContext $ cLocation context) stdGens locations
 
          mkContext locString stdGen (LocationD name ds (Proc as)) =
@@ -248,7 +253,7 @@ heatAtom m@(MatchA e ps) =
        Just proc -> rmAtom m >> mapM_ putAtom proc
 
 {-
- - At first we mark all the MsgP:s in the context.
+ - At first we mark all the MsgP:s in the context, as well as the exported names.
  - Then we mark the defs that might be activated by the marked atoms
  - and mark all the MsgP:s, that are potentially produced by these
  - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
@@ -256,8 +261,11 @@ heatAtom m@(MatchA e ps) =
 garbageCollect :: (MonadJoin m, Functor m) => m ()
 garbageCollect = do
   markedNames <- S.unions . map freeVars <$> getAtoms
-  liveDefs <- gc' markedNames []
+  exportedNames <- getExportedNames
+  liveDefs <- gc' (markedNames `S.union` exportedNames) []
   replaceDefs liveDefs
+  -- Remove all exported names that aren't represented in any live defs
+  setExportedNames $ exportedNames `S.intersection` (S.unions . map definedVars $ liveDefs)
   where
     defMatched :: Def -> S.Set String -> Bool
     defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
