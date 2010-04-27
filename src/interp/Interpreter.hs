@@ -59,6 +59,7 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
 
 instance Show Context where
   show context =      "Loc  :\t" ++ (concat . intersperse "." $ cLocation context)
+               ++ "\n\nExps :\t" ++ (concat . intersperse "," $ cExportedNames context)
                ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
 
@@ -164,7 +165,12 @@ runInterpreter conf (Proc as) = do
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
                stdGens = repStdGens (length locations) stdGen
-               context' = context {cDefs = defs}
+               exports = (S.unions . map definedVars $ defs)
+                          `S.intersection`
+                         (S.unions . map freeVars $ locations)
+               context' = context {cDefs = defs,
+                                   cExportedNames = cExportedNames context
+                                                   ++ S.toList exports}
             in context' : zipWith (mkContext $ cLocation context) stdGens locations
 
          mkContext locString stdGen (LocationD name ds (Proc as)) =
