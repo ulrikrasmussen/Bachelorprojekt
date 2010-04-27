@@ -121,7 +121,7 @@ initContext ::    [Def]    -- initial definitions
               -> Context
 
 initContext ds as loc stdGen = Context ds as freshNames [] stdGen loc False
-    where freshNames = ["#" ++ head loc ++ "." ++ show i | i <- [1..]]
+    where freshNames = ["#" ++ head loc ++ "#" ++ show i | i <- [1..]]
 
 data InterpConfig = IC {
     runGC :: Bool
