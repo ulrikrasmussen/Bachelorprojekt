@@ -9,7 +9,7 @@ import Control.Monad
 import Control.Applicative
 import Control.Monad.State
 import Control.Monad.Error
-import Control.Arrow (first,second)
+import Control.Arrow
 
 import Data.List
 import Data.Maybe
@@ -165,8 +165,8 @@ runInterpreter conf (Proc as) = do
            let (stdGen', stdGen'') = R.split stdGen
                -- Execute a step in each context, spawn off any new locations, and
                -- exchange messages between contexts.
-               ctx' = exchangeMessages $
-                        concatMap (heatLocations stdGen'' . execInterp conf) ctx
+               ctx' = concatMap (heatLocations stdGen'' . execInterp conf) >>>
+                      exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
                   else ctx
