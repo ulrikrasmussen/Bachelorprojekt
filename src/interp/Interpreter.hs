@@ -165,7 +165,7 @@ runInterpreter conf (Proc as) = do
            let (stdGen', stdGen'') = R.split stdGen
                -- Execute a step in each context, spawn off any new locations, and
                -- exchange messages between contexts.
-               ctx' = concatMap (heatLocations stdGen'' . execInterp conf) >>>
+               ctx' = concatMap (execInterp conf >>> heatLocations stdGen'') >>>
                       exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
