@@ -225,15 +225,24 @@ runInterpreter conf (Proc as) = do
            -- for each context, remove and collect occurences of fail, and mark the failure
            -- continuation as exported
            let
+             (fails, ctxs') = unzip $ map extractFails ctxs
+           in
+             map (updateCtx fails) ctxs'
+           where
              isFail (MsgA "fail" _) = True
              isFail _               = False
-             (fails, ctxs') = unzip $ map (\ctx ->
+             -- ([(locNm, failCont)], Context)
+             extractFails :: Context -> ([(String, String)], Context)
+             extractFails ctx =
                let (fails, atms') = partition isFail (cAtoms ctx)
                    fails' = map (\(MsgA _ ((VarE loc):(VarE cont):[])) -> (loc,cont)) fails
-               in (fails', ctx{cAtoms = atms', cExportedNames = (S.fromList (snd . unzip $ fails')) `S.union` (cExportedNames ctx)})) ctxs
-           in
-             map (\ctx -> let (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) $ concat fails
-                          in ctx{cFailureConts = failConts ++ (cFailureConts ctx)}) ctxs'
+               in (fails', ctx{cAtoms = atms',
+                               cExportedNames = (S.fromList (snd . unzip $ fails'))
+                                                `S.union` (cExportedNames ctx)})
+             updateCtx :: [(String, String)] -> Context -> Context
+             updateCtx fails ctx = let
+               (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) $ concat fails
+               in ctx{cFailureConts = failConts ++ (cFailureConts ctx)}
 
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
