@@ -47,10 +47,8 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cFreshNames :: [String] -- ^ Infinite stream of fresh names
                        , cLog :: [String] -- ^ Debug log
                        , cStdGen :: R.StdGen -- ^ StdGen for non-determinism
-                       , cLocation :: [String] -- ^ Location path. Root is the
-                                               -- last element, the local
-                                               -- name of the context is the
-                                               -- first.
+                       , cLocation :: String -- ^ Location name.
+                       , cLocationParent :: String -- ^ Name of parent location.
                        , cFail :: Bool -- ^ Indicates if the context is in a failed state.
                        , cExportedNames :: S.Set String -- ^ Names exported to other contexts.
                                                         --   Defs for these cannot be garbage
@@ -58,7 +56,7 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        }
 
 instance Show Context where
-  show context =      "Loc  :\t" ++ (concat . intersperse "." $ cLocation context)
+  show context =      "Loc  :\t" ++ cLocation context ++ " (" ++ cLocationParent context ++ ")"
                ++ "\n\nExps :\t" ++ (concat . intersperse ", " . S.toList $ cExportedNames context)
                ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
@@ -116,7 +114,7 @@ instance MonadJoin JoinM where
     modify $ \s -> s {cStdGen = sg'}
     return sg
 
-  getLocation = gets $ head . cLocation
+  getLocation = gets cLocation
 
   isFailed = gets cFail
 
@@ -126,22 +124,24 @@ instance MonadJoin JoinM where
 
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
-              -> [String]  -- initial location
+              -> String    -- initial location name
+              -> String    -- initial parent location name
               -> [String]  -- exported names
               -> R.StdGen  -- random seed
               -> Context
 
-initContext ds as loc exports stdGen = Context {
+initContext ds as locName locParent exports stdGen = Context {
         cDefs = ds
       , cAtoms = as
       , cFreshNames = freshNames
       , cLog = []
       , cStdGen = stdGen
-      , cLocation = loc
+      , cLocation = locName
+      , cLocationParent = locParent
       , cFail = False
       , cExportedNames = S.fromList exports
       }
-    where freshNames = ["#" ++ head loc ++ "#" ++ show i | i <- [1..]]
+    where freshNames = ["#" ++ locName ++ "#" ++ show i | i <- [1..]]
 
 data InterpConfig = IC {
     runGC :: Bool
@@ -160,7 +160,7 @@ defaultConfig = IC {
 runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
   (stdGen1, stdGen2) <- R.split <$> R.getStdGen
-  return $ runInterpreter' stdGen2 0 [initContext [] as [rootLocation] [] stdGen1]
+  return $ runInterpreter' stdGen2 0 [initContext [] as rootLocation rootLocation [] stdGen1]
    where runInterpreter' stdGen n ctx =
            let (stdGen', stdGen'') = R.split stdGen
                -- Execute a step in each context, spawn off any new locations, and
@@ -182,9 +182,9 @@ runInterpreter conf (Proc as) = do
                                                    `S.union` exports}
             in context' : zipWith (mkContext $ cLocation context) stdGens locations
 
-         mkContext locString stdGen (LocationD name ds (Proc as)) =
+         mkContext locParent stdGen (LocationD name ds (Proc as)) =
             let exports = S.unions . map definedVars $ filter isReactionD ds
-             in initContext ds as (name:locString) (S.toList exports) stdGen
+             in initContext ds as name locParent (S.toList exports) stdGen
 
 -- | Exchanges messages between a list of contexts.
 exchangeMessages :: [Context] -> [Context]
