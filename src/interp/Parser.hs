@@ -43,7 +43,9 @@ constructor = (:) <$> upper <*> many (alphaNum <|> char '\'') <?> "constructor"
 -- |Parses an expression.
 expr :: Parser Expr
 expr =   ConE  <$> (lexeme constructor)
-               <*> (parens $ lexeme expr `sepBy` (lexeme $ char ','))
+               <*> ((parens $ lexeme expr `sepBy` (lexeme $ char ','))
+                    <|> ((:[]) <$> expr)
+                    <|> pure [])
      <|> VarE  <$> (lexeme identifier)
      <?> "expression"
 
@@ -51,7 +53,9 @@ expr =   ConE  <$> (lexeme constructor)
 -- also includes synchronous calls.
 sexpr :: Parser SExpr
 sexpr =   ConS <$> (lexeme constructor)
-               <*> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
+               <*> ((parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
+                    <|> ((:[]) <$> sexpr)
+                    <|> pure [])
       <|> (do ident <- identifier
               (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
                <|> (pure $ VarS ident)))
@@ -60,7 +64,9 @@ sexpr =   ConS <$> (lexeme constructor)
 -- |Parses patterns (like expressions, but linear).
 pat :: Parser Pat
 pat  =   ConP  <$> (lexeme constructor)
-               <*> (parens $ lexeme pat `sepBy` (lexeme $ char ','))
+               <*> ((parens $ lexeme pat `sepBy` (lexeme $ char ','))
+                    <|> ((:[]) <$> pat)
+                    <|> (pure []))
      <|> VarP  <$> (lexeme identifier)
      <?> "pattern"
 

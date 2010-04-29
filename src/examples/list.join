@@ -1,8 +1,8 @@
-def foldr(f, x, Nil())      |> {return (x) to foldr}
+def foldr(f, x, Nil)        |> {return (x) to foldr}
  or foldr(f, x, Cons(y,ys)) |> {return (f(y,foldr(f,x,ys))) to foldr}
- or add(Z(), y)             |> {return (y) to add}
- or add(S(x), y)            |> {return (add(x,S(y))) to add}
+ or add(Z, y)               |> {return (y) to add}
+ or add(S x, y)            |> {return (add(x, S y)) to add}
  or done<r> |> done<r>
- in { let r = foldr(add, Z(), Cons(S(Z()), Cons(S(Z()), Cons(S(S(Z())) ,Nil()))));
+ in { let r = foldr(add, Z, Cons(S Z, Cons(S Z, Cons(S S Z, Nil))));
       run done<r>
     }
