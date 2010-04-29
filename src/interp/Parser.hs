@@ -35,18 +35,23 @@ braces p = char '{' *> many space *> p <* char '}'
 identifier :: Parser String
 identifier = (:) <$> lower <*> many (alphaNum <|> char '\'') <?> "identifier"
 
+-- |Parses a type constructor, which consists of one uppercase letter followed by
+-- zero of more alphanumeric letters (mixed case) or plings.
+constructor :: Parser String
+constructor = (:) <$> upper <*> many (alphaNum <|> char '\'') <?> "constructor"
+
 -- |Parses an expression.
 expr :: Parser Expr
-expr =   ZeroE <$ (lexeme $ char 'Z')
-     <|> SuccE <$ (lexeme $ char 'S') <*> expr
+expr =   ConE  <$> (lexeme constructor)
+               <*> (parens $ lexeme expr `sepBy` (lexeme $ char ','))
      <|> VarE  <$> (lexeme identifier)
      <?> "expression"
 
 -- |Parses a sugared expression. This is the exact same parser as 'expr', but
 -- also includes synchronous calls.
 sexpr :: Parser SExpr
-sexpr =   ZeroS <$ (char 'Z')
-      <|> SuccS <$ (lexeme $ char 'S') <*> sexpr
+sexpr =   ConS <$> (lexeme constructor)
+               <*> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
       <|> (do ident <- identifier
               (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
                <|> (pure $ VarS ident)))
@@ -54,8 +59,8 @@ sexpr =   ZeroS <$ (char 'Z')
 
 -- |Parses patterns (like expressions, but linear).
 pat :: Parser Pat
-pat  =   ZeroP <$ (lexeme $ char 'Z')
-     <|> SuccP <$ (lexeme $ char 'S') <*> pat
+pat  =   ConP  <$> (lexeme constructor)
+               <*> (parens $ lexeme pat `sepBy` (lexeme $ char ','))
      <|> VarP  <$> (lexeme identifier)
      <?> "pattern"
 

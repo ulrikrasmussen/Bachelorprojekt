@@ -30,57 +30,41 @@ type Sigma = M.Map String Expr
 class Subst a where subst :: Sigma -> a -> a
 
 data Expr = VarE String
-          | ZeroE
-          | SuccE Expr
+          | ConE String [Expr]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show Expr where
     show (VarE v) = v
-    show ZeroE = "0"
-    show succExpr = show' 0 succExpr
-      where show' n (SuccE e)= show' (n+1) e
-            show' n ZeroE = show n
-            show' n (VarE v) = v ++ " + " ++ show n
+    show (ConE n es) = n ++ "(" ++ (concat . intersperse ", " $ map show es) ++ ")"
 
 instance Subst Expr where
     subst sigma expr =
       case expr of
         ve@(VarE v) -> maybe ve id $ M.lookup v sigma
-        ZeroE -> ZeroE
-        SuccE e -> SuccE $ sigma `subst` e
+        ConE n es -> ConE n $ map (subst sigma) es
 --}
 
 data SExpr = VarS String
-           | ZeroS
-           | SuccS SExpr
+           | ConS String [SExpr]
            | CallS String [SExpr]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show SExpr where
     show (VarS v) = v
-    show ZeroS = "0"
-    show (SuccS e) = show' 1 e
-      where show' n (SuccS e) = show' (n+1) e
-            show' n ZeroS = show n
-            show' n e = show e ++ " + " ++ show n
     show (CallS v es) = v ++ "(" ++ (concat . intersperse "," . map show $ es) ++ ")"
+    show (ConS n es) = n ++ "(" ++ (concat . intersperse ", " $ map show es) ++ ")"
 --}
 
 data Pat  = VarP String
-          | ZeroP
-          | SuccP Pat
+          | ConP String [Pat]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show Pat where
     show (VarP v) = v
-    show ZeroP = "0"
-    show succPat = show' 0 succPat
-      where show' n (SuccP e)= show' (n+1) e
-            show' n ZeroP = show n
-            show' n (VarP v) = v ++ " + " ++ show n
+    show (ConP n ps) = n ++ "(" ++ (concat . intersperse ", " $ map show ps) ++ ")"
 --}
 
 {- A join pattern -}
@@ -197,9 +181,8 @@ class ReceivedVars e where receivedVars :: e -> S.Set String
 
 --{ Instances
 instance ReceivedVars Pat where
-  receivedVars ZeroP = S.empty
-  receivedVars (SuccP p) = receivedVars p
   receivedVars (VarP v) = S.singleton v
+  receivedVars (ConP n ps) = S.unions . map receivedVars $ ps
 
 instance ReceivedVars Join where
   receivedVars (VarJ m ps) = S.unions $ map receivedVars ps
@@ -222,9 +205,8 @@ class FreeVars e where freeVars :: e -> S.Set String
 
 --{ Instances
 instance FreeVars Expr where
-  freeVars (ZeroE)   = S.empty
-  freeVars (SuccE e) = freeVars e
-  freeVars (VarE v)  = S.singleton v
+  freeVars (ConE n es) = S.unions $ map freeVars es
+  freeVars (VarE v)    = S.singleton v
 
 instance FreeVars Def where
   freeVars (ReactionD j p) =
