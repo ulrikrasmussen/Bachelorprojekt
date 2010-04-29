@@ -41,7 +41,6 @@ newtype JoinM a = J { runJoinM :: State Context a  }
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
                        , cFreshNames :: [String] -- ^ Infinite stream of fresh names
-                       , cLog :: [String] -- ^ Debug log
                        , cStdGen :: R.StdGen -- ^ StdGen for non-determinism
                        , cLocation :: String -- ^ Location name.
                        , cLocationParent :: String -- ^ Name of parent location.
@@ -73,8 +72,6 @@ class (Monad m) => MonadJoin m where
   putAtom :: Atom -> m ()
   replaceDefs :: [Def] -> m ()
   replaceAtoms :: [Atom] -> m ()
-  debug :: String -> m ()
-  cleanDebug :: m()
 
   getFreshNames :: Int -> m [String]
   getExportedNames :: m (S.Set String)
@@ -94,9 +91,6 @@ instance MonadJoin JoinM where
 
   replaceAtoms atoms = modify $ \s -> s {cAtoms = atoms}
   replaceDefs defs = modify $ \s -> s {cDefs = defs}
-
-  debug msg = modify $ \s -> s{cLog = msg : (cLog s)}
-  cleanDebug = modify $ \s -> s{cLog = []}
 
   getFreshNames n = do
     (fns, fns') <- gets (splitAt n . cFreshNames)
@@ -129,7 +123,6 @@ initContext ds as locName locParent exports stdGen = Context {
         cDefs = ds
       , cAtoms = as
       , cFreshNames = freshNames
-      , cLog = []
       , cStdGen = stdGen
       , cLocation = locName
       , cLocationParent = locParent
