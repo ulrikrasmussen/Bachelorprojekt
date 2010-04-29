@@ -1,39 +1,8 @@
-def list(f, o, k) |> def k0()   |> f(S S S S S S Z, o, k1)
-                      or k1(xs) |> f(S  Z, xs, k2)
-                      or k2(xs) |> f(S S Z, xs, k3)
-                      or k3(xs) |> f(S S S Z, xs, k)
-                      in k0()
- or nil(f, o, k)   |> k(o)
- or cons(x, xs, k) |> def list(f, o, k) |> def k0(xs') |> f(x, xs', k)
-                                            in xs(f, o, k0)
-                       in k(list)
- or tuple(x,y,k)   |> def f(S Z, k) |> k(x)
-                       or f(S S Z, k) |> k(y)
-                       in k(f)
- or fst(f,k)       |> f(S Z, k)
- or snd(f,k)       |> f(S S Z, k)
- or add(Z, x, k)   |> k(x)
- or add(S x, y, k) |> add(x, S y, k)
- or head(list, k)  |> def aux(x,xs,k) |> k(x)
-                       in list(aux, nil, k)
- or tail(list, k)  |> def aux(x, t, k) |> def k0() |> fst(t, k1)
-                                          or k1(fs) |> k2(fs) & cons(x,fs,k3)
-                                          or k2(fs) & k3(xs) |> tuple(xs,fs, k)
-                                          in k0()
-                       or k0(nt) |> list(aux, nt, k1)
-                       or k1(res) |> snd(res, k)
-                       in tuple(nil, nil, k0)
- or length(list, k) |> def aux(x, c, k) |> k(S c) in list(aux, Z, k)
- or id(x,k) |> k(x)
- or foldr(f, o, xs, k) |> xs(f,o,k)
- or foldl(f, o, xs, k) |> def step(x,g,a,k) |> def k1(r) |> g(r,k) in f(a,x,k1)
-                             or k1(res) |> res(o, k)
-                             in foldr(step, id, xs, k1)
- or writeList(list, out) |> def aux(x, c, k) |> match c with S c' -> out(c, x) & k(c')
-                                                           | Z    -> k(Z)
-                            or k0(l) |> list(aux, l, k1)
-                            or k1(res) |> 0
-                            in length(list, k0)
- in def k0()    |> tail(list, k1)
-     or k1(tl)  |> foldl(add, Z, tl, out)
-     in k0()
+def foldr(f, x, Nil())      |> {return (x) to foldr}
+ or foldr(f, x, Cons(y,ys)) |> {return (f(y,foldr(f,x,ys))) to foldr}
+ or add(Z(), y)             |> {return (y) to add}
+ or add(S(x), y)            |> {return (add(x,S(y))) to add}
+ or done<r> |> done<r>
+ in { let r = foldr(add, Z(), Cons(S(Z()), Cons(S(Z()), Cons(S(S(Z())) ,Nil()))));
+      run done<r>
+    }

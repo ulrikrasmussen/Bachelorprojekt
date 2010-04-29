@@ -12,7 +12,7 @@ syn match joinKeyword "->"
 syn match joinKeyword "&"
 syn match joinKeyword "|[^>]"
 
-syn keyword joinConstant S Z
+syn match joinConstant "[A-Z][a-zA-Z0-9']*"
 
 hi link joinKeyword Keyword
 hi link joinConstant Constant

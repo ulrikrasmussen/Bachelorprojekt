@@ -325,8 +325,9 @@ matchJoin (VarJ var pats) = do
 
 matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
 matchPat (VarP s) e = Just $ M.fromList [(s, e)]
-matchPat (ZeroP) (ZeroE) = Just $ M.empty
-matchPat (SuccP p) (SuccE e) = matchPat p e
+matchPat (ConP np ps) (ConE ne es)
+  | np /= ne  = Nothing
+  | otherwise = M.unions <$> (sequence $ zipWith matchPat ps es)
 matchPat _ _ = Nothing
 
 heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
