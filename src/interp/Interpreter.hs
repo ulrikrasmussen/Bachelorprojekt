@@ -234,7 +234,7 @@ runInterpreter conf (Proc as) = do
            let
              (fails, ctxs') = unzip $ map extractFails ctxs
            in
-             map (updateCtx fails) ctxs'
+             map (updateCtx $ concat fails) ctxs'
            where
              isFail (MsgA "fail" _) = True
              isFail _               = False
@@ -248,7 +248,7 @@ runInterpreter conf (Proc as) = do
                                                 `S.union` (cExportedNames ctx)})
              updateCtx :: [(String, String)] -> Context -> Context
              updateCtx fails ctx = let
-               (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) $ concat fails
+               (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) fails
                in ctx{cFailureConts = failConts ++ (cFailureConts ctx)}
 
          heatLocations stdGen context =
