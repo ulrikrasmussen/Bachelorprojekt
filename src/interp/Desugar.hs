@@ -34,13 +34,15 @@ type Continuation = String
 desExp :: Continuation -> SExpr -> DesugarM Atom
 
 desExp k (VarS v) = return $ MsgA k [VarE v]
-desExp k (ZeroS) = return $ MsgA k [ZeroE]
-desExp k (SuccS e) =
-  do [l, v] <- getFresh 2
-     e' <- desExp l e
-     return $ DefA [ReactionD [VarJ l [VarP v]]
-                              (Proc [MsgA k [SuccE (VarE v)]])]
-                   (Proc [e'])
+desExp k (ConS n []) = return $ MsgA k [ConE n []]
+desExp k (ConS n es) =
+  do chans <- getFresh $ length es
+     vars <- getFresh $ length es
+     es' <- zipWithM desExp chans es
+     let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
+     return $ DefA [ReactionD joins
+                              (Proc [MsgA k [ConE n $ map VarE vars]])]
+                   (Proc es')
 
 -- | A call without any arguments is simply a message with the current
 -- continuation.
