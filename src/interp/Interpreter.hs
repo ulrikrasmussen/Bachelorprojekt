@@ -170,11 +170,30 @@ runInterpreter conf (Proc as) = do
                -- exchange messages between contexts.
                ctx' = map (execInterp conf) >>>
                       concatMap (heatLocations stdGen'') >>>
+                      killFailed >>>
                       map migrate >>>
                       exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
                   else ctx
+
+         killFailed :: [Context] -> [Context]
+         killFailed cs =
+            let (failed, ok) = propagateFail cs
+                conts = concatMap cFailureConts failed
+                msgs = map (\n -> MsgA n []) conts
+             in putMessages msgs ok
+              where propagateFail cs =
+                      let (failed, ok) = partition cFail cs
+                          failNames = S.fromList $ map cLocation failed
+                          cs' = map (markFailed failNames) ok
+                          (failed', ok') = propagateFail cs'
+                       in if null failed
+                             then ([], cs)
+                             else (failed++failed', ok++ok')
+
+                    markFailed failNames ctx =
+                      ctx { cFail = S.member (cLocation ctx) failNames }
 
          {-
           - For all locations with a "go"-atom, change its parent location
@@ -216,25 +235,28 @@ exchangeMessages :: [Context] -> [Context]
 exchangeMessages cs =
   let (cs', ms) = second concat . unzip $ map takeMessages cs
    in putMessages ms cs'
-  where -- Takes out non-local messages from a context, and updates the exported messages set.
-        takeMessages context =
-          let dvs = S.unions . map definedVars $ cDefs context
-              (locals, nonlocals) = partition (isLocal dvs) $ cAtoms context
-              exports = S.unions $ map getExports nonlocals
-              context' = context { cAtoms = locals
-                                 , cExportedNames = cExportedNames context `S.union` exports }
-           in (context', nonlocals)
-            where getExports (MsgA _ es) = S.unions $ map freeVars es
 
-        putMessages ms [] = []
-        putMessages ms (context:cs) =
-         let dvs = S.unions . map definedVars $ cDefs context
-             (locals, ms') = partition (isLocal dvs) $ ms
-             context' = context { cAtoms = cAtoms context ++ locals }
-          in context':putMessages ms' cs
+takeMessages ::  Context -> (Context, [Atom])
+takeMessages context =
+  let dvs = S.unions . map definedVars $ cDefs context
+      (locals, nonlocals) = partition (isLocal dvs) $ cAtoms context
+      exports = S.unions $ map getExports nonlocals
+      context' = context { cAtoms = locals
+                         , cExportedNames = cExportedNames context `S.union` exports }
+   in (context', nonlocals)
+    where getExports (MsgA _ es) = S.unions $ map freeVars es
 
-        isLocal dvs (MsgA name _) = S.member name dvs
-        isLocal _ _ = True
+putMessages ::  [Atom] -> [Context] -> [Context]
+putMessages ms [] = []
+putMessages ms (context:cs) =
+ let dvs = S.unions . map definedVars $ cDefs context
+     (locals, ms') = partition (isLocal dvs) $ ms
+     context' = context { cAtoms = cAtoms context ++ locals }
+  in context':putMessages ms' cs
+
+isLocal ::  S.Set String -> Atom -> Bool
+isLocal dvs (MsgA name _) = S.member name dvs
+isLocal _ _ = True
 
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.
