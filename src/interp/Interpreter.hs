@@ -142,6 +142,7 @@ initContext ds as locName locParent exports stdGen = Context {
       , cLocationParent = locParent
       , cFail = False
       , cExportedNames = S.fromList exports
+      , cFailureConts = []
       }
     where freshNames = ["#" ++ locName ++ "#" ++ show i | i <- [1..]]
 
