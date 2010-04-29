@@ -194,15 +194,6 @@ runInterpreter conf (Proc as) = do
          takeElem p xs = takeElem' [] xs
            where takeElem' l [] = (Nothing, l)
                  takeElem' l (x:xs) = if p x then (Just x, l++xs) else takeElem' (l++[x]) xs
-         
-         {-
-          - Find all fail<a, k> and register k in the cFailureConts of a
-          -}
-         registerFail :: [Context] -> [Context]
-         registerFail ctxs = 
-           -- for each context, remove and collect occurences of fail
-           let failures = mapMaybe (\ctx -> 
-             let (fails, atms') = takeElems isFail ctxs
 
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
