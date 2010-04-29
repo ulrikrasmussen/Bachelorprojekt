@@ -7,6 +7,7 @@ import Interpreter
 import Text.ParserCombinators.Parsec
 import System
 import Control.Applicative
+import Data.List (intersperse)
 
 openJF f = do res <- parseFromFile program f
               case res of
@@ -18,7 +19,8 @@ joinProgs (Proc as) (Proc as') = Proc $ as ++ as'
 run conf fs = do
   progs <- mapM openJF fs
   let prog = foldl1 joinProgs progs
-  putStrLn . show =<< runInterpreter conf (desugar prog)
+  ctxs <- runInterpreter conf (desugar prog)
+  mapM_ putStrLn . intersperse "----------" $ map show ctxs
 
 parseArgs conf fs [] = (fs, conf)
 parseArgs conf fs ("-n":xs) =

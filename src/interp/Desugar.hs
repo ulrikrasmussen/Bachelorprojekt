@@ -150,6 +150,10 @@ desAtom a = return [a]
 desDef :: Def -> DesugarM Def
 desDef (ReactionD js (Proc as)) =
   ReactionD (map desJoin js) <$> (Proc . concat <$> mapM desAtom as)
+desDef (LocationD name ds (Proc as)) = do
+  ds' <- mapM desDef ds
+  as' <- concat <$> mapM desAtom as
+  return $ LocationD name ds' (Proc as')
 
 desJoin :: Join -> Join
 desJoin (SyncJ f ps) = VarJ f (ps ++ [VarP $ contName f])

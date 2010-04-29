@@ -10,3 +10,7 @@ Om locations & mobility
 -----------------------
 
 Vi har valgt at implementere den distribuerede del således at hver location kører i en separat fortolker (altså i sin egen kontekst), og den overordnede fortolkning sker så ved at hver fortolker kører 1 trin og returnerer listen af atomer, der skal sendes til andre locations. Dette klares ved at navne bliver udvidet med et location tag, så den ydre fortolker kan route dem.
+
+Yderligere bliver freshnames global, i den forstand at nye navne bliver unikke på tværs af alle fortolkere, da der ellers kan skabes to locations med samme navn.
+
+Garbage collection sker ved at alle navne markeres som levende, hvis de undslipper deres definerende location. På denne måde kan defs stadig garbage-collectes, hvis de bliver guardet med en timeout. Dog kan der opstå garbage-atomer, hvis en timeout bliver affyret og kaldet sidenhen alligevel returnerer. Da vil de returnerede atomer ikke kunne reagere. Dette er dog ikke kritisk foreløbig, så det forbliver bare et memo for nu.

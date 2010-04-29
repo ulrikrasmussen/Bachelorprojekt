@@ -1,3 +1,4 @@
+-- vim:set foldmethod=marker foldmarker=--{,--}:
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 module Language( Expr(..)
@@ -5,6 +6,8 @@ module Language( Expr(..)
                , Pat(..)
                , Join(..)
                , Def(..)
+               , isLocationD
+               , isReactionD
                , Atom(..)
                , Instr(..)
                , Proc(..)
@@ -26,29 +29,12 @@ type Sigma = M.Map String Expr
 
 class Subst a where subst :: Sigma -> a -> a
 
---instance Subst [Char] where
---  subst sigma v = maybe v id $ M.lookup v sigma
-
 data Expr = VarE String
           | ZeroE
           | SuccE Expr
     deriving (Eq, Data, Typeable)
 
-data SExpr = VarS String
-           | ZeroS
-           | SuccS SExpr
-           | CallS String [SExpr]
-    deriving (Eq, Data, Typeable)
-
-instance Show SExpr where
-    show (VarS v) = v
-    show ZeroS = "0"
-    show (SuccS e) = show' 1 e
-      where show' n (SuccS e) = show' (n+1) e
-            show' n ZeroS = show n
-            show' n e = show e ++ " + " ++ show n
-    show (CallS v es) = v ++ "(" ++ (concat . intersperse "," . map show $ es) ++ ")"
-
+--{ Instances
 instance Show Expr where
     show (VarE v) = v
     show ZeroE = "0"
@@ -63,13 +49,31 @@ instance Subst Expr where
         ve@(VarE v) -> maybe ve id $ M.lookup v sigma
         ZeroE -> ZeroE
         SuccE e -> SuccE $ sigma `subst` e
+--}
 
+data SExpr = VarS String
+           | ZeroS
+           | SuccS SExpr
+           | CallS String [SExpr]
+    deriving (Eq, Data, Typeable)
+
+--{ Instances
+instance Show SExpr where
+    show (VarS v) = v
+    show ZeroS = "0"
+    show (SuccS e) = show' 1 e
+      where show' n (SuccS e) = show' (n+1) e
+            show' n ZeroS = show n
+            show' n e = show e ++ " + " ++ show n
+    show (CallS v es) = v ++ "(" ++ (concat . intersperse "," . map show $ es) ++ ")"
+--}
 
 data Pat  = VarP String
           | ZeroP
           | SuccP Pat
     deriving (Eq, Data, Typeable)
 
+--{ Instances
 instance Show Pat where
     show (VarP v) = v
     show ZeroP = "0"
@@ -77,18 +81,14 @@ instance Show Pat where
       where show' n (SuccP e)= show' (n+1) e
             show' n ZeroP = show n
             show' n (VarP v) = v ++ " + " ++ show n
-
---instance Subst Pat where
---  subst sigma (VarP v) = VarP $ sigma `subst` v
---  subst sigma ZeroP = ZeroP
---  subst sigma (SuccP e) = SuccP $ sigma `subst` e
-
+--}
 
 {- A join pattern -}
 data Join = VarJ String [Pat]
           | SyncJ String [Pat]
     deriving (Eq, Data, Typeable)
 
+--{ Instances
 instance Show Join where
     show (VarJ v ps) =
      v ++ "<" ++ (concat $ intersperse ", " (map show ps)) ++ ">"
@@ -96,39 +96,56 @@ instance Show Join where
      v ++ "(" ++ (concat . intersperse ", " . map show $ ps) ++ ")"
 
 instance Subst Join where
-  subst sigma vj@(VarJ v ps) = 
+  subst sigma vj@(VarJ v ps) =
    maybe vj (\(VarE v') -> VarJ v' ps) $ M.lookup v sigma
+--}
 
 
 data Def  = ReactionD [Join] Proc
+          | LocationD String [Def] Proc
     deriving (Eq, Data, Typeable)
 
+--{ Utility functions
+isLocationD (LocationD _ _ _) = True
+isLocationD _ = False
+isReactionD (ReactionD _ _) = True
+isReactionD _ = False
+--}
+
+--{ Instances
 instance Show Def where
   show (ReactionD j p) = (concat $ intersperse " & " (map show j)) ++ " |> " ++ show p
+  show (LocationD n d p) =
+    n ++ "[" ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ (show p) ++ "]"
 
 instance Subst Def where
   subst sigma (ReactionD js p) =
      let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map receivedVars js)
      in ReactionD (subst sigma' <$> js) (sigma' `subst` p)
-
+  subst sigma (LocationD loc ds p) =
+     let loc' = maybe loc (\(VarE loc') -> loc') $ M.lookup loc sigma
+     in LocationD loc' (subst sigma <$> ds) (sigma `subst` p)
+--}
 
 newtype Proc = Proc {pAtoms :: [Atom]}
    deriving (Eq, Data, Typeable)
 
+--{ Instances
 instance Show Proc where
     show (Proc as) = concat $ intersperse " & " (map show as)
 
 instance Subst Proc where
   subst sigma (Proc as) = Proc (subst sigma <$> as)
-
+--}
 
 data Atom = InertA
-          | MsgA String [Expr]
-          | DefA [Def] Proc
+          | MsgA   String [Expr]
+          | DefA   [Def] Proc
           | MatchA Expr [(Pat, Proc)]
           | InstrA [Instr]
     deriving (Eq, Data, Typeable)
 
+--{ Instances
 instance Show Atom where
   show InertA = "0"
   show (MsgA s es) =
@@ -153,6 +170,8 @@ instance Subst Atom where
             let sigma' = foldl (flip M.delete) sigma (S.toList $ receivedVars pat)
             in  (pat, sigma' `subst` proc)
 
+--}
+
 data Instr = LetI [Pat] SExpr
            | RunI Proc
            | DoI String [SExpr]
@@ -160,6 +179,7 @@ data Instr = LetI [Pat] SExpr
            | ReturnI [SExpr] String
     deriving (Eq, Data, Typeable)
 
+--{ Instances
 instance Show Instr where
     show (LetI p e) = "let " ++ show p ++ " = " ++ show e
     show (RunI p) = "run " ++ show p
@@ -170,10 +190,12 @@ instance Show Instr where
               showis = concat . intersperse ";\n" . map show
     show (ReturnI es v) = "return (" ++ (concat . intersperse "," $ map show es)
                                      ++ ") to " ++ v
+--}
 
 -- Note: This must not contain duplicates (because the vars are received in the same scope)
 class ReceivedVars e where receivedVars :: e -> S.Set String
 
+--{ Instances
 instance ReceivedVars Pat where
   receivedVars ZeroP = S.empty
   receivedVars (SuccP p) = receivedVars p
@@ -182,16 +204,23 @@ instance ReceivedVars Pat where
 instance ReceivedVars Join where
   receivedVars (VarJ m ps) = S.unions $ map receivedVars ps
 
+--}
+
 class DefinedVars e where definedVars :: e -> S.Set String
 
+--{ Instances
 instance DefinedVars Join where
   definedVars (VarJ m ps) = S.singleton m
 
 instance DefinedVars Def where
   definedVars (ReactionD j p) = S.unions $ map definedVars j
+  definedVars (LocationD a ds p) = a `S.insert` S.unions (map definedVars ds)
+
+--}
 
 class FreeVars e where freeVars :: e -> S.Set String
 
+--{ Instances
 instance FreeVars Expr where
   freeVars (ZeroE)   = S.empty
   freeVars (SuccE e) = freeVars e
@@ -201,6 +230,9 @@ instance FreeVars Def where
   freeVars (ReactionD j p) =
     S.unions (map definedVars j)
         `S.union` (freeVars p `S.difference` S.unions (map receivedVars j))
+  freeVars (LocationD a ds p) =
+    a `S.insert` S.unions (map freeVars ds)
+      `S.union` freeVars p
 
 instance FreeVars Proc where
   freeVars (Proc as) = S.unions $ map freeVars as
@@ -212,3 +244,4 @@ instance FreeVars Atom where
     `S.difference` S.unions (map definedVars ds)
   freeVars (MatchA e mps) = freeVars e `S.union` (S.unions $ map freeVars' mps)
     where freeVars' (pat, proc) = freeVars proc `S.union` receivedVars pat
+--}
