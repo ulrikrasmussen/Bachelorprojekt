@@ -53,6 +53,8 @@ data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cExportedNames :: S.Set String -- ^ Names exported to other contexts.
                                                         --   Defs for these cannot be garbage
                                                         --   collected.
+                       , cFailureConts :: [String] -- ^ The list of continuations triggered
+                                                   --   upon calling halt<>
                        }
 
 instance Show Context where
@@ -182,6 +184,14 @@ runInterpreter conf (Proc as) = do
 
          findGo = find (\at -> case at of {MsgA "go" _ -> True; _ -> False})
          
+         {-
+          - Find all fail<a, k> and register k in the cFailureConts of a
+          -}
+         registerFail :: [Context] -> [Context]
+         registerFail ctxs = 
+           -- for each context, remove and collect occurences of fail
+           let failures = mapMaybe (\ctx -> 
+             let (fails, atms') = takeElems isFail ctxs
 
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
