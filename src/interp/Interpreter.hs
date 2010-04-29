@@ -166,10 +166,22 @@ runInterpreter conf (Proc as) = do
                -- Execute a step in each context, spawn off any new locations, and
                -- exchange messages between contexts.
                ctx' = concatMap (execInterp conf >>> heatLocations stdGen'') >>>
-                      exchangeMessages $ ctx
+                      map migrate >>> exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
                   else ctx
+         {-
+          - For all locations with a "go"-atom, change its parent location
+          - to the first argument of the "go" and substitute all occurences 
+          - of go<_, k> with k
+          -}
+         migrate :: Context -> Context
+         migrate ctx = case findGo $ cAtoms ctx of
+           Just (MsgA "go" ((VarE dest):(VarE cont):[])) -> ctx{cLocationParent = dest, cAtoms = (MsgA cont []):(cAtoms ctx)}
+           Nothing -> ctx
+
+         findGo = find (\at -> case at of {MsgA "go" _ -> True; _ -> False})
+         
 
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
