@@ -172,12 +172,19 @@ runInterpreter conf (Proc as) = do
                ctx' = map (execInterp conf) >>>
                       concatMap (heatLocations stdGen'') >>>
                       registerFail >>>
+                      map halt >>>
                       killFailed >>>
                       map migrate >>>
                       exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
                   else ctx
+
+         halt :: Context -> Context
+         halt context =
+           context { cFail = any isHalt $ cAtoms context }
+             where isHalt (MsgA "halt" _) = True
+                   isHalt _ = False
 
          killFailed :: [Context] -> [Context]
          killFailed cs =
@@ -192,7 +199,7 @@ runInterpreter conf (Proc as) = do
                           (failed', ok') = propagateFail cs'
                        in if null failed
                              then ([], cs)
-                             else (failed++failed', ok++ok')
+                             else (failed++failed', ok')
 
                     markFailed failNames ctx =
                       ctx { cFail = S.member (cLocation ctx) failNames }
