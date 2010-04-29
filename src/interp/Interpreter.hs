@@ -171,9 +171,9 @@ runInterpreter conf (Proc as) = do
                -- exchange messages between contexts.
                ctx' = map (execInterp conf) >>>
                       concatMap (heatLocations stdGen'') >>>
+                      registerFail >>>
                       killFailed >>>
                       map migrate >>>
-                      registerFail >>>
                       exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
