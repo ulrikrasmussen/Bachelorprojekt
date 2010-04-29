@@ -62,6 +62,7 @@ instance Show Context where
                ++ "\n\nExps :\t" ++ (concat . intersperse ", " . S.toList $ cExportedNames context)
                ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
+               ++ "\n\nFailure Cs:\t" ++ (concat . intersperse "\n\t" . map show $ cFailureConts context)
 
 instance Eq Context where
   a == b = cDefs a == cDefs b && cAtoms a == cAtoms b
@@ -151,7 +152,7 @@ data InterpConfig = IC {
   , gcInterval :: Integer
   , breakAt :: Maybe Integer
   , nondeterministic :: Bool
-}
+} deriving (Show)
 
 defaultConfig = IC {
     runGC = True
@@ -171,6 +172,7 @@ runInterpreter conf (Proc as) = do
                ctx' = map (execInterp conf) >>>
                       concatMap (heatLocations stdGen'') >>>
                       map migrate >>>
+                      registerFail >>>
                       exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
@@ -201,14 +203,15 @@ runInterpreter conf (Proc as) = do
           -}
          registerFail :: [Context] -> [Context]
          registerFail ctxs =
-           -- for each context, remove and collect occurences of fail
+           -- for each context, remove and collect occurences of fail, and mark the failure
+           -- continuation as exported
            let
              isFail (MsgA "fail" _) = True
              isFail _               = False
              (fails, ctxs') = unzip $ map (\ctx ->
                let (fails, atms') = partition isFail (cAtoms ctx)
                    fails' = map (\(MsgA _ ((VarE loc):(VarE cont):[])) -> (loc,cont)) fails
-               in (fails', ctx{cAtoms = atms'})) ctxs
+               in (fails', ctx{cAtoms = atms', cExportedNames = (S.fromList (snd . unzip $ fails')) `S.union` (cExportedNames ctx)})) ctxs
            in
              map (\ctx -> let (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) $ concat fails
                           in ctx{cFailureConts = failConts ++ (cFailureConts ctx)}) ctxs'
