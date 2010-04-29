@@ -35,12 +35,8 @@ instance Applicative (State Context) where
     pure = return
     (<*>) = ap
 
-instance Applicative (ErrorT String (State Context)) where
-    pure = return
-    (<*>) = ap
-
-newtype JoinM a = J { runJoinM :: ErrorT String (State Context) a  }
-    deriving (Monad, MonadState Context, MonadError String, Functor, Applicative)
+newtype JoinM a = J { runJoinM :: State Context a  }
+    deriving (Monad, MonadState Context, Functor, Applicative)
 
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
@@ -86,7 +82,6 @@ class (Monad m) => MonadJoin m where
   getStdGen :: m R.StdGen
   getLocation :: m String
   isFailed :: m Bool
-  setFail :: m ()
 
 instance MonadJoin JoinM where
   getDefs = gets cDefs
@@ -120,9 +115,6 @@ instance MonadJoin JoinM where
   getLocation = gets cLocation
 
   isFailed = gets cFail
-
-  setFail = do modify $ \s -> s{cFail = True}
-               throwError "Location failed"
 
 
 initContext ::    [Def]    -- initial definitions
@@ -299,7 +291,7 @@ isLocal _ _ = True
 execInterp :: InterpConfig -> Context -> Context
 execInterp conf context
     | cFail context = context
-    | otherwise     = execState (runErrorT . runJoinM $ interp conf) context
+    | otherwise     = execState (runJoinM $ interp conf) context
 
 -- |Performs a single step of interpretation
 interp :: (MonadJoin m, Functor m, Applicative m)
