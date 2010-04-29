@@ -196,6 +196,23 @@ runInterpreter conf (Proc as) = do
            where takeElem' l [] = (Nothing, l)
                  takeElem' l (x:xs) = if p x then (Just x, l++xs) else takeElem' (l++[x]) xs
 
+         {-
+          - Find all fail<a, k> and register k in the cFailureConts of a
+          -}
+         registerFail :: [Context] -> [Context]
+         registerFail ctxs =
+           -- for each context, remove and collect occurences of fail
+           let
+             isFail (MsgA "fail" _) = True
+             isFail _               = False
+             (fails, ctxs') = unzip $ map (\ctx ->
+               let (fails, atms') = partition isFail (cAtoms ctx)
+                   fails' = map (\(MsgA _ ((VarE loc):(VarE cont):[])) -> (loc,cont)) fails
+               in (fails', ctx{cAtoms = atms'})) ctxs
+           in
+             map (\ctx -> let (_, failConts) = unzip . fst $ partition (((cLocation ctx) ==) . fst) $ concat fails
+                          in ctx{cFailureConts = failConts ++ (cFailureConts ctx)}) ctxs'
+
          heatLocations stdGen context =
            let (locations, defs) = partition isLocationD $ cDefs context
                stdGens = repStdGens (length locations) stdGen
