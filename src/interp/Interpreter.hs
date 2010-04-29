@@ -167,22 +167,33 @@ runInterpreter conf (Proc as) = do
            let (stdGen', stdGen'') = R.split stdGen
                -- Execute a step in each context, spawn off any new locations, and
                -- exchange messages between contexts.
-               ctx' = concatMap (execInterp conf >>> heatLocations stdGen'') >>>
-                      map migrate >>> exchangeMessages $ ctx
+               ctx' = map (execInterp conf) >>>
+                      concatMap (heatLocations stdGen'') >>>
+                      map migrate >>>
+                      exchangeMessages $ ctx
             in if maybe (ctx /= ctx') (n/=) (breakAt conf)
                   then runInterpreter' stdGen' (n+1) ctx'
                   else ctx
+
          {-
           - For all locations with a "go"-atom, change its parent location
-          - to the first argument of the "go" and substitute all occurences 
-          - of go<_, k> with k
+          - to the first argument of the "go" and substitute go<_, k> with k
           -}
          migrate :: Context -> Context
-         migrate ctx = case findGo $ cAtoms ctx of
-           Just (MsgA "go" ((VarE dest):(VarE cont):[])) -> ctx{cLocationParent = dest, cAtoms = (MsgA cont []):(cAtoms ctx)}
-           Nothing -> ctx
+         migrate ctx =
+           let (mMsg, as') = takeElem isGo $ cAtoms ctx
+               isGo (MsgA "go" _) = True
+               isGo _ = False
+            in maybe
+                 ctx
+                 (\(MsgA _ ((VarE dest):(VarE cont):[]))
+                    -> ctx { cLocationParent = dest
+                           , cAtoms = (MsgA cont []):as'})
+                 mMsg
 
-         findGo = find (\at -> case at of {MsgA "go" _ -> True; _ -> False})
+         takeElem p xs = takeElem' [] xs
+           where takeElem' l [] = (Nothing, l)
+                 takeElem' l (x:xs) = if p x then (Just x, l++xs) else takeElem' (l++[x]) xs
          
          {-
           - Find all fail<a, k> and register k in the cFailureConts of a
