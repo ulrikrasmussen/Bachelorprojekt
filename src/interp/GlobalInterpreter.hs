@@ -39,8 +39,6 @@ runInterpreter conf (Proc as) = do
   runInterpreter' stdGen2 0 [initContext [] as rootLocation rootLocation [] stdGen1]
    where runInterpreter' stdGen n ctx = do
            (stdGen', stdGen'') <- return $ R.split stdGen
-               -- Execute a step in each context, spawn off any new locations, and
-               -- exchange messages between contexts.
            newAtms <- runExternals $ manipulators conf
            ctx' <- mapM (runApi $ apiMap conf) ctx >>=
                    (map (execInterp conf) >>>
