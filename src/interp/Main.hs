@@ -8,6 +8,7 @@ import Text.ParserCombinators.Parsec
 import System
 import Control.Applicative
 import Data.List (intersperse)
+import qualified Data.Map as M
 
 openJF f = do res <- parseFromFile program f
               case res of
@@ -20,7 +21,8 @@ run conf fs = do
   progs <- mapM openJF fs
   let prog = foldl1 joinProgs progs
   ctxs <- runInterpreter conf (desugar prog)
-  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  --mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  return ()
 
 parseArgs conf fs [] = (fs, conf)
 parseArgs conf fs ("-n":xs) =
@@ -32,6 +34,10 @@ parseArgs conf fs ("-nogc":xs) =
 parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
+helloWorldConfig = defaultConfig
+ { apiMap = M.fromList [("helloWorld", const (putStrLn "Hello World!" >> return []))]
+ }
+
 main = do
-  (fs, conf) <- parseArgs defaultConfig [] <$> getArgs
+  (fs, conf) <- parseArgs helloWorldConfig [] <$> getArgs
   run conf fs

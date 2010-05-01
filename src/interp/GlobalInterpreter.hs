@@ -37,22 +37,22 @@ runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
   (stdGen1, stdGen2) <- R.split <$> R.getStdGen
   runInterpreter' stdGen2 0 [initContext [] as rootLocation rootLocation [] stdGen1]
-   where runInterpreter' stdGen n ctx = do
+   where runInterpreter' stdGen n contexts = do
            (stdGen', stdGen'') <- return $ R.split stdGen
            newAtms <- runExternals $ manipulators conf
-           ctx' <- mapM (runApi $ apiMap conf) ctx >>=
-                   (map (execInterp conf) >>>
-                   concatMap (heatLocations stdGen'') >>>
-                   registerFail >>>
-                   map halt >>>
-                   killFailed >>>
-                   map migrate >>>
-                   exchangeMessages >>>
-                   putMessages newAtms >>>
-                   return)
-           if maybe (ctx /= ctx') (n/=) (breakAt conf)
-                then runInterpreter' stdGen' (n+1) ctx'
-                else return ctx
+           contexts' <- mapM (runApi $ apiMap conf) contexts >>=
+                        (concatMap (heatLocations stdGen'') >>>
+                         registerFail >>>
+                         map halt >>>
+                         killFailed >>>
+                         map migrate >>>
+                         exchangeMessages >>>
+                         putMessages newAtms >>>
+                         map (execInterp conf) >>>
+                         return)
+           if maybe (contexts /= contexts') (n/=) (breakAt conf)
+                then runInterpreter' stdGen' (n+1) contexts'
+                else return contexts
 
 {-
  - There are two types of "magic" devices:
