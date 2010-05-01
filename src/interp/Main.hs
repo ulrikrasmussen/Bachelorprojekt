@@ -35,8 +35,25 @@ parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
 helloWorldConfig = defaultConfig
- { apiMap = M.fromList [("helloWorld", const (putStrLn "Hello World!" >> return []))]
+ { apiMap = M.fromList [("print", jPrint)]
  }
+
+jPrint :: Atom -> IO [Atom]
+jPrint (MsgA _ [xs, VarE k]) = do
+ putStrLn . map toChar . toList $ xs
+ return [(MsgA k [])]
+ where toList :: Expr -> [Expr]
+       toList (ConE "Nil" []) = []
+       toList (ConE "Cons" [x,xs]) = x:toList xs
+
+       toChar :: Expr -> Char
+       toChar x = let n = toInt x+64
+                   in if n == 64 then ' '
+                                 else toEnum n
+
+       toInt :: Expr -> Int
+       toInt (ConE "Z" []) = 0
+       toInt (ConE "S" [x]) = 1 + toInt x
 
 main = do
   (fs, conf) <- parseArgs helloWorldConfig [] <$> getArgs
