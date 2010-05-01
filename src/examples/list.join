@@ -1,8 +1,17 @@
-def foldr(f, x, Nil)        |> {return (x) to foldr}
- or foldr(f, x, Cons(y,ys)) |> {return (f(y,foldr(f,x,ys))) to foldr}
- or add(Z, y)               |> {return (y) to add}
- or add(S x, y)            |> {return (add(x, S y)) to add}
+def add(Z, y)          |> {return (y) to add}
+ or add(S x, y)        |> {return (add(x, S y)) to add}
+ or leq(x, y) |> match T2(x,y) with
+                   T2(S x, Z) -> { return (False) to leq }
+                 | T2(S x, S y) -> { return (leq(x, y)) to leq }
+                 | T2(x, y) -> { return (True) to leq }
+ or partition(p, xs) |>
+    def part(p, acc, Nil) |> { return (acc) to part }
+     or part(p, T2(l, r), Cons(x,xs)) |>
+         { match p(x) with
+             True  -> { return (part(p, T2(Cons(x,l), r), xs)) to part }
+           | False -> { return (part(p, T2(l, Cons(x,r)), xs)) to part } }
+     in { return (part(p, T2(Nil, Nil), xs)) to partition }
  or done<r> |> done<r>
- in { let r = foldr(add, Z, Cons(S Z, Cons(S Z, Cons(S S Z, Nil))));
+ in { let r = partition(leq, Cons);
       run done<r>
     }

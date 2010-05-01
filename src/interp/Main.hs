@@ -3,7 +3,7 @@ module Main() where
 import Parser
 import Language
 import Desugar
-import Interpreter
+import GlobalInterpreter
 import Text.ParserCombinators.Parsec
 import System
 import Control.Applicative
