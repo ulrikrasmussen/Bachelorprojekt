@@ -65,11 +65,11 @@ runInterpreter conf (Proc as) = do
 -- | Remove atoms that match a magic word and run the corresponding function.
 runApi :: ApiMap -> Context -> IO Context
 runApi funMap ctx = do
-  atms <- (sequence $ map matchAtm (cAtoms ctx)) >>= (concat >>> return)
+  atms <- concat <$> mapM matchAtm (cAtoms ctx)
   return ctx{cAtoms = atms}
   where
     matchAtm :: Atom -> IO [Atom]
-    matchAtm atm@(MsgA nm exp) = maybe (return [atm]) (\f -> f atm) (M.lookup nm funMap)
+    matchAtm atm@(MsgA nm exp) = maybe (return [atm]) ($ atm) (M.lookup nm funMap)
     matchAtm atm = return [atm]
 
 runExternals :: [Manipulator] -> IO [Atom]
