@@ -38,6 +38,9 @@ instance Applicative (State Context) where
 newtype JoinM a = J { runJoinM :: State Context a  }
     deriving (Monad, MonadState Context, Functor, Applicative)
 
+type ApiMap      = M.Map String (Atom -> IO [Atom])
+type Manipulator = IO (Maybe [Atom])
+
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
                        , cFreshNames :: [String] -- ^ Infinite stream of fresh names
@@ -137,33 +140,64 @@ data InterpConfig = IC {
   , gcInterval :: Integer
   , breakAt :: Maybe Integer
   , nondeterministic :: Bool
-} deriving (Show)
+  , apiMap :: ApiMap         -- ^ A map from atom names to functions. Used to enable IO in join programs.
+  , manipulators :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.
+} 
 
 defaultConfig = IC {
     runGC = True
   , gcInterval = 1
   , breakAt = Nothing
   , nondeterministic = False
+  , apiMap = M.fromList []
+  , manipulators = []
 }
 
 runInterpreter :: InterpConfig -> Proc -> IO [Context]
 runInterpreter conf (Proc as) = do
   (stdGen1, stdGen2) <- R.split <$> R.getStdGen
-  return $ runInterpreter' stdGen2 0 [initContext [] as rootLocation rootLocation [] stdGen1]
-   where runInterpreter' stdGen n ctx =
-           let (stdGen', stdGen'') = R.split stdGen
+  runInterpreter' stdGen2 0 [initContext [] as rootLocation rootLocation [] stdGen1]
+   where runInterpreter' stdGen n ctx = do
+           (stdGen', stdGen'') <- return $ R.split stdGen
                -- Execute a step in each context, spawn off any new locations, and
                -- exchange messages between contexts.
-               ctx' = map (execInterp conf) >>>
-                      concatMap (heatLocations stdGen'') >>>
-                      registerFail >>>
-                      map halt >>>
-                      killFailed >>>
-                      map migrate >>>
-                      exchangeMessages $ ctx
-            in if maybe (ctx /= ctx') (n/=) (breakAt conf)
-                  then runInterpreter' stdGen' (n+1) ctx'
-                  else ctx
+           newAtms <- runExternals $ manipulators conf
+           ctx' <- mapM (runApi $ apiMap conf) ctx >>=
+                   (map (execInterp conf) >>>
+                   concatMap (heatLocations stdGen'') >>>
+                   registerFail >>>
+                   map halt >>>
+                   killFailed >>>
+                   map migrate >>>
+                   exchangeMessages newAtms >>>
+                   return) 
+           if maybe (ctx /= ctx') (n/=) (breakAt conf)
+                then runInterpreter' stdGen' (n+1) ctx'
+                else return ctx
+
+         {-
+          - There are two types of "magic" devices:
+          -   1. External events that manipulate the state of the interpreter
+          -   2. Atoms with side effects in the outside world
+          -
+          - Through these two magic devices we can implement timeouts and keypresses.
+          -}
+
+         -- | Remove atoms that match a magic word and run the corresponding function.
+         runApi :: ApiMap -> Context -> IO Context
+         runApi funMap ctx = do
+           atms <- (sequence $ map matchAtm (cAtoms ctx)) >>= (concat >>> return)
+           return ctx{cAtoms = atms}
+           where 
+             matchAtm :: Atom -> IO [Atom]
+             matchAtm atm@(MsgA nm exp) = maybe (return [atm]) (\f -> f atm) (M.lookup nm funMap)
+             matchAtm atm = return [atm]
+
+         runExternals :: [Manipulator] -> IO [Atom]
+         runExternals funs = do
+           maybeAtms <- sequence funs
+           return $ concat $ catMaybes maybeAtms
+
 
          halt :: Context -> Context
          halt context =
@@ -252,10 +286,10 @@ runInterpreter conf (Proc as) = do
              in initContext ds as name locParent (S.toList exports) stdGen
 
 -- | Exchanges messages between a list of contexts.
-exchangeMessages :: [Context] -> [Context]
-exchangeMessages cs =
+exchangeMessages :: [Atom] -> [Context] -> [Context]
+exchangeMessages newAtms cs =
   let (cs', ms) = second concat . unzip $ map takeMessages cs
-   in putMessages ms cs'
+   in putMessages (ms ++ newAtms) cs'
 
 takeMessages ::  Context -> (Context, [Atom])
 takeMessages context =
