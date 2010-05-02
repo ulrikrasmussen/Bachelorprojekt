@@ -1,6 +1,8 @@
 -- vim:set foldmethod=marker foldmarker=--{,--}:
 module GlobalInterpreter(runInterpreter
                         ,InterpConfig(..)
+                        ,ApiMap
+                        ,Manipulator
                         ,defaultConfig) where
 
 import Interpreter
@@ -74,8 +76,8 @@ runApi funMap ctx = do
 
 runExternals :: [Manipulator] -> IO [Atom]
 runExternals funs = do
-  maybeAtms <- sequence funs
-  return $ concat $ catMaybes maybeAtms
+  atms <- sequence funs
+  return $ concat $ atms
 
 -- |Marks a context as failed if it contains a halt<> atom.
 halt :: Context -> Context

@@ -30,40 +30,47 @@ type Sigma = M.Map String Expr
 class Subst a where subst :: Sigma -> a -> a
 
 data Expr = VarE String
+          | IntE Int
           | ConE String [Expr]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show Expr where
     show (VarE v) = v
+    show (IntE i) = show i
     show (ConE n es) = n ++ "(" ++ (concat . intersperse ", " $ map show es) ++ ")"
 
 instance Subst Expr where
     subst sigma expr =
       case expr of
         ve@(VarE v) -> maybe ve id $ M.lookup v sigma
+        IntE n -> expr
         ConE n es -> ConE n $ map (subst sigma) es
 --}
 
 data SExpr = VarS String
            | ConS String [SExpr]
+           | IntS Int
            | CallS String [SExpr]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show SExpr where
     show (VarS v) = v
+    show (IntS i) = show i
     show (CallS v es) = v ++ "(" ++ (concat . intersperse "," . map show $ es) ++ ")"
     show (ConS n es) = n ++ "(" ++ (concat . intersperse ", " $ map show es) ++ ")"
 --}
 
 data Pat  = VarP String
+          | IntP Int
           | ConP String [Pat]
     deriving (Eq, Data, Typeable)
 
 --{ Instances
 instance Show Pat where
     show (VarP v) = v
+    show (IntP i) = show i
     show (ConP n ps) = n ++ "(" ++ (concat . intersperse ", " $ map show ps) ++ ")"
 --}
 
@@ -182,6 +189,7 @@ class ReceivedVars e where receivedVars :: e -> S.Set String
 --{ Instances
 instance ReceivedVars Pat where
   receivedVars (VarP v) = S.singleton v
+  receivedVars (IntP i) = S.empty
   receivedVars (ConP n ps) = S.unions . map receivedVars $ ps
 
 instance ReceivedVars Join where
@@ -206,6 +214,7 @@ class FreeVars e where freeVars :: e -> S.Set String
 --{ Instances
 instance FreeVars Expr where
   freeVars (ConE n es) = S.unions $ map freeVars es
+  freeVars (IntE _)    = S.empty
   freeVars (VarE v)    = S.singleton v
 
 instance FreeVars Def where

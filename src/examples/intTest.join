@@ -1,0 +1,3 @@
+def mat<1> |> print<1, k>
+ or mat<2> |> print<2, k>
+ in mat<1> & mat<2> & mat<3>

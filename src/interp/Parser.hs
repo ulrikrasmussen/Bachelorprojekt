@@ -1,4 +1,4 @@
-module Parser(program, runParser) where
+module Parser(program, runParser, parseTest) where
 
 import Language
 
@@ -47,19 +47,21 @@ expr =   ConE  <$> (lexeme constructor)
                     <|> ((:[]) <$> expr)
                     <|> pure [])
      <|> VarE  <$> (lexeme identifier)
+     <|> (IntE . read) <$> (lexeme $ many1 digit)
      <?> "expression"
 
 -- |Parses a sugared expression. This is the exact same parser as 'expr', but
 -- also includes synchronous calls.
 sexpr :: Parser SExpr
-sexpr =   ConS <$> (lexeme constructor)
-               <*> ((parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
-                    <|> ((:[]) <$> sexpr)
-                    <|> pure [])
-      <|> (do ident <- identifier
-              (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
-               <|> (pure $ VarS ident)))
-      <?> "sugared expression"
+sexpr = ConS <$> (lexeme constructor)
+             <*> ((parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
+                  <|> ((:[]) <$> sexpr)
+                  <|> pure [])
+        <|> (IntS . read) <$> (lexeme $ many1 digit)
+        <|> (do ident <- identifier
+                (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
+                 <|> (pure $ VarS ident)))
+        <?> "sugared expression"
 
 -- |Parses patterns (like expressions, but linear).
 pat :: Parser Pat
@@ -68,6 +70,7 @@ pat  =   ConP  <$> (lexeme constructor)
                     <|> ((:[]) <$> pat)
                     <|> (pure []))
      <|> VarP  <$> (lexeme identifier)
+     <|> IntP . read  <$> (lexeme $ many1 digit)
      <?> "pattern"
 
 -- |Parses one or more join expressions, separated by '&'.

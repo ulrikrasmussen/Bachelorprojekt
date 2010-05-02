@@ -26,6 +26,7 @@ import qualified Data.Set as S
 
 import qualified System.Random as R
 
+import System.IO.Unsafe
 
 instance Applicative (State Context) where
     pure = return
@@ -35,7 +36,7 @@ newtype JoinM a = J { runJoinM :: State Context a  }
     deriving (Monad, MonadState Context, Functor, Applicative)
 
 type ApiMap      = M.Map String (Atom -> IO [Atom])
-type Manipulator = IO (Maybe [Atom])
+type Manipulator = IO [Atom]
 
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
@@ -195,6 +196,9 @@ matchJoin (VarJ var pats) = do
 
 matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
 matchPat (VarP s) e = Just $ M.fromList [(s, e)]
+matchPat (IntP i1) (IntE i2)
+  | i1 == i2  = Just M.empty 
+  | otherwise = unsafePerformIO (do {putStrLn $ (show i1) ++ " == " ++ (show i2); return Nothing})
 matchPat (ConP np ps) (ConE ne es)
   | np /= ne  = Nothing
   | otherwise = M.unions <$> (sequence $ zipWith matchPat ps es)

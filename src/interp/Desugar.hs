@@ -34,6 +34,7 @@ type Continuation = String
 desExp :: Continuation -> SExpr -> DesugarM Atom
 
 desExp k (VarS v) = return $ MsgA k [VarE v]
+desExp k (IntS i) = return $ MsgA k [IntE i]
 desExp k (ConS n []) = return $ MsgA k [ConE n []]
 desExp k (ConS n es) =
   do chans <- getFresh $ length es
