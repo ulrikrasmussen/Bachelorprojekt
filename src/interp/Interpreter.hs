@@ -26,7 +26,7 @@ import qualified Data.Set as S
 
 import qualified System.Random as R
 
-import System.IO.Unsafe
+import Debug.Trace
 
 instance Applicative (State Context) where
     pure = return
@@ -186,19 +186,20 @@ applyReaction (LocationD _ _ _) = return ()
 {- Check whether a join pattern is matched by the atoms in the context -}
 matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
 matchJoin (VarJ var pats) = do
-  mAtom <- find (chanIs var) <$> getAtoms
-  return $ do atom@(MsgA _ es) <- mAtom
-              sigma <- matchPatterns es
-              return (sigma, atom)
+  atoms <- filter (chanIs var) <$> getAtoms
+  let matches = map matchPatterns atoms
+  return . getFirst . mconcat . map First $ matches
    where chanIs v (MsgA v' _) = v == v'
          chanIs v _           = False
-         matchPatterns es     = M.unions <$> (sequence $ zipWith matchPat pats es)
+         matchPatterns atom@(MsgA _ es) = do
+            sigma <- M.unions <$> zipWithM matchPat pats es
+            return (sigma, atom)
 
 matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
 matchPat (VarP s) e = Just $ M.fromList [(s, e)]
 matchPat (IntP i1) (IntE i2)
   | i1 == i2  = Just M.empty 
-  | otherwise = unsafePerformIO (do {putStrLn $ (show i1) ++ " == " ++ (show i2); return Nothing})
+  | otherwise = Nothing
 matchPat (ConP np ps) (ConE ne es)
   | np /= ne  = Nothing
   | otherwise = M.unions <$> (sequence $ zipWith matchPat ps es)
