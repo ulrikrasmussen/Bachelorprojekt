@@ -4,6 +4,7 @@ module JoinApi(integerArith
               ,jPrint
               ,initApi
               ,initTimeout
+              ,output
               ,ApiMap
               ,Manipulator) where
 
@@ -51,8 +52,8 @@ instance JoinValue Char where
  toJoin = toJoin . fromEnum
 --}
 
-integerArith :: IO ([Manipulator], ApiMap)
-integerArith = return ([], M.fromList [
+integerArith :: ([Manipulator], ApiMap)
+integerArith = ([], M.fromList [
     ("add", jAdd)
   , ("mult", jMult)
   , ("div", jDiv)
@@ -64,10 +65,13 @@ integerArith = return ([], M.fromList [
     jDiv (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 `div` op2]]
     jLeq (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 <= op2]]
 
-initApi :: [IO ([Manipulator], ApiMap)] -> IO ([Manipulator], ApiMap)
-initApi apiFuns = do
-  (manips, maps) <- unzip <$> (sequence apiFuns)
-  return (concat manips, M.unions maps)
+output = ([], M.fromList [
+   ("print", jPrint)
+  ])
+
+initApi :: [([Manipulator], ApiMap)] -> ([Manipulator], ApiMap)
+initApi xs = let (manips, maps) = unzip xs
+              in (concat manips, M.unions maps)
 
 initTimeout :: IO ([Manipulator], ApiMap)
 initTimeout = do
@@ -75,10 +79,11 @@ initTimeout = do
   return ([checkTimeout reportMv], M.fromList [("sleep", registerTimeout reportMv)])
   where
     registerTimeout :: MVar [Atom] -> Atom -> IO [Atom]
-    registerTimeout repMv (MsgA _ ((IntE muS):(VarE cont):_)) = 
+    registerTimeout repMv (MsgA _ ((IntE muS):(VarE cont):_)) =
       forkIO (threadDelay muS >> putMVar repMv [(MsgA cont [])]) >> return []
     checkTimeout :: MVar [Atom] -> IO [Atom]
     checkTimeout repMv = tryTakeMVar repMv >>= (maybe [] id >>> return)
+
 
 jPrint :: Atom -> IO [Atom]
 jPrint (MsgA _ [jStr, VarE k]) = do

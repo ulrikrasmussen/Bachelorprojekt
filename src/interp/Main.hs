@@ -40,9 +40,11 @@ parseArgs conf fs (f:xs) =
 
 main = do
   (fs, conf) <- parseArgs defaultConfig [] <$> getArgs
-  (manips, apiMap) <- initApi [
-      (return ([], M.fromList [("print", jPrint)]))
-    , initTimeout
-    , integerArith
-    ]
+  timeout <- initTimeout
+  let (manips, apiMap) =
+       initApi [
+          output
+        , timeout
+        , integerArith
+        ]
   run conf{manipulators = manips, apiMap = apiMap} fs
