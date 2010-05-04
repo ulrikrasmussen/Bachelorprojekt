@@ -4,6 +4,7 @@ module JoinApi(integerArith
               ,jPrint
               ,initApi
               ,initTimeout
+              ,initNameServer
               ,output
               ,ApiMap
               ,Manipulator) where
@@ -19,38 +20,6 @@ import qualified Data.Map as M
 
 type ApiMap      = M.Map String (Atom -> IO [Atom])
 type Manipulator = IO [Atom]
-
---{ Conversion functions
-class JoinValue a where
- fromJoin :: Expr -> a
- toJoin :: a -> Expr
-
-instance JoinValue Bool where
- fromJoin (ConE "True" []) = True
- fromJoin (ConE "Fals" []) = False
- fromJoin x = error $ "Not a join boolean: '" ++ show x ++ "'"
-
- toJoin True = ConE "True" []
- toJoin False = ConE "False" []
-
-instance JoinValue Int where
- fromJoin (IntE i) = i
- fromJoin x = error $ "Not a join integer: '" ++ show x ++ "'"
-
- toJoin = IntE
-
-instance (JoinValue a) => JoinValue [a] where
- fromJoin (ConE "Nil" []) = []
- fromJoin (ConE "Cons" [x, xs]) = fromJoin x : fromJoin xs
- fromJoin x = error $ "Not a join list: '" ++ show x ++ "'"
-
- toJoin [] = ConE "Nil" []
- toJoin (x:xs) = ConE "Cons" [toJoin x, toJoin xs]
-
-instance JoinValue Char where
- fromJoin = toEnum . fromJoin
- toJoin = toJoin . fromEnum
---}
 
 integerArith :: ([Manipulator], ApiMap)
 integerArith = ([], M.fromList [
@@ -84,6 +53,21 @@ initTimeout = do
     checkTimeout :: MVar [Atom] -> IO [Atom]
     checkTimeout repMv = tryTakeMVar repMv >>= (maybe [] id >>> return)
 
+
+initNameServer :: IO ([Manipulator], ApiMap)
+initNameServer = do
+  nsVar <- newEmptyMVar :: IO (MVar (M.Map String Expr))
+  nsVar `putMVar` M.empty
+  return ([], M.fromList([("search", jSearch nsVar), ("register", jRegister nsVar)]))
+  where
+    jSearch nsVar (MsgA _ [name, VarE k]) =
+      withMVar nsVar $ \m -> return [MsgA k [toJoin $ M.lookup (fromJoin name) m]]
+
+    jRegister nsVar (MsgA _ [name, expr, VarE k]) =
+      modifyMVar nsVar $ \m ->
+        let m' = M.insert (fromJoin name) expr m
+            msg = MsgA k []
+         in return (m', [msg])
 
 jPrint :: Atom -> IO [Atom]
 jPrint (MsgA _ [jStr, VarE k]) = do

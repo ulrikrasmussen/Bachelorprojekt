@@ -40,6 +40,28 @@ identifier = (:) <$> lower <*> many (alphaNum <|> char '\'') <?> "identifier"
 constructor :: Parser String
 constructor = (:) <$> upper <*> many (alphaNum <|> char '\'') <?> "constructor"
 
+genericString :: ([a] -> a) -> a -> (Int -> a) -> Parser a
+genericString cons nil int = do
+ char '"'
+ str <- many stringChar
+ char '"'
+ return $ mkJString str
+ where
+   stringChar = do
+     x <- noneOf ['"']
+     if x /= '\\'
+       then return x
+       else do e <- anyChar
+               case e of
+                 'n' -> return '\n'
+                 't' -> return '\t'
+                 '"' -> return '"'
+                 '\\' -> return '\\'
+                 x -> return x
+
+   mkJString [] = nil
+   mkJString (x:xs) = cons [int . fromEnum $ x, mkJString xs]
+
 -- |Parses an expression.
 expr :: Parser Expr
 expr =   ConE  <$> (lexeme constructor)
@@ -48,6 +70,7 @@ expr =   ConE  <$> (lexeme constructor)
                     <|> pure [])
      <|> VarE  <$> (lexeme identifier)
      <|> (IntE . read) <$> (lexeme $ many1 digit)
+     <|> genericString (ConE "Cons") (ConE "Nil" []) IntE
      <?> "expression"
 
 -- |Parses a sugared expression. This is the exact same parser as 'expr', but
@@ -61,6 +84,7 @@ sexpr = ConS <$> (lexeme constructor)
         <|> (do ident <- identifier
                 (CallS ident <$> (parens $ lexeme sexpr `sepBy` (lexeme $ char ','))
                  <|> (pure $ VarS ident)))
+        <|> genericString (ConS "Cons") (ConS "Nil" []) IntS
         <?> "sugared expression"
 
 -- |Parses patterns (like expressions, but linear).
@@ -89,12 +113,8 @@ defs :: Parser [Def]
 defs = (lexeme def) `sepBy1` (lexeme1 $ string "or")
      <?> "Definition"
   where def = ReactionD <$> (try joins) <* (lexeme $ string "|>") <*> proc
-            <|> LocationD <$> identifier 
+            <|> LocationD <$> identifier
                 <* (lexeme $ char '[') <*> defs <* (lexeme1 $ string "in") <*> proc <* char ']'
-
-
-                -- (lexeme $ string "[" *> defs) <*> 
-                -- (lexeme1 $ string "in" *> proc <* (string "]"))
 
 -- |Parses a process, which is one or more atoms, separated by '&'
 proc :: Parser Proc
