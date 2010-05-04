@@ -5,11 +5,10 @@ module Interpreter( defaultConfig
                   , InterpConfig(..)
                   , Context(..)
                   , initContext
-                  , execInterp
-                  , ApiMap
-                  , Manipulator ) where
+                  , execInterp) where
 
 import Language
+import JoinApi(ApiMap, Manipulator)
 
 import Control.Monad
 import Control.Applicative
@@ -34,9 +33,6 @@ instance Applicative (State Context) where
 
 newtype JoinM a = J { runJoinM :: State Context a  }
     deriving (Monad, MonadState Context, Functor, Applicative)
-
-type ApiMap      = M.Map String (Atom -> IO [Atom])
-type Manipulator = IO [Atom]
 
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms

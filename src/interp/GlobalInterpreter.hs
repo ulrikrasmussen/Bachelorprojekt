@@ -7,6 +7,7 @@ module GlobalInterpreter(runInterpreter
 
 import Interpreter
 import Language
+import JoinApi(ApiMap, Manipulator)
 
 import Control.Applicative
 import Control.Arrow

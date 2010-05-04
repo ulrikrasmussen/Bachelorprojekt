@@ -1,17 +1,24 @@
-def add(Z, y)          |> {return (y) to add}
- or add(S x, y)        |> {return (add(x, S y)) to add}
- or leq(x, y) |> match T2(x,y) with
-                   T2(S x, Z) -> { return (False) to leq }
-                 | T2(S x, S y) -> { return (leq(x, y)) to leq }
-                 | T2(x, y) -> { return (True) to leq }
- or partition(p, xs) |>
-    def part(p, acc, Nil) |> { return (acc) to part }
-     or part(p, T2(l, r), Cons(x,xs)) |>
-         { match p(x) with
-             True  -> { return (part(p, T2(Cons(x,l), r), xs)) to part }
-           | False -> { return (part(p, T2(l, Cons(x,r)), xs)) to part } }
-     in { return (part(p, T2(Nil, Nil), xs)) to partition }
+def partition(Cons(x,xs)) |>
+    def part(acc, Nil) |> { return (acc) to part }
+     or part(T2(l, r), Cons(y,ys)) |>
+         { match leq(y,x) with
+             True  -> { return (part(T2(Cons(y,l), r), ys)) to part }
+           | False -> { return (part(T2(l, Cons(y,r)), ys)) to part } }
+     in { return (part(T2(Cons(x, Nil), Nil), xs)) to partition }
+ or qs(xs) |> {
+    match xs with
+      Nil -> { return (Nil) to qs }
+    | Cons(x, Nil) -> { return (Cons(x, Nil)) to qs }
+    | xs -> { let T2(l, r) = partition(xs);
+              return (app(qs(l),qs(r))) to qs }
+ }
+ or app(Nil, xs)        |> { return (xs) to app }
+ or app(Cons(x,xs), ys) |> { return (Cons(x, app(xs,ys))) to app }
  or done<r> |> done<r>
- in { let r = partition(leq, Cons);
+ in { let r = qs(Cons(7,
+                 Cons(5,
+                 Cons(1,
+                 Cons(3,
+                 Cons(2, Nil))))));
       run done<r>
     }

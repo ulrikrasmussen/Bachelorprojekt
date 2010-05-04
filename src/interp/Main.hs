@@ -11,8 +11,8 @@ import Data.List (intersperse)
 import qualified Data.Map as M
 import Control.Monad
 import Control.Arrow
-import Control.Concurrent
-import Control.Concurrent.MVar
+
+import JoinApi
 
 openJF f = do res <- parseFromFile program f
               case res of
@@ -43,38 +43,6 @@ main = do
   (manips, apiMap) <- initApi [
       (return ([], M.fromList [("print", jPrint)]))
     , initTimeout
-    , arithmetic
+    , integerArith
     ]
   run conf{manipulators = manips, apiMap = apiMap} fs
-
-initApi :: [IO ([Manipulator], ApiMap)] -> IO ([Manipulator], ApiMap)
-initApi apiFuns = do
-  (manips, maps) <- (liftM unzip) (sequence apiFuns)
-  return (concat manips, M.unions maps)
-
-initTimeout :: IO ([Manipulator], ApiMap)
-initTimeout = do
-  reportMv <- newEmptyMVar :: IO (MVar [Atom])
-  return ([checkTimeout reportMv], M.fromList [("sleep", registerTimeout reportMv)])
-  where
-    registerTimeout :: MVar [Atom] -> Atom -> IO [Atom]
-    registerTimeout repMv (MsgA _ ((IntE muS):(VarE cont):_)) = 
-      forkIO (threadDelay muS >> putMVar repMv [(MsgA cont [])]) >> return []
-    checkTimeout :: MVar [Atom] -> IO [Atom]
-    checkTimeout repMv = tryTakeMVar repMv >>= (maybe [] id >>> return)
-
-jPrint :: Atom -> IO [Atom]
-jPrint (MsgA _ [xs, VarE k]) = do
-  putStrLn $ show xs
-  return [MsgA k []]
-
-arithmetic = return ([], M.fromList [
-    ("add", jAdd)
-  , ("mult", jMult)
-  , ("div", jDiv)
-  ])
-  where
-    jAdd (MsgA _ ((IntE op1):(IntE op2):(VarE k):[])) = return [MsgA k [IntE $ op1 + op2]]
-    jMult (MsgA _ ((IntE op1):(IntE op2):(VarE k):[])) = return [MsgA k [IntE $ op1 * op2]]
-    jDiv (MsgA _ ((IntE op1):(IntE op2):(VarE k):[])) = return [MsgA k [IntE $ op1 `div` op2]]
-  
