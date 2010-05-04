@@ -43,10 +43,22 @@ constructor = (:) <$> upper <*> many (alphaNum <|> char '\'') <?> "constructor"
 genericString :: ([a] -> a) -> a -> (Int -> a) -> Parser a
 genericString cons nil int = do
  char '"'
- str <- many $ noneOf ['"']
+ str <- many stringChar
  char '"'
  return $ mkJString str
  where
+   stringChar = do
+     x <- noneOf ['"']
+     if x /= '\\'
+       then return x
+       else do e <- anyChar
+               case e of
+                 'n' -> return '\n'
+                 't' -> return '\t'
+                 '"' -> return '"'
+                 '\\' -> return '\\'
+                 x -> return x
+
    mkJString [] = nil
    mkJString (x:xs) = cons [int . fromEnum $ x, mkJString xs]
 
