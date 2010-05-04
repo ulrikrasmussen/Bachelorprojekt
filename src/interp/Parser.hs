@@ -92,10 +92,6 @@ defs = (lexeme def) `sepBy1` (lexeme1 $ string "or")
             <|> LocationD <$> identifier 
                 <* (lexeme $ char '[') <*> defs <* (lexeme1 $ string "in") <*> proc <* char ']'
 
-
-                -- (lexeme $ string "[" *> defs) <*> 
-                -- (lexeme1 $ string "in" *> proc <* (string "]"))
-
 -- |Parses a process, which is one or more atoms, separated by '&'
 proc :: Parser Proc
 proc =  (Proc . concat <$> atoms)
