@@ -41,9 +41,11 @@ parseArgs conf fs (f:xs) =
 main = do
   (fs, conf) <- parseArgs defaultConfig [] <$> getArgs
   timeout <- initTimeout
+  ns <- initNameServer
   let (manips, apiMap) =
        initApi [
           output
+        , ns
         , timeout
         , integerArith
         ]

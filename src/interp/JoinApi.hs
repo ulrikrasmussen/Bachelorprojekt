@@ -4,6 +4,7 @@ module JoinApi(integerArith
               ,jPrint
               ,initApi
               ,initTimeout
+              ,initNameServer
               ,output
               ,ApiMap
               ,Manipulator) where
@@ -24,6 +25,10 @@ type Manipulator = IO [Atom]
 class JoinValue a where
  fromJoin :: Expr -> a
  toJoin :: a -> Expr
+
+instance JoinValue Expr where
+ fromJoin = id
+ toJoin = id
 
 instance JoinValue Bool where
  fromJoin (ConE "True" []) = True
@@ -46,6 +51,13 @@ instance (JoinValue a) => JoinValue [a] where
 
  toJoin [] = ConE "Nil" []
  toJoin (x:xs) = ConE "Cons" [toJoin x, toJoin xs]
+
+instance (JoinValue a) => JoinValue (Maybe a) where
+ fromJoin (ConE "Nothing" []) = Nothing
+ fromJoin (ConE "Just" [x]) = Just $ fromJoin x
+
+ toJoin Nothing = ConE "Nothing" []
+ toJoin (Just x) = ConE "Just" [toJoin x]
 
 instance JoinValue Char where
  fromJoin = toEnum . fromJoin
@@ -84,6 +96,21 @@ initTimeout = do
     checkTimeout :: MVar [Atom] -> IO [Atom]
     checkTimeout repMv = tryTakeMVar repMv >>= (maybe [] id >>> return)
 
+
+initNameServer :: IO ([Manipulator], ApiMap)
+initNameServer = do
+  nsVar <- newEmptyMVar :: IO (MVar (M.Map String Expr))
+  nsVar `putMVar` M.empty
+  return ([], M.fromList([("search", jSearch nsVar), ("register", jRegister nsVar)]))
+  where
+    jSearch nsVar (MsgA _ [name, VarE k]) =
+      withMVar nsVar $ \m -> return [MsgA k [toJoin $ M.lookup (fromJoin name) m]]
+
+    jRegister nsVar (MsgA _ [name, expr, VarE k]) =
+      modifyMVar nsVar $ \m ->
+        let m' = M.insert (fromJoin name) expr m
+            msg = MsgA k []
+         in return (m', [msg])
 
 jPrint :: Atom -> IO [Atom]
 jPrint (MsgA _ [jStr, VarE k]) = do
