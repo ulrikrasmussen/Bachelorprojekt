@@ -32,12 +32,23 @@
 
 \usepackage{natbib}
 
+\usepackage[final]{listings}
+
 \input{macros.tex}
 
 \title{Programming distributed embedded devices using join-calculus}
 \author{Philip Carlsen \& Ulrik Rasmussen}
 
 \begin{document}
+
+\lstdefinelanguage{join}{
+  morekeywords={def, in},
+  literate={{|>}{$\triangleright$}{1} {or}{$\land$}{2} {&}{$|$}{1}}
+}
+
+\lstset{language=join,
+        basicstyle=\small
+}
 
 \frontmatter
 
@@ -61,7 +72,7 @@
 \chapter{Introduction}
 \input{chap/introduction.tex}
 
-\chapter{The join language}
+\chapter{The Join language}
 \input{chap/language.tex}
 
 \chapter{Use Cases}
