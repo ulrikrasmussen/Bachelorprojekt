@@ -24,11 +24,13 @@
 \usepackage{graphicx}
 
 % Pedantic typesetting - we like it!
-\usepackage{microtype}
+\usepackage[final]{microtype}
 
 \usepackage{fixme}
 
 \usepackage{url}
+
+\usepackage{natbib}
 
 \input{macros.tex}
 
@@ -55,13 +57,17 @@
 
 \fi
 \mainmatter
-\iffalse
+
 \chapter{Introduction}
 \input{chap/introduction.tex}
-\fi
+
+\chapter{The join language}
+\input{chap/language.tex}
+
 \chapter{Use Cases}
 \input{chap/use-cases.tex}
 
-\bibliographystyle{plain}
+
 \bibliography{bib/bibliography}
+\bibliographystyle{plainnat}
 \end{document}
