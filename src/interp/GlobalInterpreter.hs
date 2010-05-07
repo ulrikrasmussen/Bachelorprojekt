@@ -199,10 +199,11 @@ putMessages comP rGen ms (context:cs) =
   in context':putMessages comP rGen' ms' cs
   where
     tryCom _  [] = []
-    tryCom rg ((loc,a):ls) = case M.lookup (loc, cLocation context) comP of
-      Nothing -> tryCom rg ls
-      Just cP -> let (p,rg') = R.randomR (0,1) rg in
-                 if cP >= p then a:tryCom rg' ls else tryCom rg' ls
+    tryCom rg ((loc,a):ls) = if loc == rootLocation then a:tryCom rg ls 
+      else case M.lookup (loc, cLocation context) comP of
+        Nothing -> tryCom rg ls
+        Just cP -> let (p,rg') = R.randomR (0,1) rg in
+                   if cP >= p then a:tryCom rg' ls else tryCom rg' ls
 
 isLocal ::  S.Set String -> Atom -> Bool
 isLocal dvs (MsgA name _) = S.member name dvs
