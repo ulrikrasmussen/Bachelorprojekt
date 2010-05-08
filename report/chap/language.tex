@@ -23,31 +23,43 @@ forever if a message should get lost, or if the program in the other end
 crashes. To express a constraint like that in the core join calculus would
 require that we rely on a specific implementation being able to generate a
 message on a given time interval:
-\begin{lstlisting}
- def k<x> & incall<> |> P
-  or timeout<> & incall<> |> E
-  in remotecall<k>
-     & starttimer<timeout, 1000>
-     & incall<>
-\end{lstlisting}
-
+\begin{align*}
+  \textbf{def}\quad & \S k<x> ~|~ \S incall<> \triangleright P_{ok} \\
+  \land\quad & \S timeout<> ~|~ \S incall<> \triangleright P_{error} \\
+  \textbf{in}\quad & \S remotecall<k> ~|~ \S starttimer<timeout, 1000> ~|~ \S incall<>
+\end{align*}
 In the example above, \emph{remotecall} is given $1000$ time units to return a
 result on the name \emph{k}. If \emph{k} makes it before the time limit, the
-process $P$ is started, otherwise the process $E$ starts.
+process $P_{ok}$ is started, otherwise the process $P_{error}$ starts.
 There is a problem with this approach though: Even though we can provide a
 Join-implementation that does exactly as described, there is no guarantee that
-the program will behave in a similar way across implementations.
+the program will behave in a similar way on different implementations.
 
 The problem lies both in the non-deterministic choice between the two reaction
 rules, and in the fact that messages are not required to be processed in the
 same order as they arrive. Even if a result arrives before the timeout fires, a
-valid implementation can wait for a \emph{timeout} message to appear, and
-choose to consume that instead of the \emph{k} message.
+valid implementation can choose to wait for the \emph{timeout} message to
+appear, and consume that instead of the \emph{k} message.
 
 A possible solution to this problem is to extend the join-calculus with a
-notion of time. Many different approaches to this has been applied to a wide
-range of other process process calculi, including CSP and CCS,
-\citep{nicollin-overview}. \citep{timed-join}
+notion of time. Many other non-timed process calculi, including CSP and CCS,
+has already been extended for this purpose. An overview of some of the work
+that has been done in this area along with an attempt to generalize some of the
+concepts of timed process calculi has been presented in
+\cite{nicollin-overview}.
+
+A timed extension also exists for join-calculus, called Timed Join
+Calculus \cite{timed-join}. The calculus is extended with a model of time using
+a \emph{discrete time domain}, where every process bears a time tag denoting
+when it will be able to participate in a reaction. The syntax is extended with
+a new tagging construction for processes, and all reactions are tagged with a
+\emph{delay} tag:
+\begin{align*}
+  P ::={} & ...    & D ::={}& J \stackrel{d}{\triangleright} P \\
+          & t : P  &        & D \land D
+\end{align*}
+
+
 
 \section{(Semantics of syntactic sugar)}
 
