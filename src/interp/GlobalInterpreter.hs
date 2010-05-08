@@ -9,6 +9,7 @@ import Interpreter
 import Language
 import JoinApi(ApiMap, Manipulator)
 
+import Control.Monad
 import Control.Applicative
 import Control.Arrow
 
@@ -37,37 +38,39 @@ rootLocation = "@root"
 
 
 runInterpreter :: InterpConfig -> IO [Context]
-runInterpreter conf = let
-    comP = M.fromList [ p | x <- M.keys $ comLinks conf, 
-                            y <- M.keys $ comLinks conf, 
+runInterpreter conf = do
+    let comP = M.fromList [ p | x <- M.keys $ comLinks conf,
+                            y <- M.keys $ comLinks conf,
                             p <- [((x,y), comProb (comLinks conf) x y)]]
-  in do 
-    (stdGen1, stdGen2) <- R.split <$> R.getStdGen
-    -- Create the initial "machines"
-    runInterpreter' comP stdGen2 0 $ mkInitialCtxs stdGen1 (machineClasses conf) (initialMachines conf) -- [initContext [] as rootLocation rootLocation [] stdGen1]
-  where runInterpreter' comP stdGen n contexts = do
-           (stdGen_, stdGen') <- return $ R.split stdGen
-           (stdGen__, stdGen'') <- return $ R.split stdGen_
-           (stdGen___, stdGen''') <- return $ R.split stdGen__
-           (stdGen'''', stdGen''''') <- return $ R.split stdGen___
+    stdGen <- R.newStdGen
+    runInterpreter' comP 0 $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
+  where runInterpreter' comP n contexts = do
+           [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
            newAtms <- runExternals $ manipulators conf
            contexts' <- mapM (runApi $ apiMap conf) contexts >>=
-                        (concatMap (heatLocations stdGen'') >>>
+                        (concatMap (heatLocations stdGen1) >>>
                          registerFail >>>
                          map halt >>>
-                         killFailed comP stdGen''' >>>
+                         killFailed comP stdGen2 >>>
                          map migrate >>>
-                         exchangeMessages comP stdGen'''' >>>
-                         putMessages comP stdGen''''' [tagged| na <- newAtms, tagged <- [(rootLocation,na)]]  >>>
+                         exchangeMessages comP stdGen3 >>>
+                         putMessages comP stdGen4 [(rootLocation,na) | na <- newAtms] >>>
                          map (execInterp conf) >>>
                          return)
            if maybe (contexts /= contexts') (n/=) (breakAt conf)
-                then runInterpreter' comP stdGen' (n+1) contexts'
+                then runInterpreter' comP (n+1) contexts'
                 else return contexts
 
         mkInitialCtxs      _   _     [] = []
-        mkInitialCtxs stdGen cls (m:ms) = let (stdGen, stdGen') = R.split stdGen 
-          in (initContext [] [(M.findWithDefault undefined (mcClass m) cls)] (mcName m) rootLocation [] stdGen):(mkInitialCtxs stdGen' cls ms)
+        mkInitialCtxs stdGen cls (m:ms) =
+          let (stdGen, stdGen') = R.split stdGen
+              ctx = initContext []
+                                [(M.findWithDefault undefined (mcClass m) cls)]
+                                (mcName m)
+                                rootLocation
+                                []
+                                stdGen
+          in ctx : mkInitialCtxs stdGen' cls ms
 
 {-
  - There are two types of "magic" devices:
