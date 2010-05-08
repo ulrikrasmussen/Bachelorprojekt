@@ -25,7 +25,7 @@ run conf fs = do
   progs <- mapM openJF fs
   let prog = foldl1 joinProgs progs
   ctxs <- runInterpreter conf (desugar prog)
-  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  --mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()
 
 parseArgs conf fs [] = (fs, conf)
