@@ -24,10 +24,7 @@ joinProgs (Proc as) (Proc as') = Proc $ as ++ as'
 run conf fs = do
   progs <- mapM openJF fs
   let (Proc as) = desugar $ foldl1 joinProgs progs
-  ctxs <- runInterpreter $ conf {
-            machineClasses = M.fromList [("Default", head as)]
-          , initialMachines = [("A", "Default")]
-          }
+  ctxs <- runInterpreter $ conf
   --mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()
 

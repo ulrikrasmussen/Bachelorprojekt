@@ -35,47 +35,48 @@ takeElem p xs = takeElem' [] xs
         takeElem' l (x:xs) = if p x then (Just x, l++xs) else takeElem' (l++[x]) xs
 
 comProb :: M.Map String [(String, Double)] -> String -> String -> Double
-comProb graph n1 n2 = maybe 0 (\p -> 1/p) $ dijkstra graph (\(_, _, w) -> w) (\o n -> o * (1/n)) n1 n2 1
+comProb graph n1 n2 =
+    maybe 0 (\p -> 1/p) $ dijkstra graph (\(_, _, w) -> w) (\o n -> o * (1/n)) n1 n2 1
 
-dijkstra graph wFun adder start dest initW = dijkstra' (Just start) (M.fromList [(start, (False, initW))])
+dijkstra graph wFun adder start dest initW =
+    dijkstra' (Just start) (M.fromList [(start, (False, initW))])
   where
-    -- graph maps vertexes to edges. wFun maps edges to weights
+    -- graph maps vertices to edges. wFun maps edges to weights
     dijkstra' cur paths =  -- paths map vertexes to path lengths and visited/unvisited status
       case cur of
         Just cur' -> let edges  = outE graph cur'
                          curW   = snd . fromJust $ M.lookup cur' paths
-                         paths' = updatePaths paths cur' curW edges 
+                         paths' = updatePaths paths cur' curW edges
                      in dijkstra' (getLowestUnvisited paths) paths'
         Nothing   -> maybe Nothing (Just . snd) (M.lookup dest paths)
 
-    --getLowestUnvisited :: (Ord k) => M.Map k a -> Maybe k
+    getLowestUnvisited :: (Ord k) => M.Map k a -> Maybe k
     getLowestUnvisited pths = maybe Nothing (Just . fst) $ M.foldrWithKey foldPaths Nothing pths
+
     foldPaths v (vis, w) old = if vis then old else
       maybe (Just (v,w)) (\o@(v',w') -> if v < v' then Just (v,w) else Just o) old
-    
-    -- Examine every edge, update the vertexes pointed to and mark the current node as visited.
-    updatePaths paths curV curW []     = M.update (\(_, len) -> Just (True, len)) curV paths -- no more edges to examine, mark visited
-    updatePaths paths curV curW (e:es) = let 
-                                    w   = adder curW (wFun e)
-                                    dV  = destV e
-                                    dVData = M.lookup dV paths 
-                                  in case dVData of
-                                       -- dV already visited
-                                       Just (True, _)      -> updatePaths paths curV curW es
-                                       -- org not visited, check for update
-                                       Just (False, wPrev) -> if w < wPrev then 
-                                         updatePaths (M.update (\_ -> Just (False, w)) dV paths) curV curW es
-                                         else updatePaths paths curV curW es
-                                       Nothing   -> updatePaths (M.insert dV (False, w) paths) curV curW es
 
+    -- Examine every edge, update the vertices pointed to and mark the current node as visited.
+    updatePaths paths curV curW []     = M.update (\(_, len) -> Just (True, len)) curV paths
+    updatePaths paths curV curW (e:es) =
+        let w   = adder curW (wFun e)
+            dV  = destV e
+            dVData = M.lookup dV paths
+         in case dVData of
+              -- dV already visited
+              Just (True, _)      -> updatePaths paths curV curW es
+              -- org not visited, check for update
+              Just (False, wPrev) -> if w < wPrev then
+                updatePaths (M.update (\_ -> Just (False, w)) dV paths) curV curW es
+                else updatePaths paths curV curW es
+              Nothing   -> updatePaths (M.insert dV (False, w) paths) curV curW es
 
--- It would have been nice to have graph operations grouped in a typeclass, but it took too long.
 mkUniGraph vs es = mkGraph' M.empty vs [ e | (o,d,w) <- es, e <- [(o,d,w),(d,o,w)] ]
-  where 
+  where
     mkGraph' m []     _  = m
-    mkGraph' m (v:vs) es = let 
-      (vEdgs, restE) = partition (\(v', _, _) -> v' == v) es
-      vEdgs' = [(d,w) | (_,d,w) <- vEdgs]
+    mkGraph' m (v:vs) es =
+      let (vEdgs, restE) = partition (\(v', _, _) -> v' == v) es
+          vEdgs'         = [(d,w) | (_,d,w) <- vEdgs]
       in M.insert v vEdgs' (mkGraph' m vs restE)
 
 outE g o = maybe [] (\e -> [(o,d,w) | (d,w) <- e]) (M.lookup o g)
