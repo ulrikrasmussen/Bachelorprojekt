@@ -1,4 +1,4 @@
-report.pdf:
+report.pdf: chap/*.tex
 	mkdir build
 	pdflatex --output-directory build report.tex
 	bibtex build/report
