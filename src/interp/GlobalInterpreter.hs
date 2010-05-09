@@ -1,6 +1,7 @@
 -- vim:set foldmethod=marker foldmarker=--{,--}:
 module GlobalInterpreter(runInterpreter
                         ,InterpConfig(..)
+                        ,MachineConfig(..)
                         ,ApiMap
                         ,Manipulator
                         ,defaultConfig) where
@@ -40,8 +41,8 @@ rootLocation = "@root"
 runInterpreter :: InterpConfig -> IO [Context]
 runInterpreter conf = do
     let comP = M.fromList [ p | x <- M.keys $ comLinks conf,
-                            y <- M.keys $ comLinks conf,
-                            p <- [((x,y), comProb (comLinks conf) x y)]]
+                                y <- M.keys $ comLinks conf,
+                                p <- [((x,y), comProb (comLinks conf) x y)]]
     stdGen <- R.newStdGen
     runInterpreter' comP 0 $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
   where runInterpreter' comP n contexts = do
