@@ -1,10 +1,8 @@
 -- vim:set foldmethod=marker foldmarker=--{,--}:
 module GlobalInterpreter(runInterpreter
                         ,InterpConfig(..)
-                        ,MachineConfig(..)
                         ,ApiMap
                         ,Manipulator
-                        ,MachineConfig(..)
                         ,mkUniGraph
                         ) where
 

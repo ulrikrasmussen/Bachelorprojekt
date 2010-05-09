@@ -26,7 +26,7 @@ run conf fs = do
   let (Proc as) = desugar $ foldl1 joinProgs progs
   ctxs <- runInterpreter $ conf {
             machineClasses = M.fromList [("Default", head as)]
-          , initialMachines = [MC "A" "Default"]
+          , initialMachines = [("A", "Default")]
           }
   --mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()
