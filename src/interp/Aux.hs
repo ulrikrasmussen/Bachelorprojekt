@@ -21,14 +21,6 @@ openJF f = do res <- parseFromFile program f
 
 joinProgs (Proc as) (Proc as') = Proc $ as ++ as'
 
-run conf fs = do
-  progs <- mapM openJF fs
-  let (Proc as) = desugar $ foldl1 joinProgs progs
-  ctxs <- runInterpreter $ conf
-  --mapM_ putStrLn . intersperse "----------" $ map show ctxs
-  return ()
-
-
 defaultConfig = IC {
     runGC = True
   , gcInterval = 1
@@ -51,7 +43,7 @@ parseArgs conf fs ("-nogc":xs) =
 parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
-stdJoinMain (man, api) machines comEdges cfg = do
+stdJoinMain (man, api) machines mClasses comEdges cfg = do
   let cfg' = cfg { initialMachines = machines
                  , comLinks = mkUniGraph (fst . unzip $ machines) comEdges }
   (fs, conf) <- parseArgs cfg' [] <$> getArgs
@@ -65,4 +57,10 @@ stdJoinMain (man, api) machines comEdges cfg = do
          , timeout
          , integerArith
          ]
-  run conf{manipulators = manips, apiMap = apiMap} fs
+  (Proc as) <- desugar . foldl joinProgs (Proc []) <$> mapM openJF fs
+  ctxs <- runInterpreter conf { manipulators = manips
+                              , apiMap = apiMap
+                              , machineClasses = M.fromList [("Default", as)]
+                              }
+  --  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  return ()

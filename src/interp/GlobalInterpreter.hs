@@ -20,8 +20,24 @@ import qualified Data.Map as M
 import Data.Maybe
 
 import qualified System.Random as R
+import Debug.Trace
+
+rootLocation = "@root"
 
 --{ Helper functions
+
+grandestParents :: [Context] -> M.Map String String
+grandestParents ctxs =
+  grandestParents' $ M.fromList (map (cLocation &&& cLocationParent) ctxs)
+  where
+    grandestParents' m = let m' = M.mapWithKey prop m
+                          in if m' == m then m' else grandestParents' m'
+     where prop k p = let p' = m M.! p
+                      in if p == rootLocation
+                            then k
+                            else if p' == rootLocation
+                                    then p
+                                    else p'
 
 -- | Generates a list of fresh StdGens
 repStdGens ::  (R.RandomGen b) => Int -> b -> [b]
@@ -70,6 +86,7 @@ dijkstra graph wFun adder start dest initW =
                 else updatePaths paths curV curW es
               Nothing   -> updatePaths (M.insert dV (False, w) paths) curV curW es
 
+mkUniGraph :: [String] -> [(String, String, Double)] -> M.Map String [(String, Double)]
 mkUniGraph vs es = mkGraph' M.empty vs [ e | (o,d,w) <- es, e <- [(o,d,w),(d,o,w)] ]
   where
     mkGraph' m []     _  = m
@@ -83,9 +100,6 @@ destV (_, d, _)  = d
 origV (o, _, _)  = o
 --}
 
-rootLocation = "@root"
-
-
 runInterpreter :: InterpConfig -> IO [Context]
 runInterpreter conf = do
     let comP = M.fromList [ p | x <- M.keys $ comLinks conf,
@@ -96,18 +110,24 @@ runInterpreter conf = do
   where runInterpreter' comP n contexts = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
            newAtms <- runExternals $ manipulators conf
-           contexts' <- mapM (runApi $ apiMap conf) contexts >>=
-                        (concatMap (heatLocations stdGen1) >>>
-                         registerFail >>>
-                         map halt >>>
-                         killFailed comP stdGen2 >>>
-                         map migrate >>>
-                         exchangeMessages comP stdGen3 >>>
-                         putMessages comP stdGen4 [(rootLocation,na) | na <- newAtms] >>>
-                         map (execInterp conf) >>>
-                         return)
-           if maybe (contexts /= contexts') (n/=) (breakAt conf)
-                then runInterpreter' comP (n+1) contexts'
+           -- Execute API messages
+           contexts' <- mapM (runApi $ apiMap conf) contexts
+           -- Spawn new contexts for sublocations
+           let cSpawned = concatMap (heatLocations stdGen1) contexts'
+           -- Move contexts with a "go" atom
+           let cMoved = map migrate cSpawned
+           -- Map sublocation names to their grandest parent location name.
+           let gp = grandestParents cMoved
+           -- Handle fail handler registration and halting
+           let cFailed =
+                (registerFail >>> map halt >>> killFailed comP gp stdGen2) cMoved
+           -- Exchange messages between locations and API, and take a step in each context.
+           let cStepped =
+                (exchangeMessages comP gp stdGen3 >>>
+                 putMessages comP gp stdGen4 [(rootLocation,na) | na <- newAtms] >>>
+                 map (execInterp conf)) cFailed
+           if maybe (contexts /= cStepped) (n/=) (breakAt conf)
+                then runInterpreter' comP (n+1) cStepped
                 else return contexts
 
         mkInitialCtxs      _   _     [] = []
@@ -152,11 +172,16 @@ halt context =
           isHalt _ = False
 
 -- |Propagates failure to subcontexts, and removes failed
-killFailed :: M.Map (String, String) Double -> R.StdGen -> [Context] -> [Context]
-killFailed comP rGen cs =
+killFailed :: M.Map (String, String) Double
+              -> M.Map String String
+              -> R.StdGen
+              -> [Context]
+              -> [Context]
+killFailed comP gp rGen cs =
    let (failed, ok) = propagateFail cs
-       msgs = concatMap (\ctx -> [tagged| fc <- cFailureConts ctx, tagged <- [(cLocation ctx, MsgA fc [])]]) failed
-    in putMessages comP rGen msgs ok
+       msgs = concatMap (\ctx -> [(gp M.! cLocation ctx, MsgA fc []) | fc <- cFailureConts ctx])
+                        failed
+    in putMessages comP gp rGen msgs ok
      where propagateFail cs =
              let (failed, ok) = partition cFail cs
                  failNames = S.fromList $ map cLocation failed
@@ -225,10 +250,14 @@ heatLocations stdGen context =
             in initContext ds as name locParent (S.toList exports) stdGen
 
 -- | Exchanges messages between a list of contexts.
-exchangeMessages :: M.Map (String, String) Double -> R.StdGen -> [Context] -> [Context]
-exchangeMessages comP rGen cs =
+exchangeMessages :: M.Map (String, String) Double
+                    -> M.Map String String
+                    -> R.StdGen
+                    -> [Context]
+                    -> [Context]
+exchangeMessages comP gp rGen cs =
   let (cs', ms) = second concat . unzip $ map takeMessages cs
-   in putMessages comP rGen ms cs'
+   in putMessages comP gp rGen ms cs'
 
 takeMessages ::  Context -> (Context, [(String, Atom)])
 takeMessages context =
@@ -240,22 +269,32 @@ takeMessages context =
    in (context', [tagged| nl <- nonlocals, tagged <- [(cLocation context, nl)]])
     where getExports (MsgA _ es) = S.unions $ map freeVars es
 
-putMessages :: M.Map (String, String) Double -> R.StdGen -> [(String, Atom)] -> [Context] -> [Context]
-putMessages comP rGen ms [] = []
-putMessages comP rGen ms (context:cs) =
+putMessages :: M.Map (String, String) Double
+               -> M.Map String String
+               -> R.StdGen
+               -> [(String, Atom)]
+               -> [Context]
+               -> [Context]
+putMessages comP gp rGen ms [] = []
+putMessages comP gp rGen ms (context:cs) =
  let (rGen, rGen') = R.split rGen
      dvs = S.unions . map definedVars $ cDefs context
      (locals, ms') = partition (snd >>> isLocal dvs) $ ms
      succCom = tryCom rGen locals
      context' = context { cAtoms = cAtoms context ++ succCom }
-  in context':putMessages comP rGen' ms' cs
+  in context':putMessages comP gp rGen' ms' cs
   where
     tryCom _  [] = []
-    tryCom rg ((loc,a):ls) = if loc == rootLocation then a:tryCom rg ls 
-      else case M.lookup (loc, cLocation context) comP of
-        Nothing -> tryCom rg ls
-        Just cP -> let (p,rg') = R.randomR (0,1) rg in
-                   if cP >= p then a:tryCom rg' ls else tryCom rg' ls
+    tryCom rg ((loc,a):ls) =
+      let destLoc = gp M.! cLocation context
+          loc' = gp M.! loc
+       in if loc == rootLocation || loc' == destLoc
+             then a:tryCom rg ls
+             else case M.lookup (loc', destLoc) comP of
+                    Nothing -> tryCom rg ls
+                    Just cP -> let (p,rg') = R.randomR (0,1) rg
+                                in if cP >= p then a:tryCom rg' ls
+                                              else tryCom rg' ls
 
 isLocal ::  S.Set String -> Atom -> Bool
 isLocal dvs (MsgA name _) = S.member name dvs
