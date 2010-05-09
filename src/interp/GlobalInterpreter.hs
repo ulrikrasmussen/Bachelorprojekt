@@ -50,7 +50,6 @@ dijkstra graph wFun adder start dest initW =
                      in dijkstra' (getLowestUnvisited paths) paths'
         Nothing   -> maybe Nothing (Just . snd) (M.lookup dest paths)
 
-    getLowestUnvisited :: (Ord k) => M.Map k a -> Maybe k
     getLowestUnvisited pths = maybe Nothing (Just . fst) $ M.foldrWithKey foldPaths Nothing pths
 
     foldPaths v (vis, w) old = if vis then old else
@@ -115,7 +114,7 @@ runInterpreter conf = do
         mkInitialCtxs stdGen cls (m:ms) =
           let (stdGen, stdGen') = R.split stdGen
               ctx = initContext []
-                                [(M.findWithDefault undefined (snd m) cls)]
+                                (M.findWithDefault undefined (snd m) cls)
                                 (fst m)
                                 rootLocation
                                 []

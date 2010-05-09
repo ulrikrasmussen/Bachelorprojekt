@@ -135,7 +135,7 @@ data InterpConfig = IC {
   , nondeterministic :: Bool
   , apiMap :: ApiMap         -- ^ A map from atom names to functions. Used to enable IO in join programs.
   , manipulators :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.
-  , machineClasses :: M.Map String Atom
+  , machineClasses :: M.Map String [Atom]
   , initialMachines :: [MachineConfig]
   , comLinks :: M.Map String [(String, Double)]
 }

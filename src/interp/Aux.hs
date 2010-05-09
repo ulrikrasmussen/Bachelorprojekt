@@ -52,14 +52,17 @@ parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
 stdJoinMain (man, api) machines comEdges cfg = do
-  (fs, conf) <- parseArgs cfg{initialMachines = machines, comLinks = mkUniGraph (fst . unzip $ machines) comEdges} [] <$> getArgs
+  let cfg' = cfg { initialMachines = machines
+                 , comLinks = mkUniGraph (fst . unzip $ machines) comEdges }
+  (fs, conf) <- parseArgs cfg' [] <$> getArgs
   timeout <- initTimeout
   ns <- initNameServer
   let (manips, apiMap) =
-       initApi $ (man, M.fromList api):[
-          output
-        , ns
-        , timeout
-        , integerArith
-        ]  
+       initApi
+         [ (man, M.fromList api)
+         , output
+         , ns
+         , timeout
+         , integerArith
+         ]
   run conf{manipulators = manips, apiMap = apiMap} fs
