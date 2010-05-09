@@ -1,0 +1,8 @@
+def intToStr(n) |> { return (Cons(add(n, 48), Nil)) to intToStr }
+ or concat(Nil, ys) |> { return (ys) to concat }
+ or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+ or msg<a> |> { let str = concat("Received: ", intToStr(a));
+                let str' = concat(str, "\n");
+                do print(str')
+               }
+ in { do register("server", msg) }

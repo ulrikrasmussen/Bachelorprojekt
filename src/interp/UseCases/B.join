@@ -1,0 +1,9 @@
+def send<msg> & count<n> |>
+      match n with
+        10 -> 0
+      | n' -> send<msg> & add<n,1,count> & msg<n>
+ or connect<> |>
+      { match search("server") with
+          Nothing -> { run connect<> }
+        | Just msg -> { run send<msg> } }
+ in connect<> & count<0>
