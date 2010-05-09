@@ -1,4 +1,4 @@
-module UseCases.TemperatureWareHouse () where
+module Main() where
 
 import Aux( stdJoinMain, defaultConfig )
 
