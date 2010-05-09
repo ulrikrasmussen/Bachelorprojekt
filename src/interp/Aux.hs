@@ -1,4 +1,4 @@
-module Main() where
+module Aux( stdJoinMain, defaultConfig ) where
 
 import Parser
 import Language
@@ -28,6 +28,19 @@ run conf fs = do
   --mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()
 
+
+defaultConfig = IC {
+    runGC = True
+  , gcInterval = 1
+  , breakAt = Nothing
+  , nondeterministic = False
+  , apiMap = M.fromList []
+  , manipulators = []
+  , machineClasses = M.empty
+  , initialMachines = []
+  , comLinks = (M.empty)
+}
+
 parseArgs conf fs [] = (fs, conf)
 parseArgs conf fs ("-n":xs) =
     parseArgs (conf {nondeterministic = True}) fs xs
@@ -38,15 +51,15 @@ parseArgs conf fs ("-nogc":xs) =
 parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
-main = do
-  (fs, conf) <- parseArgs defaultConfig [] <$> getArgs
+stdJoinMain (man, api) machines comEdges cfg = do
+  (fs, conf) <- parseArgs cfg{initialMachines = machines, comLinks = mkUniGraph (fst . unzip $ machines) comEdges} [] <$> getArgs
   timeout <- initTimeout
   ns <- initNameServer
   let (manips, apiMap) =
-       initApi [
+       initApi $ (man, M.fromList api):[
           output
         , ns
         , timeout
         , integerArith
-        ]
+        ]  
   run conf{manipulators = manips, apiMap = apiMap} fs
