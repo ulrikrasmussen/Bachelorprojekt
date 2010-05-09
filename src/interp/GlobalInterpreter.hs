@@ -121,11 +121,11 @@ runInterpreter conf = do
            -- Handle fail handler registration and halting
            let cFailed =
                 (registerFail >>> map halt >>> killFailed comP gp stdGen2) cMoved
-           -- Exchange messages between locations and API, and take a step in each context.
+           -- Exchange messages between locations
+           let cExchanged = exchangeMessages comP gp stdGen3 cFailed
            let cStepped =
-                (exchangeMessages comP gp stdGen3 >>>
-                 putMessages comP gp stdGen4 [(rootLocation,na) | na <- newAtms] >>>
-                 map (execInterp conf)) cFailed
+                (putMessages comP gp stdGen4 [(rootLocation,na) | na <- newAtms] >>>
+                 map (execInterp conf)) cExchanged
            if maybe (contexts /= cStepped) (n/=) (breakAt conf)
                 then runInterpreter' comP (n+1) cStepped
                 else return contexts
@@ -277,12 +277,12 @@ putMessages :: M.Map (String, String) Double
                -> [Context]
 putMessages comP gp rGen ms [] = []
 putMessages comP gp rGen ms (context:cs) =
- let (rGen, rGen') = R.split rGen
+ let (rGen', rGen'') = R.split rGen
      dvs = S.unions . map definedVars $ cDefs context
      (locals, ms') = partition (snd >>> isLocal dvs) $ ms
-     succCom = tryCom rGen locals
+     succCom = tryCom rGen' locals
      context' = context { cAtoms = cAtoms context ++ succCom }
-  in context':putMessages comP gp rGen' ms' cs
+  in context':putMessages comP gp rGen'' ms' cs
   where
     tryCom _  [] = []
     tryCom rg ((loc,a):ls) =

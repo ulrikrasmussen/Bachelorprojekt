@@ -57,10 +57,15 @@ stdJoinMain (man, api) machines mClasses comEdges cfg = do
          , timeout
          , integerArith
          ]
+  -- Parse files from the command line. These are used for the "Default" machine class
   (Proc as) <- desugar . foldl joinProgs (Proc []) <$> mapM openJF fs
+  -- Parse files from the given list of machine classes
+  let (cls, paths) = unzip mClasses
+  progs <- map ((\(Proc as) -> as) . desugar) <$> mapM openJF paths
   ctxs <- runInterpreter conf { manipulators = manips
                               , apiMap = apiMap
-                              , machineClasses = M.fromList [("Default", as)]
+                              , machineClasses =
+                                    M.fromList $ ("Default", as):(zip cls progs)
                               }
-  --  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+--  mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()
