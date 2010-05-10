@@ -26,6 +26,13 @@ rootLocation = "@root"
 
 --{ Helper functions
 
+-- | Adds a global "machineId" message to a group of atoms.
+makeIdMsg :: String -> [Atom] -> [Atom]
+makeIdMsg machineId as =
+ [DefA [ReactionD [VarJ "machineId" [VarP "k"]] . Proc $ [MsgA "k" [toJoin machineId]]]
+       (Proc as)
+ ]
+
 grandestParents :: [Context] -> M.Map String String
 grandestParents ctxs =
   grandestParents' $ M.fromList (map (cLocation &&& cLocationParent) ctxs)
@@ -132,14 +139,15 @@ runInterpreter conf = do
 
         mkInitialCtxs      _   _     [] = []
         mkInitialCtxs stdGen cls (m:ms) =
-          let (stdGen, stdGen') = R.split stdGen
+          let (stdGen', stdGen'') = R.split stdGen
+              as = makeIdMsg (fst m) (cls M.! snd m)
               ctx = initContext []
-                                (M.findWithDefault undefined (snd m) cls)
+                                as
                                 (fst m)
                                 rootLocation
                                 []
-                                stdGen
-          in ctx : mkInitialCtxs stdGen' cls ms
+                                stdGen'
+          in ctx : mkInitialCtxs stdGen'' cls ms
 
 {-
  - There are two types of "magic" devices:

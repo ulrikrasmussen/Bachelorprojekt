@@ -2,13 +2,13 @@ module Main() where
 
 import Aux( stdJoinMain, defaultConfig )
 
-machineClasses = [("Collector", "path/to/collector.join")]
+machineClasses = [("Collector", "collector.join")]
 
 machines = [ ("Server", "Collector")
-           , ("Sensor1", "Sensor")
-           , ("Sensor2", "Sensor")
-           , ("Sensor3", "Sensor")
-           , ("Sensor4", "Sensor")
+           , ("Sensor_A", "Sensor")
+           , ("Sensor_B", "Sensor")
+           , ("Sensor_C", "Sensor")
+           , ("Sensor_D", "Sensor")
            ]
 comEdges = [ ("Sensor1", "Server", 0.9)
            , ("Sensor2", "Server", 0.9)

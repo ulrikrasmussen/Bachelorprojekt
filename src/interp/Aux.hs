@@ -49,12 +49,14 @@ stdJoinMain (man, api) machines mClasses comEdges cfg = do
   (fs, conf) <- parseArgs cfg' [] <$> getArgs
   timeout <- initTimeout
   ns <- initNameServer
+  temp <- initTempSensor
   let (manips, apiMap) =
        initApi
          [ (man, M.fromList api)
          , output
          , ns
          , timeout
+         , temp
          , integerArith
          ]
   -- Parse files from the command line. These are used for the "Default" machine class
@@ -67,5 +69,5 @@ stdJoinMain (man, api) machines mClasses comEdges cfg = do
                               , machineClasses =
                                     M.fromList $ ("Default", as):(zip cls progs)
                               }
---  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()

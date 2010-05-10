@@ -5,6 +5,7 @@ module JoinApi(integerArith
               ,initApi
               ,initTimeout
               ,initNameServer
+              ,initTempSensor
               ,output
               ,ApiMap
               ,Manipulator) where
@@ -21,17 +22,41 @@ import qualified Data.Map as M
 type ApiMap      = M.Map String (Atom -> IO [Atom])
 type Manipulator = IO [Atom]
 
+initTempSensor :: IO ([Manipulator], ApiMap)
+initTempSensor = do
+  tV <- newMVar 0
+  return ([progressTime tV],
+          M.fromList [
+            ("readTemp", readTemp tV)
+          ])
+  where
+    progressTime tV = modifyMVar tV (\t -> return (t+1,[]))
+    tempFun :: Int -> Double -> Double -> Int -> Int
+    tempFun avg freq amp time =
+      avg + (round $ amp * sin(2*pi * fromIntegral time * freq))
+    readTemp tV (MsgA _ [machineId, VarE k]) = do
+      t <- readMVar tV
+      let temp = case fromJoin machineId of
+                   "Sensor_A" -> tempFun 20 0.10 2 t
+                   "Sensor_B" -> tempFun 20 0.12 2 t
+                   "Sensor_C" -> tempFun 20 0.05 3 t
+                   "Sensor_D" -> tempFun 20 0.09 1 t
+                   _ -> error $ "Unknown sensor: " ++ fromJoin machineId
+      return [MsgA k [toJoin (temp :: Int)]]
+
 integerArith :: ([Manipulator], ApiMap)
 integerArith = ([], M.fromList [
     ("add", jAdd)
   , ("mult", jMult)
   , ("div", jDiv)
+  , ("mod", jMod)
   , ("leq", jLeq)
   ])
   where
     jAdd (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 + op2]]
     jMult (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 * op2]]
     jDiv (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 `div` op2]]
+    jMod (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 `mod` op2]]
     jLeq (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 <= op2]]
 
 output = ([], M.fromList [

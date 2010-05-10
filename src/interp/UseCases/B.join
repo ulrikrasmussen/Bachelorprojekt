@@ -1,7 +1,9 @@
 def send<msg> & count<n> |>
       match n with
-        10 -> 0
-      | n' -> send<msg> & add<n,1,count> & msg<n>
+        20 -> 0
+      | n' -> { let t = readTemp(machineId());
+                run send<msg> & add<n,1,count> & msg<t>
+              }
  or connect<> |>
       { match search("server") with
           Nothing -> { run connect<> }

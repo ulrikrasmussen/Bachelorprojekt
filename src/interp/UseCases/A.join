@@ -1,8 +1,20 @@
-def intToStr(n) |> { return (Cons(add(n, 48), Nil)) to intToStr }
+def intToStr(n) |>
+    def intToStr'(n,acc) |> {
+          match n with
+            0 -> { return (acc) to intToStr' }
+          | n -> { let n' = div(n, 10);
+                   let d = mod(n, 10);
+                   let acc' = Cons(add(d, 48), acc);
+                   return (intToStr'(n', acc')) to intToStr'
+                 }
+        }
+     in { return (intToStr'(n, Nil)) to intToStr }
  or concat(Nil, ys) |> { return (ys) to concat }
  or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
- or msg<a> |> { let str = concat("Received: ", intToStr(a));
-                let str' = concat(str, "\n");
-                do print(str')
-               }
+
+ or msg<id, a> |>
+    { let str = concat("Received: ", intToStr(a));
+      let str' = concat(str, "\n");
+       do print(str')
+    }
  in { do register("server", msg) }

@@ -5,13 +5,11 @@ import Aux( stdJoinMain, defaultConfig )
 machineClasses = [ ("ClassA", "UseCases/A.join")
                  , ("ClassB", "UseCases/B.join") ]
 
-machines = [ ("A", "ClassA")
-           , ("B", "ClassB") ]
+machines = [ ("Server", "ClassA")
+           , ("Sensor_A", "ClassB") ]
 
-comEdges = [  ("A", "B", 1.0) ]
+comEdges = [  ("Server", "Sensor_A", 1.0) ]
 
-api = ([], [
-  ("readTemp", undefined)
-  ])
+api = ([], [])
 
 main = stdJoinMain api machines machineClasses comEdges defaultConfig
