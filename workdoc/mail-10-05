@@ -1,0 +1,34 @@
+Hej Andrzej,
+
+Operationssemantik
+------------------
+Afsnit 1.4 i [1] diskuterer hvorvidt en mere traditionel operationssemantik er
+ønskværdig, fremfor RCHAM-modellen. Det vises as semantikken kan udtrykkes som
+en enkelt reduktionsregel, men at meget implementationsrelevante dele af
+sproget (bl.a. start af nye tråde) kommer til at være udtrykt i en
+ækvivalensrelation, som ikke gør det oplagt at udforme en reel implementation.
+
+RCHAM-modellen skulle ligge tættere op ad hvordan man reelt ville implementere
+sproget.
+
+Vi skal nok alligevel have samlet nogle af alle trådene, bl.a. tilføjelse af
+tid, distribution og pattern matching. Det virker oplagt at definere
+en semantik for det endelige sprog med alle disse udvidelser.
+
+
+Tid i join-calculus
+-------------------
+Vi har fundet en enkelt artikel der beskæftiger sig med tid i join-calculus[2].
+Det virker lidt spøjst at ingen af de to forfattere har den på listen over
+publicerede værker på deres hjemmesider, og at der heller ikke er nogen der
+(ifølge Google Scholar) ser ud til at have citeret den. Den ser dog ud til at
+have nogle lovende ideer.
+
+Vi har ikke nået at implementere udvidelsen i fortolkeren, men vi er begyndt på
+et lille rapportafsnit, hvor vi generelt beskriver det sprog vi har arbejdet
+med, og motivationen bag de udvidelser vi har valgt at inkludere. Udkastet er
+vedhæftet.
+
+
+[1] The Join Calculus: A Language For Distributed Mobile Programming
+[2] http://www.cs.unibo.it/pub/TR/UBLCS/2002/2002-01.ps.gz
