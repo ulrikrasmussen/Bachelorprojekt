@@ -1,0 +1,62 @@
+def div'<n, d, k> |> def k'<r> & once<> |> k<r> in div<n, d, k'> & once<>
+ or mod'<n, d, k> |> def k'<r> & once<> |> k<r> in mod<n, d, k'> & once<>
+ or eq'<e1, e2, k> |> def k'<r> & once<> |> k<r> in eq<e1,e2,k'> & once<>
+ or print'<s,k> |> def k'<> & once<> |> k<> in print<s,k'> & once<>
+ or intToStr(n) |>
+    def intToStr'(n,acc) |>
+          match n with
+            0 -> { return (acc) to intToStr' }
+          | n -> { let n' = div'(n, 10);
+                   let d = mod'(n, 10);
+                   let acc' = Cons(add(d, 48), acc);
+                   return (intToStr'(n', acc')) to intToStr'
+                 }
+     in { return (intToStr'(n, Nil)) to intToStr }
+
+ or length(Nil) |> { return (0) to length }
+ or length(Cons(x,xs)) |> { return (add(1,length(xs))) to length }
+
+or concat(Nil, ys) |> { return (ys) to concat }
+or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+
+or map(f, Nil) |> { return (Nil) to map }
+or map(f, Cons(x,xs)) |> { return (Cons(f(x), map(f,xs))) to map }
+
+or mkReducer<ss> |>
+  def recv'(id) |> def f<v> |> recv<id, v> in {return (f) to recv'}
+   or recv<id, v> & state<xs> |> {
+     let xs' = update(xs, id, v);
+     do print'(id);
+     do print'(": ");
+     do print'(intToStr(v));
+     do print'("\n");
+     run state<xs'>
+   }
+   or update(Nil, id, v) |> { return (Nil) to update }
+   or update(Cons(QueryData(qid, qstop, mlast), xs), id, v) |> {
+        match eq'(id, qid) with
+          True -> { return (Cons(QueryData(qid,qstop,Just v), xs)) to update }
+        | False -> { return (Cons(QueryData(qid,qstop,mlast), update(xs,id,v))) to update }
+      }
+
+   or startQuery(Sensor(id, start)) |> {
+        let stop = start(23, recv'(id));
+        return (QueryData(id, stop, Nothing)) to startQuery
+      }
+   in { let xs = map(startQuery, ss);
+        run state<xs>
+      }
+
+or mkServer<> |>
+  def sensorConnect<id, start> & sensors<ss> |> {
+        run sensors<Cons(Sensor(id, start), ss)>;
+        match add(1, length(ss)) with
+          3 -> { run runQuery<> }
+        | n -> { }
+      }
+   or runQuery<> & sensors<ss> |> mkReducer<ss> & sensors<ss>
+   or recv<id, t> |> 0
+   in { do register("server", sensorConnect) } & sensors<Nil>
+
+
+in mkServer<>

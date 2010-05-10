@@ -7,6 +7,7 @@ module JoinApi(integerArith
               ,initNameServer
               ,initTempSensor
               ,output
+              ,equality
               ,ApiMap
               ,Manipulator) where
 
@@ -19,8 +20,14 @@ import Language
 
 import qualified Data.Map as M
 
+import Debug.Trace
+
 type ApiMap      = M.Map String (Atom -> IO [Atom])
 type Manipulator = IO [Atom]
+
+equality :: ([Manipulator], ApiMap)
+equality = ([], M.fromList [("eq", exprEq)])
+ where exprEq (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin (e1 == e2)]]
 
 initTempSensor :: IO ([Manipulator], ApiMap)
 initTempSensor = do
@@ -37,10 +44,10 @@ initTempSensor = do
     readTemp tV (MsgA _ [machineId, VarE k]) = do
       t <- readMVar tV
       let temp = case fromJoin machineId of
-                   "Sensor_A" -> tempFun 20 0.10 2 t
-                   "Sensor_B" -> tempFun 20 0.12 2 t
-                   "Sensor_C" -> tempFun 20 0.05 3 t
-                   "Sensor_D" -> tempFun 20 0.09 1 t
+                   "Sensor_A" -> tempFun 20 0.0012 10 t
+                   "Sensor_B" -> tempFun 20 0.0010 3 t
+                   "Sensor_C" -> tempFun 20 0.0001 2 t
+                   "Sensor_D" -> tempFun 20 0.0009 1 t
                    _ -> error $ "Unknown sensor: " ++ fromJoin machineId
       return [MsgA k [toJoin (temp :: Int)]]
 
