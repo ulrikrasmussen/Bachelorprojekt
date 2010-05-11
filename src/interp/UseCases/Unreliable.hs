@@ -15,7 +15,7 @@ machines = [ ("Server", "Server")
 comEdges = [ ("Server", "Sensor_A", 1.0)
            , ("Server", "Sensor_B", 1.0)
            , ("Server", "Sensor_C", 1.0)
-           , ("Server", "Sensor_D", 0.8)
+           , ("Server", "Sensor_D", 1.0)
            ]
 
 api = ([], [])

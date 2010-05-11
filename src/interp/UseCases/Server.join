@@ -1,13 +1,9 @@
-def div'<n, d, k> |> def k'<r> & once<> |> k<r> in div<n, d, k'> & once<>
- or mod'<n, d, k> |> def k'<r> & once<> |> k<r> in mod<n, d, k'> & once<>
- or eq'<e1, e2, k> |> def k'<r> & once<> |> k<r> in eq<e1,e2,k'> & once<>
- or print'<s,k> |> def k'<> & once<> |> k<> in print<s,k'> & once<>
- or intToStr(n) |>
+def intToStr(n) |>
     def intToStr'(n,acc) |>
           match n with
             0 -> { return (acc) to intToStr' }
-          | n -> { let n' = div'(n, 10);
-                   let d = mod'(n, 10);
+          | n -> { let n' = div(n, 10);
+                   let d = mod(n, 10);
                    let acc' = Cons(add(d, 48), acc);
                    return (intToStr'(n', acc')) to intToStr'
                  }
@@ -26,15 +22,15 @@ or mkReducer<ss> |>
   def recv'(id) |> def f<v> |> recv<id, v> in {return (f) to recv'}
    or recv<id, v> & state<xs> |> {
      let xs' = update(xs, id, v);
-     do print'(id);
-     do print'(": ");
-     do print'(intToStr(v));
-     do print'("\n");
+     do print(id);
+     do print(": ");
+     do print(intToStr(v));
+     do print("\n");
      run state<xs'>
    }
    or update(Nil, id, v) |> { return (Nil) to update }
    or update(Cons(QueryData(qid, qstop, mlast), xs), id, v) |> {
-        match eq'(id, qid) with
+        match eq(id, qid) with
           True -> { return (Cons(QueryData(qid,qstop,Just v), xs)) to update }
         | False -> { return (Cons(QueryData(qid,qstop,mlast), update(xs,id,v))) to update }
       }
