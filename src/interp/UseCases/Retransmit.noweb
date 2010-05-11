@@ -1,0 +1,95 @@
+% vim:set filetype=noweb:
+% use notangle Retransmit.noweb (apt-get noweb) to generate join file.
+% vim syntax highlighting is provided in misc/noweb.vim
+
+In the following is an attempt at defining a rudimentary protocol for guarranteed delivery of messages,
+based on the same fundamental techniques as TCP.
+
+The use of the library is made somewhat transparent to the programmer, as the only visible indication
+of the use of the library is in the initial exchange of names between machines, because new names that
+will serve as managed message proxies need to be created. These names will then take the place of the
+original unmanaged name when invoking atoms.
+
+Overall, the library consists of two parts:
+
+<<*>>=
+  def
+     <<Exposing a name for proxied communication>>
+   or
+     <<Communicating with a proxied name>>
+   in 0
+@
+
+\paragraph{Instantiating the receiving side} of the communication channel produces a nested def that
+takes care of sending acks upon the reception af a name invocation, while returning a name that will
+serve as the communication proxy.
+
+A notable limitation to the current simple implementation is that only one sender can be allowed pr
+name proxy, as the bookkeeping mechanics are tied to the session. It could easily be extended by
+adding session numbers to the \texttt{SynAck} and subsequent transfers.
+
+<<Exposing a name for proxied communication>>=
+  listen<nm, ret> |> {let timeout = 1000; run
+    def
+        receive<Syn(ack), num> |> ackNm<ack> & ack<SynAck, num> & pNum<num>
+
+        receive<Data(data), next>
+        & pNum<cur> & ackNm<ack>
+        & lastResult<lr> |> match leq(next, cur) with
+                              True  -> pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>
+                            | False -> pNum<next> & ackNm<ack>
+                                     & match nm with
+                                         Sync(nm') -> { let ret = nm'<data>; run ack<DataAck(Just(ret)), next> & lastResult<ret> }
+     in ret<receive> & lastResult<Nothing>
+    }
+
+@
+
+Upon receiving a \texttt{Syn} message, the packet number is reset and the name to send acknowledgements to is saved for later.
+Subsequent communications use the recorded ack-name for confirming reception of new messages, or retransmitting results if it
+detects a retransmit from the sender, indicated by a lower packet number than the one currently recorded.
+
+\paragraph{Initialising the communication} is done by the sending party, by means of sending \texttt{Syn} packets until receiving
+a \texttt{SynAck}, indicating that the receiving party has accepted the communication.
+
+<<Communicating with a proxied name>>=
+  initTrans<nm, dest, ret> |> { let timeout = 1000; run
+      def
+
+         ack<type, ackN>
+       & waitAck<>
+       & pNum<cur> |> match eq(ackN,cur) with
+                        True -> (match type with
+                                        SynAck -> match nm with
+                                                    Sync(nm')  -> ret<sendSync>
+                                                  | ASync(nm') -> ret<sendAsync>
+                                      | DataAck(ret) -> match nm with
+                                                    Sync(nm') -> runRecvCont<ret>
+                                                  | Async(nm') -> 0
+                                ) & pNum<cur> & lineClear<>
+
+                      | False -> 0
+
+       or runRecvCont<data> & recvCont<k> |> match data with
+                                               Just(data') -> k<data'>
+                                             | Nothing     -> k<>
+
+       or retransmit<pl> & waitAck<> |> send<pl>
+
+       or send<payload> & pNum<n> |> pNum<n>
+                                  & dest<Data(payload), n'>
+                                  & {sleep(timeout); run retransmit<payload>}
+                                  & waitAck<>}
+
+       or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & pNum<n'>}
+       or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
+
+       or sendSyn<> |> dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
+       or retrSyn<> & waitAck<> |> sendSyn<>
+
+       in pNum<0> & sendSyn<>
+    in
+      0
+    }
+@
+

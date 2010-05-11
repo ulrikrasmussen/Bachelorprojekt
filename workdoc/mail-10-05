@@ -3,7 +3,7 @@ Hej Andrzej,
 Operationssemantik
 ------------------
 Afsnit 1.4 i [1] diskuterer hvorvidt en mere traditionel operationssemantik er
-ønskværdig, fremfor RCHAM-modellen. Det vises as semantikken kan udtrykkes som
+ønskværdig, fremfor RCHAM-modellen. Det vises at semantikken kan udtrykkes som
 en enkelt reduktionsregel, men at meget implementationsrelevante dele af
 sproget (bl.a. start af nye tråde) kommer til at være udtrykt i en
 ækvivalensrelation, som ikke gør det oplagt at udforme en reel implementation.
@@ -24,11 +24,11 @@ publicerede værker på deres hjemmesider, og at der heller ikke er nogen der
 (ifølge Google Scholar) ser ud til at have citeret den. Den ser dog ud til at
 have nogle lovende ideer.
 
-Vi har ikke nået at implementere udvidelsen i fortolkeren, men vi er begyndt på
-et lille rapportafsnit, hvor vi generelt beskriver det sprog vi har arbejdet
+Vi har ikke nået at implementere tidsudvidelsen i fortolkeren, men vi er begyndt
+på et lille rapportafsnit, hvor vi generelt beskriver det sprog vi har arbejdet
 med, og motivationen bag de udvidelser vi har valgt at inkludere. Udkastet er
 vedhæftet.
 
 
-[1] The Join Calculus: A Language For Distributed Mobile Programming
-[2] http://www.cs.unibo.it/pub/TR/UBLCS/2002/2002-01.ps.gz
+[1] The Join Calculus: A Language For Distributed Mobile Programming (http://github.com/ulrikrasmussen/Bachelorprojekt/blob/master/papers/join-calculus/join-tutorial.pdf)
+[2] A Timed Join Calculus (http://github.com/ulrikrasmussen/Bachelorprojekt/blob/master/papers/join-calculus/timed-join-calculus.ps)
