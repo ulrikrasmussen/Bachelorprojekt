@@ -112,7 +112,11 @@ joins = (lexeme construction) `sepBy1` (lexeme $ char '&')
 defs :: Parser [Def]
 defs = (lexeme def) `sepBy1` (lexeme1 $ string "or")
      <?> "Definition"
-  where def = ReactionD <$> (try joins) <* (lexeme $ string "|>") <*> proc
+  where def = ReactionD <$> (try joins)
+                        <*  (string "|>")
+                        <*> (char '^' *> lexeme1 (read <$> many1 digit)
+                             <|> pure 0 <* many1 space)
+                        <*> proc
             <|> LocationD <$> identifier
                 <* (lexeme $ char '[') <*> defs <* (lexeme1 $ string "in") <*> proc <* char ']'
 

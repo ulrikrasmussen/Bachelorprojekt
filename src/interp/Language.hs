@@ -95,27 +95,28 @@ instance Subst Join where
 --}
 
 
-data Def  = ReactionD [Join] Proc
+data Def  = ReactionD [Join] Integer Proc
           | LocationD String [Def] Proc
     deriving (Eq, Data, Typeable)
 
 --{ Utility functions
 isLocationD (LocationD _ _ _) = True
 isLocationD _ = False
-isReactionD (ReactionD _ _) = True
+isReactionD (ReactionD _ _ _) = True
 isReactionD _ = False
 --}
 
 --{ Instances
 instance Show Def where
-  show (ReactionD j p) = (concat $ intersperse " & " (map show j)) ++ " |> " ++ show p
+  show (ReactionD j d p) = (concat $ intersperse " & " (map show j))
+    ++ " |>^" ++ show d ++ " " ++ show p
   show (LocationD n d p) =
     n ++ "[" ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ (show p) ++ "]"
 
 instance Subst Def where
-  subst sigma (ReactionD js p) =
+  subst sigma (ReactionD js d p) =
      let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map receivedVars js)
-     in ReactionD (subst sigma' <$> js) (sigma' `subst` p)
+     in ReactionD (subst sigma' <$> js) d (sigma' `subst` p)
   subst sigma (LocationD loc ds p) =
      let loc' = maybe loc (\(VarE loc') -> loc') $ M.lookup loc sigma
      in LocationD loc' (subst sigma <$> ds) (sigma `subst` p)
@@ -137,6 +138,7 @@ data Atom = InertA
           | DefA   [Def] Proc
           | MatchA Expr [(Pat, Proc)]
           | InstrA [Instr]
+          | DelayA Integer Proc
     deriving (Eq, Data, Typeable)
 
 --{ Instances
@@ -149,6 +151,7 @@ instance Show Atom where
     (concat $ intersperse " | " (map showmp mps)) ++ ")"
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc
   show (InstrA is) = "{ " ++ (concat . intersperse "\n; " . map show $ is) ++ "}"
+  show (DelayA d p) = show d ++ " : " ++ show p
 
 indent lins = indent' (lines lins)
   where
@@ -169,6 +172,7 @@ instance Subst Atom where
     where substPat (pat, proc) =
             let sigma' = foldl (flip M.delete) sigma (S.toList $ receivedVars pat)
             in  (pat, sigma' `subst` proc)
+  subst sigma (DelayA d p) = DelayA d $ sigma `subst` p
   subst sigma x = trace ("#subst# : \n\tx=" ++ show x ++ "\n\t sigma=" ++ show sigma) x
 
 --}
@@ -214,7 +218,7 @@ instance DefinedVars Join where
   definedVars (VarJ m ps) = S.singleton m
 
 instance DefinedVars Def where
-  definedVars (ReactionD j p) = S.unions $ map definedVars j
+  definedVars (ReactionD j d p) = S.unions $ map definedVars j
   definedVars (LocationD a ds p) = a `S.insert` S.unions (map definedVars ds)
 
 --}
@@ -228,7 +232,7 @@ instance FreeVars Expr where
   freeVars (VarE v)    = S.singleton v
 
 instance FreeVars Def where
-  freeVars (ReactionD j p) =
+  freeVars (ReactionD j d p) =
     S.unions (map definedVars j)
         `S.union` (freeVars p `S.difference` S.unions (map receivedVars j))
   freeVars (LocationD a ds p) =
@@ -245,6 +249,7 @@ instance FreeVars Atom where
     `S.difference` S.unions (map definedVars ds)
   freeVars (MatchA e mps) = freeVars e `S.union` (S.unions $ map freeVars' mps)
     where freeVars' (pat, proc) = freeVars proc `S.union` receivedVars pat
+  freeVars (DelayA d p) = freeVars p
 --}
 
 --{ Conversion functions
