@@ -1,16 +1,10 @@
-def machineId'<k> |> def k'<r> & once<> |> k<r> in machineId<k'> & once<>
- or search'<s, k> |> def k'<r> & once<> |> k<r> in search<s, k'> & once<>
- or mkSensor<sensorConnect> |>
+def mkSensor<sensorConnect> |>
     def start(threshold, callback) |>
          def query[
                stop<> |> halt<>
-               or leq'<n1,n2,k> |> def k'<r> & once<> |> k<r> in leq<n1,n2,k'> & once<>
-               or machineId'<k> |> def k'<r> & once<> |> k<r> in machineId<k'> & once<>
-               or readTemp'<id, k> |> def k'<r> & once<> |> k<r> in readTemp<id, k'> & once<>
                or loop<> |> {
-                    let id = machineId'();
-                    let t = readTemp'(id);
-                    match leq'(threshold, t) with
+                    let t = readTemp(machineId());
+                    match leq(threshold, t) with
                       True -> { run callback<t> }
                     | False -> { };
                     run loop<>
@@ -18,10 +12,10 @@ def machineId'<k> |> def k'<r> & once<> |> k<r> in machineId<k'> & once<>
                in loop<>
              ]
           in { return (stop) to start }
-     in { let id = machineId'();
+     in { let id = machineId();
           run sensorConnect<id, start> }
  or connect<> |>
-      { match search'("server") with
+      { match search("server") with
           Nothing -> { run connect<> }
         | Just sensorConnect -> { run mkSensor<sensorConnect> } }
  in connect<> & count<0>
