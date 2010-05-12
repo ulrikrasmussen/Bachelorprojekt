@@ -33,13 +33,13 @@ adding session numbers to the \texttt{SynAck} and subsequent transfers.
     def
         receive<Syn(ack), num> |> ackNm<ack> & ack<SynAck, num> & pNum<num>
 
-        receive<Data(data), next>
-        & pNum<cur> & ackNm<ack>
-        & lastResult<lr> |> match leq(next, cur) with
-                              True  -> pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>
-                            | False -> pNum<next> & ackNm<ack>
-                                     & match nm with
-                                         Sync(nm') -> { let ret = nm'<data>; run ack<DataAck(Just(ret)), next> & lastResult<ret> }
+     or receive<Data(data), next>
+      & pNum<cur> & ackNm<ack>
+      & lastResult<lr> |> match leq(next, cur) with
+                            True  -> pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>
+                          | False -> pNum<next> & ackNm<ack>
+                                   & match nm with
+                                       Sync(nm') -> { let ret = nm'<data>; run ack<DataAck(Just(ret)), next> & lastResult<ret> }
      in ret<receive> & lastResult<Nothing>
     }
 

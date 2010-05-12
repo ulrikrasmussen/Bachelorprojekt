@@ -173,4 +173,4 @@ instr =  LetI <$ (lexeme1 $ string "let")
 
 -- |Parses a complete program, which consists of one or more atoms
 program :: Parser Proc
-program = lexeme proc <* eof
+program = many space *> (lexeme proc <* eof)
