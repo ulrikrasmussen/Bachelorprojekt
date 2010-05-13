@@ -36,7 +36,8 @@ newtype JoinM a = J { runJoinM :: State Context a  }
 
 --{ Interpreter Context
 
-data Context = Context { cDefs :: [Def] -- ^ Active definitions
+data Context = Context { cTime :: Integer -- ^ Abstract time representation
+                       , cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
                        , cFreshNames :: [String] -- ^ Infinite stream of fresh names
                        , cStdGen :: R.StdGen -- ^ StdGen for non-determinism
