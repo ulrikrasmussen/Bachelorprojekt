@@ -35,11 +35,14 @@ adding session numbers to the \texttt{SynAck} and subsequent transfers.
 
      or receive<Data(data), next>
       & pNum<cur> & ackNm<ack>
-      & lastResult<lr> |> match leq(next, cur) with
-                            True  -> pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>
-                          | False -> pNum<next> & ackNm<ack>
+      & lastResult<lr> |> {let nextLeq = leq(next, cur); match nextLeq with
+                            True  -> {run pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
+                          | False -> {run pNum<next> & ackNm<ack>
                                    & match nm with
-                                       Sync(nm') -> { let ret = nm'<data>; run ack<DataAck(Just(ret)), next> & lastResult<ret> }
+                                       Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<ret> }
+                                     | Async(nm') -> { run ack<DataAck(Nothing), next> & lastResult<Nothing> }
+                                     }
+                          }
      in ret<receive> & lastResult<Nothing>
     }
 
@@ -58,17 +61,19 @@ a \texttt{SynAck}, indicating that the receiving party has accepted the communic
 
          ack<type, ackN>
        & waitAck<>
-       & pNum<cur> |> match eq(ackN,cur) with
-                        True -> (match type with
-                                        SynAck -> match nm with
-                                                    Sync(nm')  -> ret<sendSync>
-                                                  | ASync(nm') -> ret<sendAsync>
-                                      | DataAck(ret) -> match nm with
-                                                    Sync(nm') -> runRecvCont<ret>
-                                                  | Async(nm') -> 0
-                                ) & pNum<cur> & lineClear<>
+       & pNum<cur> |> {let ackMatch = eq(ackN, cur)
+                      ; match ackMatch with
+                        True -> {run (match type with
+                                       SynAck -> match nm with
+                                                   Sync(nm')  -> ret<sendSync>
+                                                 | ASync(nm') -> ret<sendAsync>
+                                     | DataAck(ret) -> match nm with
+                                                   Sync(nm') -> runRecvCont<ret>
+                                                 | Async(nm') -> 0)
+                                 & pNum<cur> & lineClear<>}
 
-                      | False -> 0
+                      | False -> {run 0}
+                      }
 
        or runRecvCont<data> & recvCont<k> |> match data with
                                                Just(data') -> k<data'>
@@ -76,10 +81,10 @@ a \texttt{SynAck}, indicating that the receiving party has accepted the communic
 
        or retransmit<pl> & waitAck<> |> send<pl>
 
-       or send<payload> & pNum<n> |> pNum<n>
-                                  & dest<Data(payload), n'>
-                                  & {sleep(timeout); run retransmit<payload>}
-                                  & waitAck<>}
+       or send<payload> & pNum<n> |> {run pNum<n> & dest<Data(payload), n> & waitAck<>
+                                     ; do sleep(timeout)
+                                     ; run retransmit<payload>
+                                     }
 
        or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & pNum<n'>}
        or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
@@ -87,9 +92,6 @@ a \texttt{SynAck}, indicating that the receiving party has accepted the communic
        or sendSyn<> |> dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
        or retrSyn<> & waitAck<> |> sendSyn<>
 
-       in pNum<0> & sendSyn<>
-    in
-      0
-    }
+       in pNum<0> & sendSyn<>}
 @
 

@@ -1,0 +1,45 @@
+def
+    initTrans<typ, dest, ret> |> { let timeout = 1000; run
+        def
+           ack<type, ackN>
+         & waitAck<>
+         & pNum<cur> |> {let ackMatch = eq(ackN, cur)
+                        ; match ackMatch with
+                            True -> {run (match type with
+                                           SynAck -> match typ with
+                                                       Sync  -> ret<sendSync>
+                                                     | ASync -> ret<sendAsync>
+                                         | DataAck(ret) -> match typ with
+                                                       Sync -> runRecvCont<ret>
+                                                     | Async -> 0)
+                                     & pNum<cur> & lineClear<>}
+                          | False -> {run 0}
+                        }
+
+         or runRecvCont<data> & recvCont<k> |> match data with
+                                                 Just(data') -> k<data'>
+                                               | Nothing     -> k<>
+
+         or retransmit<pl> & waitAck<> |> {do print("retransmitting..")} & send<pl>
+
+         or send<payload> & pNum<n> |> { run pNum<n> & dest<Data(payload), n> & waitAck<>
+                                       ; do sleep(timeout)
+                                       ; run retransmit<payload>
+                                       }
+
+         or sendAsync<payload> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & pNum<n'>}
+         or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
+
+         or sendSyn<> |> {do print("sending syn\n")} & dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
+         or retrSyn<> & waitAck<> |> sendSyn<>
+
+         in pNum<0> & sendSyn<>}
+ in { do sleep(100)
+    ; let serverPrint = search("serverPrint")
+    ; match serverPrint with
+        Just sPrint -> { do print("serverPrint found\n")
+                       ; let proxPrint = initTrans(Async, servPrint)
+                       ; run proxPrint<"1 - Test">
+                       }
+      | Nothing      -> { do print("failed to find serverPrint\n") }
+    }

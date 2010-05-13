@@ -26,6 +26,7 @@ import Data.List (intersperse, (\\), nub, union)
 import Data.Generics
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Debug.Trace (trace)
 
 type Sigma = M.Map String Expr
 
@@ -143,17 +144,23 @@ instance Show Atom where
   show InertA = "0"
   show (MsgA s es) =
     s ++ "<" ++ (concat $ intersperse ", " (map show es)) ++ ">"
-  show (DefA d p) = "def " ++ (concat $ intersperse " or " (map show d)) ++ " in " ++ show p
+  show (DefA d p) = "def\n" ++ (indent $ concat $ intersperse " or " (map show d)) ++ "\n in\n" ++ (indent $ show p)
   show (MatchA e mps) = "(match " ++ show e ++ " with " ++
     (concat $ intersperse " | " (map showmp mps)) ++ ")"
     where showmp (pat, proc) = show pat ++ " -> " ++ show proc
-  show (InstrA is) = "{" ++ (concat . intersperse "; " . map show $ is) ++ "}"
+  show (InstrA is) = "{ " ++ (concat . intersperse "\n; " . map show $ is) ++ "}"
+
+indent lins = indent' (lines lins)
+  where
+    indent' []     = []
+    indent' (l:ls) = "    " ++ (l++"\n") ++ (indent' ls)
 
 instance Subst Atom where
   subst sigma (MsgA s es) =
     let es' = subst sigma <$> es
     in  maybe (MsgA s es')
               (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
+              -- debug: (\a -> case a of { VarE s' -> MsgA s' es'; _ -> error ("Unmatching subst: " ++ show a ++ " sigma: " ++ show sigma)}) $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
     let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map definedVars ds)
@@ -162,6 +169,7 @@ instance Subst Atom where
     where substPat (pat, proc) =
             let sigma' = foldl (flip M.delete) sigma (S.toList $ receivedVars pat)
             in  (pat, sigma' `subst` proc)
+  subst sigma x = trace ("#subst# : \n\tx=" ++ show x ++ "\n\t sigma=" ++ show sigma) x
 
 --}
 

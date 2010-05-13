@@ -82,7 +82,8 @@ desInstr mk ((LetI pats e):is) =
      return $ [DefA [ReactionD [VarJ once [], VarJ k pats] (Proc is')]
                     (Proc [MsgA once [], e'])]
 
-desInstr mk ((RunI (Proc as)):is) = (as ++) <$> desInstr mk is
+desInstr mk ((RunI (Proc as)):is) =  -- (as ++) <$> desInstr mk is
+  (liftM2 (++)) (concat <$> mapM desAtom as) (desInstr mk is)
 
 -- |A do statement is executed by evaluating the given call expression, and
 -- throwing away the result.

@@ -95,7 +95,8 @@ initNameServer = do
     jSearch nsVar (MsgA _ [name, VarE k]) =
       withMVar nsVar $ \m -> return [MsgA k [toJoin $ M.lookup (fromJoin name) m]]
 
-    jRegister nsVar (MsgA _ [name, expr, VarE k]) =
+    jRegister nsVar (MsgA _ [name, expr, VarE k]) = do
+      putStrLn $ "registered name: " ++ (fromJoin name :: String)
       modifyMVar nsVar $ \m ->
         let m' = M.insert (fromJoin name) expr m
             msg = MsgA k []
@@ -105,3 +106,4 @@ jPrint :: Atom -> IO [Atom]
 jPrint (MsgA _ [jStr, VarE k]) = do
  putStr . fromJoin $ jStr
  return [MsgA k []]
+jPrint x = (putStr $ show x) >> return [InertA]
