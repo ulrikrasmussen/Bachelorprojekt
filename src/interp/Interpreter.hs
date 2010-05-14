@@ -34,6 +34,8 @@ instance Applicative (State Context) where
 newtype JoinM a = J { runJoinM :: State Context a  }
     deriving (Monad, MonadState Context, Functor, Applicative)
 
+--{ Interpreter Context
+
 data Context = Context { cDefs :: [Def] -- ^ Active definitions
                        , cAtoms :: [Atom] -- ^ Active atoms
                        , cFreshNames :: [String] -- ^ Infinite stream of fresh names
@@ -59,52 +61,57 @@ instance Eq Context where
   a == b = cDefs a == cDefs b && cAtoms a == cAtoms b
          && cLocation a == cLocation b && cFail a == cFail b
 
-class (Monad m) => MonadJoin m where
-  getDefs :: m [Def]
-  rmDef :: Def -> m ()
-  putDef :: Def -> m ()
-  getAtoms :: m [Atom]
-  rmAtom :: Atom -> m ()
-  putAtom :: Atom -> m ()
-  replaceDefs :: [Def] -> m ()
-  replaceAtoms :: [Atom] -> m ()
+--}
 
-  getFreshNames :: Int -> m [String]
-  getExportedNames :: m (S.Set String)
-  setExportedNames :: S.Set String -> m ()
-  getStdGen :: m R.StdGen
-  getLocation :: m String
-  isFailed :: m Bool
+--{ Utility functions
 
-instance MonadJoin JoinM where
-  getDefs = gets cDefs
-  rmDef def = modify $ \s -> s { cDefs = delete def $ cDefs s }
-  putDef def = modify $ \s -> s { cDefs = def : cDefs s }
+getDefs ::  JoinM [Def]
+getDefs = gets cDefs
 
-  getAtoms = gets cAtoms
-  rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
-  putAtom atm = modify $ \s -> s { cAtoms = atm : cAtoms s }
+rmDef :: Def -> JoinM ()
+rmDef def = modify $ \s -> s { cDefs = delete def $ cDefs s }
 
-  replaceAtoms atoms = modify $ \s -> s {cAtoms = atoms}
-  replaceDefs defs = modify $ \s -> s {cDefs = defs}
+putDef :: Def -> JoinM ()
+putDef def = modify $ \s -> s { cDefs = def : cDefs s }
 
-  getFreshNames n = do
-    (fns, fns') <- gets (splitAt n . cFreshNames)
-    modify $ \s -> s {cFreshNames = fns'}
-    return fns
+getAtoms :: JoinM [Atom]
+getAtoms = gets cAtoms
 
-  getExportedNames = gets cExportedNames
+rmAtom :: Atom -> JoinM ()
+rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
 
-  setExportedNames exports = modify $ \s -> s { cExportedNames = exports }
+putAtom :: Atom -> JoinM ()
+putAtom atm = modify $ \s -> s { cAtoms = atm : cAtoms s }
 
-  getStdGen = do
-    (sg, sg') <- R.split <$> gets cStdGen
-    modify $ \s -> s {cStdGen = sg'}
-    return sg
+replaceAtoms :: [Atom] -> JoinM ()
+replaceAtoms atoms = modify $ \s -> s {cAtoms = atoms}
 
-  getLocation = gets cLocation
+replaceDefs :: [Def] -> JoinM ()
+replaceDefs defs = modify $ \s -> s {cDefs = defs}
 
-  isFailed = gets cFail
+getFreshNames ::  Int -> JoinM [String]
+getFreshNames n = do
+  (fns, fns') <- gets (splitAt n . cFreshNames)
+  modify $ \s -> s {cFreshNames = fns'}
+  return fns
+
+getExportedNames :: JoinM (S.Set String)
+getExportedNames = gets cExportedNames
+
+setExportedNames :: S.Set String -> JoinM ()
+setExportedNames exports = modify $ \s -> s { cExportedNames = exports }
+
+getStdGen :: JoinM R.StdGen
+getStdGen = do
+  (sg, sg') <- R.split <$> gets cStdGen
+  modify $ \s -> s {cStdGen = sg'}
+  return sg
+
+getLocation :: JoinM String
+getLocation = gets cLocation
+
+isFailed :: JoinM Bool
+isFailed = gets cFail
 
 
 initContext ::    [Def]    -- initial definitions
@@ -128,12 +135,16 @@ initContext ds as locName locParent exports stdGen = Context {
       }
     where freshNames = ["#" ++ locName ++ "#" ++ show i | i <- [1..]]
 
+--}
+
+--{ Configuration data
+
 data InterpConfig = IC {
     runGC :: Bool
   , gcInterval :: Integer
   , breakAt :: Maybe Integer
   , nondeterministic :: Bool
-  , apiMap :: ApiMap         -- ^ A map from atom names to functions. Used to enable IO in join programs.
+  , apiMap :: ApiMap  -- ^ A map from atom names to functions. Used to enable IO in join programs.
   , manipulators :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.
   , machineClasses :: M.Map String [Atom]
   , initialMachines :: [MachineConfig]
@@ -142,6 +153,7 @@ data InterpConfig = IC {
 
 type MachineConfig = (String , String)
 
+--}
 
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.
@@ -151,22 +163,21 @@ execInterp conf context
     | otherwise     = execState (runJoinM $ interp conf) context
 
 -- |Performs a single step of interpretation
-interp :: (MonadJoin m, Functor m, Applicative m)
-                => InterpConfig -> m ()
+interp :: InterpConfig -> JoinM ()
 interp conf = do
   when (runGC conf) $ garbageCollect
   when (nondeterministic conf) $ scrambleContext
   mapM_ heatAtom =<< getAtoms
   mapM_ applyReaction =<< getDefs
 
-scrambleContext :: (MonadJoin m, Functor m, Applicative m) => m ()
+scrambleContext :: JoinM ()
 scrambleContext = do
   replaceDefs =<< scramble <$> getStdGen <*> getDefs
   replaceAtoms =<< scramble <$> getStdGen <*> getAtoms
    where scramble stdGen xs =
             map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
-applyReaction :: (MonadJoin m, Functor m) => Def -> m ()
+applyReaction :: Def -> JoinM ()
 applyReaction d@(ReactionD js p) =
   sequence <$> mapM matchJoin js >>=
   maybe (return ()) (\xs ->
@@ -177,7 +188,7 @@ applyReaction d@(ReactionD js p) =
 applyReaction (LocationD _ _ _) = return ()
 
 {- Check whether a join pattern is matched by the atoms in the context -}
-matchJoin :: (MonadJoin m, Functor m) => Join -> m (Maybe (M.Map String Expr, Atom))
+matchJoin :: Join -> JoinM (Maybe (M.Map String Expr, Atom))
 matchJoin (VarJ var pats) = do
   atoms <- filter (chanIs var) <$> getAtoms
   let matches = map matchPatterns atoms
@@ -191,14 +202,14 @@ matchJoin (VarJ var pats) = do
 matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
 matchPat (VarP s) e = Just $ M.fromList [(s, e)]
 matchPat (IntP i1) (IntE i2)
-  | i1 == i2  = Just M.empty 
+  | i1 == i2  = Just M.empty
   | otherwise = Nothing
 matchPat (ConP np ps) (ConE ne es)
   | np /= ne  = Nothing
   | otherwise = M.unions <$> (sequence $ zipWith matchPat ps es)
 matchPat _ _ = Nothing
 
-heatAtom :: (MonadJoin m, Functor m) => Atom -> m ()
+heatAtom :: Atom -> JoinM ()
 heatAtom InertA        = rmAtom InertA
 heatAtom m@(MsgA _ _)  = return ()
 heatAtom d@(DefA ds p) = do
@@ -224,7 +235,7 @@ heatAtom m@(MatchA e ps) =
  - and mark all the MsgP:s, that are potentially produced by these
  - marked defs. Then we iterate, until no new defs or MsgP:s are marked.
  -}
-garbageCollect :: (MonadJoin m, Functor m) => m ()
+garbageCollect :: JoinM ()
 garbageCollect = do
   markedNames <- S.unions . map freeVars <$> getAtoms
   exportedNames <- getExportedNames
@@ -237,7 +248,7 @@ garbageCollect = do
     defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
     defMatched (LocationD _ _ _) _ = True
 
-    gc' :: (MonadJoin m, Functor m) => S.Set String -> [Def] -> m [Def]
+    gc' :: S.Set String -> [Def] -> JoinM [Def]
     gc' markedNames defs = do
       mMarkedDefs <- mapM (\def ->
            if defMatched def markedNames
