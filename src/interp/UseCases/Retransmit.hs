@@ -10,7 +10,7 @@ machines = [ ("Server", "Server")
            , ("Client", "Client")
            ]
 
-comEdges = [ ("Server", "Client", 1.0)
+comEdges = [ ("Server", "Client", 0.2)
            ]
 
 api = ([], [])
