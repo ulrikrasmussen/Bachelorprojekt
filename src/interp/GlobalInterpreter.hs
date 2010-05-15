@@ -29,7 +29,7 @@ rootLocation = "@root"
 -- | Adds a global "machineId" message to a group of atoms.
 makeIdMsg :: String -> [Atom] -> [Atom]
 makeIdMsg machineId as =
- [DefA [ReactionD [VarJ "machineId" [VarP "k"]] . Proc $ [MsgA "k" [toJoin machineId]]]
+ [DefA [ReactionD [VarJ "machineId" [VarP "k"]] 0 . Proc $ [MsgA "k" [toJoin machineId]]]
        (Proc as)
  ]
 
