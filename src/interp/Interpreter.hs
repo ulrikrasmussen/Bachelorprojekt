@@ -197,7 +197,7 @@ applyReaction d@(ReactionD js delay p) =
   maybe (return False)
         (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
                    t <- getTime
-                   let reactionTime = max t . foldl max 0 . map getDelay $ atoms
+                   let reactionTime = max t (delay + foldl max 0 (map getDelay atoms))
                    if reactionTime > t
                       then return False
                       else do mapM_ rmAtom atoms
