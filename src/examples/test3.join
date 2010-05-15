@@ -3,7 +3,7 @@ def add(Z, x)   |> { return (x) to add }
  or fib(Z)      |> 1:{ return (S Z) to fib }
  or fib(S Z)    |> 1:{ return (S Z) to fib }
  or fib(S S x)  |> 1:{ return (add(fib(x), fib(S x))) to fib }
- or finished<x> & timer<> |> finished<x>
+ or finished<x> |>^20 finished<x>
  in { let x = fib(S S S S S S S S S S S S Z);
       run finished<x>
-    } & 500 : timer<>
+    }
