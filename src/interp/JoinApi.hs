@@ -54,6 +54,7 @@ initTempSensor = do
 integerArith :: ([Manipulator], ApiMap)
 integerArith = ([], M.fromList [
     ("add", jAdd)
+  , ("sub", jSub)
   , ("mult", jMult)
   , ("div", jDiv)
   , ("mod", jMod)
@@ -61,6 +62,7 @@ integerArith = ([], M.fromList [
   ])
   where
     jAdd (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 + op2]]
+    jSub (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin . max 0 $ op1 - op2]]
     jMult (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 * op2]]
     jDiv (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 `div` op2]]
     jMod (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 `mod` op2]]
