@@ -182,12 +182,11 @@ interp conf = do
   bs <- mapM applyReaction =<< getDefs
   defs' <- getDefs
   atms' <- getAtoms
-  when ((not $ or bs) && defs == defs' && atms == atms') incTime
+  when ((not $ or bs) && atms == atms') incTime
 
 scrambleContext :: JoinM ()
 scrambleContext = do
   replaceDefs =<< scramble <$> getStdGen <*> getDefs
-  replaceAtoms =<< scramble <$> getStdGen <*> getAtoms
    where scramble stdGen xs =
             map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
