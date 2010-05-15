@@ -152,6 +152,9 @@ desAtom (MatchA e mps) = do
 desAtom (InstrA is) =
    do is' <- desInstr Nothing is
       return is'
+desAtom (DelayA d (Proc as)) = do
+  as' <- concat <$> mapM desAtom as
+  return $ [DelayA d (Proc as')]
 desAtom a = return [a]
 
 desDef :: Def -> DesugarM Def
