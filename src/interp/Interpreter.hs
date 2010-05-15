@@ -117,6 +117,8 @@ isFailed = gets cFail
 getTime :: JoinM Integer
 getTime = gets cTime
 
+incTime :: JoinM ()
+incTime = modify $ \s -> s { cTime = succ $ cTime s }
 
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
@@ -170,12 +172,17 @@ execInterp conf context
 -- |Performs a single step of interpretation
 interp :: InterpConfig -> JoinM ()
 interp conf = do
-  when (runGC conf) $ garbageCollect
-  when (nondeterministic conf) $ scrambleContext
+  defs <- getDefs
+  atms <- getAtoms
+  when (runGC conf) garbageCollect
+  when (nondeterministic conf) scrambleContext
   (dss, ass) <- unzip <$> (mapM heatAtom =<< getAtoms)
   replaceAtoms $ concat ass
   mapM_ putDef $ concat dss
-  mapM_ applyReaction =<< getDefs
+  bs <- mapM applyReaction =<< getDefs
+  defs' <- getDefs
+  atms' <- getAtoms
+  when ((not $ or bs) && defs == defs' && atms == atms') incTime
 
 scrambleContext :: JoinM ()
 scrambleContext = do
