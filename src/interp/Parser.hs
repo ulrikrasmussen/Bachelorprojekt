@@ -131,6 +131,9 @@ proc =  (Proc . concat <$> atoms)
                      <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
             <|> InertA <$ char '0'
             <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
+            <|> DelayA <$> lexeme (read <$> many1 digit)
+                       <*  (lexeme $ char ':')
+                       <*> proc
             <?> "atom"
         -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
         -- prefixed by 'def'.
