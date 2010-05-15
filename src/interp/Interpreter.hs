@@ -114,6 +114,9 @@ getLocation = gets cLocation
 isFailed :: JoinM Bool
 isFailed = gets cFail
 
+getTime :: JoinM Integer
+getTime = gets cTime
+
 
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
@@ -124,7 +127,8 @@ initContext ::    [Def]    -- initial definitions
               -> Context
 
 initContext ds as locName locParent exports stdGen = Context {
-        cDefs = ds
+        cTime = 0
+      , cDefs = ds
       , cAtoms = as
       , cFreshNames = freshNames
       , cStdGen = stdGen
@@ -168,7 +172,9 @@ interp :: InterpConfig -> JoinM ()
 interp conf = do
   when (runGC conf) $ garbageCollect
   when (nondeterministic conf) $ scrambleContext
-  mapM_ heatAtom =<< getAtoms
+  (dss, ass) <- unzip <$> (mapM heatAtom =<< getAtoms)
+  replaceAtoms $ concat ass
+  mapM_ putDef $ concat dss
   mapM_ applyReaction =<< getDefs
 
 scrambleContext :: JoinM ()
@@ -178,15 +184,23 @@ scrambleContext = do
    where scramble stdGen xs =
             map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
-applyReaction :: Def -> JoinM ()
-applyReaction d@(ReactionD js p) =
+applyReaction :: Def -> JoinM Bool
+applyReaction d@(ReactionD js delay p) =
   sequence <$> mapM matchJoin js >>=
-  maybe (return ()) (\xs ->
-    do let (sigma, atoms) = first M.unions $ unzip xs
-       mapM_ rmAtom atoms
-       mapM_ putAtom $ (subst sigma <$> (pAtoms p))
-    )
-applyReaction (LocationD _ _ _) = return ()
+  maybe (return False)
+        (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
+                   t <- getTime
+                   let reactionTime = max t . foldl max 0 . map getDelay $ atoms
+                   if reactionTime > t
+                      then return False
+                      else do mapM_ rmAtom atoms
+                              putAtom $ DelayA reactionTime (sigma `subst` p)
+                              return True)
+  where
+    getDelay (DelayA d _) = d
+    getDelay _ = 0
+
+applyReaction (LocationD _ _ _) = return False
 
 {- Check whether a join pattern is matched by the atoms in the context -}
 matchJoin :: Join -> JoinM (Maybe (M.Map String Expr, Atom))
@@ -194,12 +208,19 @@ matchJoin (VarJ var pats) = do
   atoms <- filter (chanIs var) <$> getAtoms
   let matches = map matchPatterns atoms
   return . getFirst . mconcat . map First $ matches
-   where chanIs v (MsgA v' _) = v == v'
-         chanIs v _           = False
+   where chanIs v (MsgA v' _)                   = v == v'
+         chanIs v (DelayA d (Proc [MsgA v' _])) = v == v'
+         chanIs v _                             = False
+         matchPatterns atom@(DelayA d (Proc [msg])) = do
+            (sigma, _) <- matchPatterns msg
+            return (sigma, atom)
          matchPatterns atom@(MsgA _ es) = do
             sigma <- M.unions <$> zipWithM matchPat pats es
             return (sigma, atom)
 
+-- | Match a pattern against an expression. Returns Nothing if the pattern
+-- doesn't match, otherwise returns `Just m` where m maps variable names to
+-- subexpressions.
 matchPat ::  Pat -> Expr -> Maybe (M.Map String Expr)
 matchPat (VarP s) e = Just $ M.fromList [(s, e)]
 matchPat (IntP i1) (IntE i2)
@@ -210,15 +231,29 @@ matchPat (ConP np ps) (ConE ne es)
   | otherwise = M.unions <$> (sequence $ zipWith matchPat ps es)
 matchPat _ _ = Nothing
 
-heatAtom :: Atom -> JoinM ()
-heatAtom InertA        = rmAtom InertA
-heatAtom m@(MsgA _ _)  = return ()
-heatAtom d@(DefA ds p) = do
-  rmAtom d
+
+heatAtom :: Atom -> JoinM ([Def], [Atom])
+
+heatAtom (DelayA d (Proc [DelayA d' p])) =
+  heatAtom $ DelayA (d+d') p
+
+heatAtom (DelayA d (Proc [a])) = do
+  (ds, as) <- heatAtom a
+  return (ds, [DelayA d . Proc $ as])
+
+heatAtom (DelayA d (Proc as)) = do
+  let as' = map (DelayA d . Proc . (:[])) as
+  (dss, ass) <- unzip <$> mapM heatAtom as'
+  return (concat dss, concat ass)
+
+heatAtom InertA        = return ([], [])
+
+heatAtom m@(MsgA _ _)  = return ([], [m])
+
+heatAtom (DefA ds p) = do
   let ivs = (S.toList . S.unions $ map definedVars ds)
   sigma <- M.fromList . zipWith (\l r -> (l, VarE $ l ++ r)) ivs <$> (getFreshNames $ length ivs)
-  mapM_ putDef (subst sigma <$> ds)
-  mapM_ putAtom $ (pAtoms $ sigma `subst` p)
+  return (subst sigma <$> ds, pAtoms $ sigma `subst` p)
 
 heatAtom m@(MatchA e ps) =
   let (pats, procs) = unzip ps
@@ -228,7 +263,7 @@ heatAtom m@(MatchA e ps) =
       firstProc = getFirst . mconcat $ First <$> procs'
   in case firstProc of
        Nothing -> error $ "Pattern match is not exhaustive"
-       Just proc -> rmAtom m >> mapM_ putAtom proc
+       Just proc -> return ([], proc)
 
 {-
  - At first we mark all the MsgP:s in the context, as well as the exported names.
@@ -246,7 +281,7 @@ garbageCollect = do
   setExportedNames $ exportedNames `S.intersection` (S.unions . map definedVars $ liveDefs)
   where
     defMatched :: Def -> S.Set String -> Bool
-    defMatched (ReactionD js _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
+    defMatched (ReactionD js delay _) nms = and $ map (\(VarJ nmJ _) -> S.member nmJ nms) js
     defMatched (LocationD _ _ _) _ = True
 
     gc' :: S.Set String -> [Def] -> JoinM [Def]

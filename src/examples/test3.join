@@ -1,5 +1,5 @@
 def add(Z, x)   |> { return (x) to add }
- or add(S x, y) |> { return (add(x, S y)) to add }
+ or add(S x, y) |> 1:{ return (add(x, S y)) to add }
  or fib(Z)      |> { return (S Z) to fib }
  or fib(S Z)    |> { return (S Z) to fib }
  or fib(S S x)  |> { return (add(fib(x), fib(S x))) to fib }
