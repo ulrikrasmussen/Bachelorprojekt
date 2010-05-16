@@ -172,7 +172,6 @@ execInterp conf context
 -- |Performs a single step of interpretation
 interp :: InterpConfig -> JoinM ()
 interp conf = do
-  defs <- getDefs
   atms <- getAtoms
   when (runGC conf) garbageCollect
   when (nondeterministic conf) scrambleContext
@@ -180,7 +179,6 @@ interp conf = do
   replaceAtoms $ concat ass
   mapM_ putDef $ concat dss
   bs <- mapM applyReaction =<< getDefs
-  defs' <- getDefs
   atms' <- getAtoms
   when ((not $ or bs) && atms == atms') incTime
 
@@ -196,7 +194,7 @@ applyReaction d@(ReactionD js delay p) =
   maybe (return False)
         (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
                    t <- getTime
-                   let reactionTime = max t (delay + foldl max 0 (map getDelay atoms))
+                   let reactionTime = max t $ delay + foldl max 0 (map getDelay atoms)
                    if reactionTime > t
                       then return False
                       else do mapM_ rmAtom atoms
