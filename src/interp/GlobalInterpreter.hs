@@ -164,6 +164,10 @@ runApi funMap ctx = do
   return ctx{cAtoms = concat atms, cExportedNames = S.unions $ (cExportedNames ctx):exports }
   where
     matchAtm :: Atom -> IO ([Atom], S.Set String)
+    matchAtm del@(DelayA d (Proc [atm])) =
+        if d > cTime ctx
+            then return ([del], S.empty)
+            else matchAtm atm
     matchAtm atm@(MsgA nm exp) = maybe (return ([atm], S.empty)) (\f -> (,) <$> (f atm) <*> (pure $ freeVars atm))  (M.lookup nm funMap)
     matchAtm atm = return ([atm], S.empty)
 
