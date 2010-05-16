@@ -1,18 +1,13 @@
 def
    listen<nm, ret> |> {let timeout = 500000; run
      def
-         receive<Syn(ack), 0> |> { do print("got syn\n")} & ackNm<ack> & ack<SynAck, 0>
+         receive<Syn(ack), 0> |> ackNm<ack> & ack<SynAck, 0>
 
       or receive<Data(data), next>
        & pNum<cur> & ackNm<ack>
        & lastResult<lr> |> { match leq(next, cur) with
-                               True  -> { do print("received is old\n"); run pNum<cur>  & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
-                             | False -> { do print("received is new, cur:")
-                                        ; do printInt(cur)
-                                        ; do print(", next:")
-                                        ; do printInt(next)
-                                        ; do print("\n")
-                                        ; run pNum<next> & ackNm<ack>
+                               True  -> {  run pNum<cur>  & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
+                             | False -> { run pNum<next> & ackNm<ack>
                                       & match nm with
                                           Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<Just(ret)> }
                                         | Async(nm') -> { run nm'<data> & ack<DataAck(Nothing), next> & lastResult<Nothing> }
