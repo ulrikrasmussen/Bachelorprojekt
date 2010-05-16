@@ -1,24 +1,29 @@
 def
-   listen<nm, ret> |> {let timeout = 10000000; run
+   listen<nm, ret> |> {let timeout = 500000; run
      def
-         receive<Syn(ack), num> |> { do print("got syn\n")} & ackNm<ack> & ack<SynAck, num> & pNum<num>
+         receive<Syn(ack), 0> |> { do print("got syn\n")} & ackNm<ack> & ack<SynAck, 0>
 
       or receive<Data(data), next>
        & pNum<cur> & ackNm<ack>
        & lastResult<lr> |> { match leq(next, cur) with
                                True  -> { do print("received is old\n"); run pNum<cur>  & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
-                             | False -> { do print("received is new\n"); run pNum<next> & ackNm<ack>
+                             | False -> { do print("received is new, cur:")
+                                        ; do printInt(cur)
+                                        ; do print(", next:")
+                                        ; do printInt(next)
+                                        ; do print("\n")
+                                        ; run pNum<next> & ackNm<ack>
                                       & match nm with
                                           Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<Just(ret)> }
                                         | Async(nm') -> { run nm'<data> & ack<DataAck(Nothing), next> & lastResult<Nothing> }
                                         }
                            }
-      in ret<receive> & lastResult<Nothing>
+      in ret<receive> & lastResult<Nothing> & pNum<0>
      }
- or servPrint<txt> |> { do print(txt) }
- or servMult(Con(a, Con(b, Nil))) |> {return mult(a,b) to servMult}
+ or servPrint<txt> |> {do print("servPrint: "); do print(txt) }
+ or servMult(Cons(a, Cons(b, Nil))) |> {return mult(a,b) to servMult}
  in { let expoPrint = listen(Async(servPrint))
     ; let expoMult  = listen(Sync(servMult))
-    ; do register("serverPrint", expoPrint)
+    ; do register("serverTest", Pair(expoPrint, expoMult))
     }
 
