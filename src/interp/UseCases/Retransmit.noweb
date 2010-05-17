@@ -26,29 +26,32 @@ serve as the communication proxy.
 
 A notable limitation to the current simple implementation is that only one sender can be allowed pr
 name proxy, as the bookkeeping mechanics are tied to the session. It could easily be extended by
-adding session numbers to the \texttt{SynAck} and subsequent transfers.
+adding session numbers to the \texttt{SynAck} and subsequent transfers, as well as \texttt{pNum},
+or perhaps even more promising by simply creating a new def pr \texttt{Syn}.
+
+Also, it is currently impossible to act upon a irrevocably dead connection.
 
 <<Exposing a name for proxied communication>>=
-  listen<nm, ret> |> {let timeout = 1000; run
-    def
-        receive<Syn(ack), num> |> ackNm<ack> & ack<SynAck, num> & pNum<num>
+   listen<nm, ret> |> {let timeout = 500000; run
+     def
+         receive<Syn(ack), 0> |> { do print("got syn\n")} & ackNm<ack> & ack<SynAck, 0>
 
-     or receive<Data(data), next>
-      & pNum<cur> & ackNm<ack>
-      & lastResult<lr> |> {let nextLeq = leq(next, cur); match nextLeq with
-                            True  -> {run pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
-                          | False -> {run pNum<next> & ackNm<ack>
-                                   & match nm with
-                                       Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<ret> }
-                                     | Async(nm') -> { run ack<DataAck(Nothing), next> & lastResult<Nothing> }
-                                     }
-                          }
-     in ret<receive> & lastResult<Nothing>
-    }
+      or receive<Data(data), next>
+       & pNum<cur> & ackNm<ack>
+       & lastResult<lr> |> { match leq(next, cur) with
+                               True  -> { run pNum<cur>  & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
+                             | False -> { run pNum<next> & ackNm<ack>
+                                      & match nm with
+                                          Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<Just(ret)> }
+                                        | Async(nm') -> { run nm'<data> & ack<DataAck(Nothing), next> & lastResult<Nothing> }
+                                        }
+                           }
+      in ret<receive> & lastResult<Nothing> & pNum<0>
+     }
 
 @
 
-Upon receiving a \texttt{Syn} message, the packet number is reset and the name to send acknowledgements to is saved for later.
+Upon receiving a \texttt{Syn} message, the name to send acknowledgements to is saved for later.
 Subsequent communications use the recorded ack-name for confirming reception of new messages, or retransmitting results if it
 detects a retransmit from the sender, indicated by a lower packet number than the one currently recorded.
 
@@ -56,42 +59,46 @@ detects a retransmit from the sender, indicated by a lower packet number than th
 a \texttt{SynAck}, indicating that the receiving party has accepted the communication.
 
 <<Communicating with a proxied name>>=
-  initTrans<nm, dest, ret> |> { let timeout = 1000; run
-      def
+    initTrans<nmType, dest, ret> |> { let timeout = 500000; run
+        def
+            ack<SynAck, 0>
+          & waitSynAck<>   |>{ run match nmType with
+                                Sync  -> { run ret<sendSync> }
+                              | Async -> { run ret<sendAsync>}
+                            } & lineClear<>
 
-         ack<type, ackN>
-       & waitAck<>
-       & pNum<cur> |> {let ackMatch = eq(ackN, cur)
-                      ; match ackMatch with
-                        True -> {run (match type with
-                                       SynAck -> match nm with
-                                                   Sync(nm')  -> ret<sendSync>
-                                                 | ASync(nm') -> ret<sendAsync>
-                                     | DataAck(ret) -> match nm with
-                                                   Sync(nm') -> runRecvCont<ret>
-                                                 | Async(nm') -> 0)
-                                 & pNum<cur> & lineClear<>}
+         or ack<DataAck(dat), ackN>
+          & waitAck<>
+          & pNum<cur> |> {match eq(ackN, cur) with
+                            True -> { match nmType with
+                                            Sync  -> { run runRecvCont<dat> }
+                                          | Async -> { run 0 }
+                                    ; run pNum<cur> & lineClear<>}
+                          | False -> { do print("got unexpected ack x_x.. shouldn't happen.\n")
+                                     ; run pNum<cur> & waitAck<>}
+                        }
 
-                      | False -> {run 0}
-                      }
+         or runRecvCont<data> & recvCont<k> |> match data with
+                                                 Just data' -> k<data'>
+                                               | Nothing    -> k<>
 
-       or runRecvCont<data> & recvCont<k> |> match data with
-                                               Just(data') -> k<data'>
-                                             | Nothing     -> k<>
+         or retransmit<pl,n> & pNum<cur> & waitAck<> |> { match eq(n, cur) with
+                                                   True  -> { run send<pl>}
+                                                 | False -> { run 0}
+                                               } & pNum<cur> & waitAck<>
 
-       or retransmit<pl> & waitAck<> |> send<pl>
+         or send<payload> & pNum<n> |> { run pNum<n> & dest<Data(payload), n>
+                                       ; do sleep(timeout)
+                                       ; run retransmit<payload, n>
+                                       }
 
-       or send<payload> & pNum<n> |> {run pNum<n> & dest<Data(payload), n> & waitAck<>
-                                     ; do sleep(timeout)
-                                     ; run retransmit<payload>
-                                     }
+         or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & pNum<n'>}
+         or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & recvCont<cont> & pNum<n'>}
 
-       or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & pNum<n'>}
-       or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
+         or sendSyn<> |> { run dest<Syn(ack), 0>
+                         ; run sleep<timeout, retrSyn> & waitSynAck<>}
+         or retrSyn<> & waitSynAck<> |> sendSyn<>
 
-       or sendSyn<> |> dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
-       or retrSyn<> & waitAck<> |> sendSyn<>
-
-       in pNum<0> & sendSyn<>}
+         in pNum<0> & sendSyn<>}
 @
 

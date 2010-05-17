@@ -250,7 +250,7 @@ instance FreeVars Atom where
 --{ Conversion functions
 class JoinValue a where
  fromJoin :: Expr -> a
- toJoin :: a -> Expr
+ toJoin   :: a -> Expr
 
 instance JoinValue Expr where
  fromJoin = id
@@ -258,7 +258,7 @@ instance JoinValue Expr where
 
 instance JoinValue Bool where
  fromJoin (ConE "True" []) = True
- fromJoin (ConE "Fals" []) = False
+ fromJoin (ConE "False" []) = False
  fromJoin x = error $ "Not a join boolean: '" ++ show x ++ "'"
 
  toJoin True = ConE "True" []
