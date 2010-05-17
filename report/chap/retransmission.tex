@@ -1,0 +1,103 @@
+% vim:spell:spelllang=en_gb:
+% vim:set textwidth=80:
+
+\fixme{Be more specific with regards to the vilkår of the communication, or at least refer to what is discussed in the use case, which also needs to be edited btw.}
+In order to deal with the imperfections of basic radio and network communications
+we have implemented a rudimentary library that enables reliable, ordered delivery
+between two communicating parties.
+
+The communication protocol works by the same basic principles as does TCP. In particular
+it gives the same guarantees about the message exchanges, namely those of
+\begin{itemize}
+\item Retransmission of lost messages
+\item Ordered message treatment % currently implemented by assuring that no message can be sent before the
+\item Duplicate messages are discarded
+\end{itemize}
+
+Central to the workings of the protocol is the bookeeping that takes care of ordering
+the messages, by labeling each message to be sent with a sequence number. Only when
+the recipient acknowledges the reception of a message by sending an acknowledgement message
+that carries the same sequence number as the message of the sender did, the transmission
+of new messages can continue.
+An overview of the protocol is given below.
+
+\paragraph{The sending side:}
+\begin{enumerate}
+
+\item \label{retrans:SYN}
+The server sends a \texttt{Syn}-message to initialise the connection
+
+\item If a \texttt{SynAck} message is received within a given time window, the
+connection is established and the channel is marked clear, otherwise repeat \ref{retrans:SYN}
+
+\item \label{retrans:Send} When the sender wants to communicate, it increments
+the sequence number and send the message along with the sequence number. Then it
+removes the clear mark of the channel, effectively blocking the channel.
+
+\item If a \texttt{DataAck} message is received within the given time window,
+and its sequence number matches the sender's, the channel is marked clear.
+Otherwise the received \texttt{ACK} is discarded, and no further state change
+occurs, or if no \texttt{ACK} was received, the message gets retransmitted.
+
+\end{enumerate} \paragraph{The receiving side:} \begin{enumerate}
+
+\item Upon reception of a \texttt{Syn}-message, send a \texttt{SynAck} and set
+the sequence number to zero.
+
+\item Upon reception \texttt{Data}-message with higher sequence number,
+increment the sequence number and send a \texttt{DataAck}-message containing the
+result of computation triggered by the reception if any. Also store the result,
+in case the \texttt{DataAck} needs to be retransmitted.
+
+If the sequence number of the \texttt{Data}-message is equal to the currently
+recorded sequence number, the last sent \texttt{DataAck} is retransmitted, and
+no further computation is triggered.
+
+\end{enumerate}
+
+\paragraph{Shortcomings.} This sketch of a communication protocol is indeed very
+basic, and we have made no attempt at refining it further.  This is because we
+believe that it is obviously possible to accomplish within the expressive power
+of the programming language, looking at TCP for inspiration on optimisations,
+and adding more integrity checks to ensure that one buggy participant doesn't
+ruin the other.
+
+\subsection{Usage of the library}
+
+Actually using the library as an underlying data communication layer is
+accomplished by \emph{proxying} the names used for communication through the
+protocol library.  To make this clearer, consider this usage example of a thin
+client using server for computation:
+
+\paragraph{Server program}
+
+\begin{verbatim}
+def
+    include(retransmit.join)
+    bigComputation(x) |> {.. return f(x) to bigComputation}
+ in
+    { let exposedCom = listen(Sync(bigComputation));
+    ; register("bigComputation", exposedCom)
+    }
+\end{verbatim}
+
+\paragraph{Client program}
+
+\begin{verbatim}
+def
+    include(retransmit.join)
+ in
+    { let bigCom = search("bigComputation")
+    ; match bigCom with
+        Just bigCom' -> { let bigComProx = initTrans(Sync, bigCom')
+                        ; do print(bigComProx(100))
+                        }
+        Nothing      -> { do print("Couldn't find bigComputation") }
+    }
+\end{verbatim}
+
+Above the technique of proxying is applied to yield a two new names,
+that each represent an end of the communication channel.
+The proxy at the server end is the name returned by the synchronous call to \texttt{listen}. This is the name that is to be published to allow for communication. Feeding this name into the \texttt{initTrans} call yields the final name that the client application interacts with.
+
+Notice that beyond the call to \texttt{initTrans} it is impossible to distinguish a proxied name from an unproxied name, and using the library involves no extra complexity, which is furthers the case that usage of the join calculus shouldn't necessarily be limited to modelling concurrent computation inside a single physical unit, but is also a decent option for a distributed system, even though the communication might be flawed.\fixme{This phrase might be wierd\ldots}
