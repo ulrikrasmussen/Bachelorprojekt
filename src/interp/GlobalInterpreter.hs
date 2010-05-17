@@ -232,16 +232,21 @@ registerFail ctxs =
   in
     map (updateCtx $ concat fails) ctxs'
   where
-    isFail (MsgA "fail" _) = True
-    isFail _               = False
+    isFail t (DelayA d (Proc [MsgA "fail" _])) = d <= t
+    isFail t (MsgA "fail" _) = True
+    isFail t _               = False
 
     extractFails :: Context -> ([(String, String)], Context)
     extractFails ctx =
-      let (fails, atms') = partition isFail (cAtoms ctx)
-          fails' = map (\(MsgA _ ((VarE loc):(VarE cont):[])) -> (loc,cont)) fails
+      let (fails, atms') = partition (isFail $ cTime ctx) (cAtoms ctx)
+          fails' = map exLocCont fails
       in (fails', ctx{cAtoms = atms',
                       cExportedNames = (S.fromList (snd . unzip $ fails'))
                                        `S.union` (cExportedNames ctx)})
+
+    exLocCont :: Atom -> (String, String)
+    exLocCont (MsgA _ [VarE loc, VarE cont]) = (loc,cont)
+    exLocCont (DelayA _ (Proc [msg])) = exLocCont msg
 
     updateCtx :: [(String, String)] -> Context -> Context
     updateCtx fails ctx = let
