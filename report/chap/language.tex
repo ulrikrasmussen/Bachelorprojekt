@@ -75,32 +75,57 @@ implicitly gets tagged with a delay of $0$. If the \emph{k} message therefore
 arrives before the $16$ time units has passed, the first reaction can take
 place immediately.
 
+
 \subsection{Operational semantics}
 
 \fixme{Is it necessary to repeat the operational semantics of the article, or
 can we just refer to them?}
 
-\subsection{Local determinism and infinite instants}
+
+\subsection{Infinite instants}
 
 The time domain in Timed Join Calculus is \emph{abstract}, where time tags
 doesn't have any quantifiable correspondence with \emph{physical} time. It is
-assumed that any computation takes zero time, which is of course not a
-realistic assumption, but simplifies the model a lot. Alternatively, one could
-assume that any atomic computation took some arbitrary amount of time, yielding
-a model that is closer to reality. However, as argued in
-\cite{nicollin-overview}, this destroys the generality of the model, as we will
-then tie the behaviour of programs to an arbitrary assumption about execution
-speed.
+assumed that any computation takes zero time unless delayed with a non-zero
+time tag, which is of course not a realistic assumption, but as assumption that
+simplifies the model. Alternatively, one could assume that any atomic
+computation took some minimum amount of time, yielding a model that is closer
+to reality.  However, as argued in \cite{nicollin-overview}, this destroys the
+generality of the model, as we will then tie the behaviour of programs to an
+arbitrary assumption about execution speed.
+
+Even if we did make very conservative choices for the minimum duration of a
+single computation, this wouldn't make it possible to guarantee that a given
+computation finishes in a well-defined time window: Since a computer has finite
+computational resources, but can (in theory) execute an arbitrary number of
+threads concurrently, the time a computation takes isn't fixed. As an example,
+say that we choose that the duration $\delta$ of a reaction in the CHAM is $1
+ms$. For a single process, this will enable us to guarantee that a computation
+involving 20 reactions will finish in $20 ms$. But if we execute an arbitrary
+number of instances of this process concurrently on the same hardware, we can
+only expect that the time it takes for all the processes to finish will be
+proportional to the number of processes. The actual wall-clock time for a
+single time step therefore increases, meaning our hypothetical (though
+conservative) choice is still too low. If we increase the number of concurrent
+processes towards infinity, even the most conservative choice for $\delta$
+will result in an assumption that we can execute an arbitrary number of
+reactions in an instant. The result is a more complicated model with exactly
+the same problems as the simpler model, where every computation is assumed to
+be instantaneous.
 
 Assuming that every atomic computation takes zero time can pose some problems
-in form of \emph{timelocks} or \emph{Zeno-behaviour}, where a computation
-prevents time from progressing by diverging. In \cite{timed-join} this is
-solved by adding a very restrictive type system to the join calculus, which
-rejects all programs that aren't guaranteed to let time progress. We have
-chosen not to include this, since the type system seems too restrictive for
-practical use, and therefore lies outside our scope of interest.
+in the form of \emph{timelocks} (also called \emph{Zeno-behaviour}). Since time
+can only progress when a computation in an instant is done, a diverging
+computation can prevent time from ever progressing, causing a global timelock.
+In \cite{timed-join} this is solved by adding a very restrictive type system to
+the join calculus, which rejects all programs that aren't guaranteed to let
+time progress. We have chosen not to study this type system in detail, for
+several reasons: (1) Identifying all non-timelocking programs is equivalent to
+solving the halting problem, meaning that the set of accepted programs in the
+proposed type system is a lot smaller than the actual set of valid programs,
+making it very difficult to express useful behaviour. (2) The authors describe
+the type system as a ``first attempt'' at solving the problem, and are yet to
+prove the soundness of it.
 
 
-\section{(Semantics of syntactic sugar)}
-
-\emph{This may not require a thorough discussion.}
+\section{Language definition}
