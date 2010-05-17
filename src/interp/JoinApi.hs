@@ -7,7 +7,7 @@ module JoinApi(integerArith
               ,initNameServer
               ,initTempSensor
               ,output
-              ,equality
+              ,boolean
               ,ApiMap
               ,Manipulator) where
 
@@ -25,9 +25,14 @@ import Debug.Trace
 type ApiMap      = M.Map String (Atom -> IO [Atom])
 type Manipulator = IO [Atom]
 
-equality :: ([Manipulator], ApiMap)
-equality = ([], M.fromList [("eq", exprEq)])
- where exprEq (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin (e1 == e2)]]
+boolean :: ([Manipulator], ApiMap)
+boolean = ([], M.fromList [
+    ("eq", exprEq)
+  , ("and", exprAnd)
+  ])
+ where
+  exprEq (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin (e1 == e2)]]
+  exprAnd (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin ((fromJoin e1) && (fromJoin e2))]]
 
 initTempSensor :: IO ([Manipulator], ApiMap)
 initTempSensor = do
@@ -69,7 +74,9 @@ integerArith = ([], M.fromList [
     jLeq (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 <= op2]]
 
 output = ([], M.fromList [
-   ("print", jPrint)
+    ("print", jPrint)
+  , ("printInt", jPrintInt)
+  , ("dump", jDump)
   ])
 
 initApi :: [([Manipulator], ApiMap)] -> ([Manipulator], ApiMap)
@@ -108,4 +115,13 @@ jPrint :: Atom -> IO [Atom]
 jPrint (MsgA _ [jStr, VarE k]) = do
  putStr . fromJoin $ jStr
  return [MsgA k []]
-jPrint x = (putStr $ show x) >> return [InertA]
+
+jPrintInt :: Atom -> IO [Atom]
+jPrintInt (MsgA _ [IntE i, VarE k]) = do
+ putStr . show $ i
+ return [MsgA k []]
+
+jDump :: Atom -> IO [Atom]
+jDump (MsgA _ [x, VarE k]) = do
+  putStr . show $ x
+  return [MsgA k []]

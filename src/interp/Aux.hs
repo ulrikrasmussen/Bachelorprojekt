@@ -58,7 +58,7 @@ stdJoinMain (man, api) machines mClasses comEdges cfg = do
          , timeout
          , temp
          , integerArith
-         , equality
+         , boolean
          ]
   -- Parse files from the command line. These are used for the "Default" machine class
   (Proc as) <- desugar . foldl joinProgs (Proc []) <$> mapM openJF fs

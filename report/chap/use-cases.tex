@@ -11,6 +11,7 @@ resources, and that the number of reduction steps required to
 arrive at a result is proportional to the usage of computational
 resources.
 
+
 \section{Distributed queries in sensor networks}
 
 In \cite{bonnet2001towards}, the concept of sensor databases is
@@ -32,6 +33,7 @@ distributed query. The paper mentioned that one of the challenges of
 implementing distributed queries was dealing with the asynchronicity
 of events, which we hope will be easy to express in a join-calculus
 based language.
+
 
 \subsection{Example scenario}
 
@@ -59,30 +61,29 @@ article:
   When two sensors in close proximity to each other in a given time
   window measure a temperature above a given threshold, generate an
   event.
-
 \end{itemize}
+
+
 \subsection{Assumptions about the underlying system}
 
-We will assume a network topology with a central processing node which is
-connected to the sensors in a star pattern, using unreliable communication
-channels (i.e. some sort of radio protocol).  With regards to networking, it is
-assumed that the runtime system on each node communicates via some sort of
-reliable network protocol á la TCP\fixme{No more TCP. The basic communication
-between physical devices is more IP-like}, such that there is no notion of
-packet loss from the programmer's point of view.  However, sensor nodes may
-temporarily come out of contact and become unavailable for extended periods of
-time.
+We will assume a network topology with a central processing node
+which is connected to the sensors in a star pattern, using
+unreliable communication channels (i.e. some sort of radio protocol).  
+We do not assume that the runtime system ensures delivery of messages,
+but we do assume that any message that \emph{does} get delivered are
+ensured not to be corrupted in any way.
 
-We will start out by assuming a static network, where nodes don't
-move around. The central node knows the names of all its sensors.
-The central processing node will always be available, so queries
-will get initiated in this by an external client.
+We will start out by assuming a static network, where nodes doesn't
+move around. A central node will always be present in the system, and
+it will be from this node that all queries are initiated.
 
 It is also assumed that there is a built in name-exchange facility,
-such that the network can be bootstrapped. The \texttt{search()}
-synchronous call is the incarnation of this facility in our case.
-This call returns a list of pairs, where each pair contains names for
-pinging a server and registering with the server.
+such that the network can be bootstrapped. In our scenario, this is a
+global key-value store that can be accessed programmatically from any
+device through the API messages \verb!register! and \verb!search!. Any
+call to one of these messages always succeeds. In a real-world
+scenario, 
+
 
 \subsection{Implementation}
 

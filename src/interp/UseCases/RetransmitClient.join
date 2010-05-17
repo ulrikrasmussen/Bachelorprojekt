@@ -1,54 +1,57 @@
 def
-    initTrans<nmType, dest, ret> |> { let timeout = 10000000; run
+    initTrans<nmType, dest, ret> |> { let timeout = 500000; run
         def
-            ack<SynAck, 0> 
-          & waitSynAck<>   |>{ do print("got SynAck\n")
-                            ; run match nmType with
-                                Sync  -> {do print("returning sendSync"); run ret<sendSync> }
-                              | Async -> {do print("returning sendAsync\n"); run ret<sendAsync>}
+            ack<SynAck, 0>
+          & waitSynAck<>   |>{ run match nmType with
+                                Sync  -> { run ret<sendSync> }
+                              | Async -> { run ret<sendAsync>}
                             } & lineClear<>
 
          or ack<DataAck(dat), ackN>
           & waitAck<>
-          & pNum<cur> |> {do print("got Ack\n"); match eq(ackN, cur) with
-                            True -> {match nmType with
-                                            Sync -> { run runRecvCont<dat>}
-                                          | Async -> {run 0}
-                                    }
-                          | False -> { do print("got bad ack x_x\n")}
-                        } & pNum<cur> & lineClear<>
+          & pNum<cur> |> {match eq(ackN, cur) with
+                            True -> { match nmType with
+                                            Sync  -> { run runRecvCont<dat> }
+                                          | Async -> { run 0 }
+                                    ; run pNum<cur> & lineClear<>}
+                          | False -> { do print("got unexpected ack x_x.. shouldn't happen.\n")
+                                     ; run pNum<cur> & waitAck<>}
+                        }
 
          or runRecvCont<data> & recvCont<k> |> match data with
                                                  Just data' -> k<data'>
                                                | Nothing    -> k<>
 
-         or retransmit<pl> & waitAck<> |> {do print("retransmitting..\n")} & send<pl>
+         or retransmit<pl,n> & pNum<cur> & waitAck<> |> { match eq(n, cur) with
+                                                   True  -> { run send<pl>}
+                                                 | False -> { run 0}
+                                               } & pNum<cur> & waitAck<>
 
-         or send<payload> & pNum<n> |> { run pNum<n> & dest<Data(payload), n> & waitAck<>
+         or send<payload> & pNum<n> |> { run pNum<n> & dest<Data(payload), n>
                                        ; do sleep(timeout)
-                                       ; run retransmit<payload>
+                                       ; run retransmit<payload, n>
                                        }
 
-         or sendAsync<payload> & pNum<n> & lineClear<> |> {do print("SendAsync\n"); let n' = add(1,n); run send<payload> & pNum<n'>}
-         or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
+         or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & pNum<n'>}
+         or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & recvCont<cont> & pNum<n'>}
 
-         or sendSyn<> |> { do print("sending syn\n") 
-                         ; run dest<Syn(ack), 0>
+         or sendSyn<> |> { run dest<Syn(ack), 0>
                          ; run sleep<timeout, retrSyn> & waitSynAck<>}
          or retrSyn<> & waitSynAck<> |> sendSyn<>
 
          in pNum<0> & sendSyn<>}
- in 
+ in
     def
-      connect<ret> |> { let serverPrint = search("serverPrint")
-                      ; match serverPrint with
-                          Just sPrint -> { run ret<sPrint>}
+      connect<ret> |> { let serverTest = search("serverTest")
+                      ; match serverTest with
+                          Just sTest -> { run ret<sTest>}
                         | Nothing      -> { do sleep(1000); run connect<ret> }
                       }
-      
-     in 
-        { let sPrint = connect()
+
+     in
+        { let Pair(sPrint, sMult) = connect()
         ; let proxPrint = initTrans(Async, sPrint)
+        ; let proxMult  = initTrans(Sync,  sMult)
         ; run proxPrint<"1 - Test\n">
             & proxPrint<"2 - Test\n">
             & proxPrint<"3 - Test\n">
