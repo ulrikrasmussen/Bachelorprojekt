@@ -1,12 +1,13 @@
-In this chapter we will document our prototype language, Join.  The language is
-very similar to the original core join-calculus in many aspects, but has been
-extended with various syntactic and semantic features. In the following
-sections, we will present each extension and discuss our motivation for
-including it, as well as the possible implications that it may have on the
-difficulty of implementing the language for real-world applications.
+In this chapter we will document our prototype language, Join.  The
+language is very similar to the original core join-calculus in many
+aspects, but has been extended with various syntactic and semantic
+features. In the following sections, we will present each extension
+and discuss our motivation for including it, as well as the possible
+implications that it may have on the difficulty of implementing the
+language for real-world applications.
 
-At last we will document the final syntax and semantics of the Join language
-language.
+At last we will document the final syntax and semantics of the Join
+language language.
 
 
 \section{Pattern matching}
@@ -15,117 +16,128 @@ language.
 
 \section{Timing}
 
-The core join-calculus has no notion of time, which makes it impossible to
-reason about the behaviour of programs with real-time constraints.
-For instance, in distributed systems, it is common to place a time constraint
-on external requests, to make sure that a program don't wait for a response
-forever if a message should get lost, or if the program in the other end
-crashes. To express a constraint like that in the core join calculus would
-require that we rely on a specific implementation being able to generate a
-message on a given time interval:
+The core join-calculus has no notion of time, which makes it
+impossible to reason about the behaviour of programs with real-time
+constraints.  For instance, in distributed systems, it is common to
+place a time constraint on external requests, to make sure that a
+program don't wait for a response forever if a message should get
+lost, or if the program in the other end crashes. To express a
+constraint like that in the core join calculus would require that we
+rely on a specific implementation being able to generate a message on
+a given time interval:
 \begin{align*}
   \textbf{def}\quad & \S k<x> ~|~ \S incall<> \triangleright P_{ok} \\
   \land\quad & \S timeout<> ~|~ \S incall<> \triangleright P_{error} \\
-  \textbf{in}\quad & \S remotecall<k> ~|~ \S starttimer<timeout, 10> ~|~ \S incall<>
+  \textbf{in}\quad & \S remotecall<k> ~|~ \S starttimer<timeout, 10>
+                                      ~|~ \S incall<>
 \end{align*}
-In the example above, \emph{remotecall} is given $10$ time units to return a
-result on the name \emph{k}. If \emph{k} makes it before the time limit, the
-process $P_{ok}$ is started, otherwise the process $P_{error}$ starts.
-There is a problem with this approach though: Even though we can provide a
-Join-implementation that does exactly as described, there is no guarantee that
-the program will behave in a similar way on different implementations.
+In the example above, \emph{remotecall} is given $10$ time units to
+return a result on the name \emph{k}. If \emph{k} makes it before the
+time limit, the process $P_{ok}$ is started, otherwise the process
+$P_{error}$ starts.  There is a problem with this approach though:
+Even though we can provide a Join-implementation that does exactly as
+described, there is no guarantee that the program will behave in a
+similar way on different implementations.
 
-The problem lies both in the non-deterministic choice between the two reaction
-rules, and in the fact that messages are not required to be processed in the
-same order as they arrive. Even if a result arrives before the timeout fires, a
-valid implementation can choose to wait for the \emph{timeout} message to
-appear, and consume that instead of the \emph{k} message.
+The problem lies both in the non-deterministic choice between the two
+reaction rules, and in the fact that messages are not required to be
+processed in the same order as they arrive. Even if a result arrives
+before the timeout fires, a valid implementation can choose to wait
+for the \emph{timeout} message to appear, and consume that instead of
+the \emph{k} message.
 
-A possible solution to this problem is to extend the join-calculus with a
-notion of time. Many other non-timed process calculi, including CSP and CCS,
-has already been extended for this purpose. An overview of some of the work
-that has been done in this area along with an attempt to generalize some of the
-concepts of timed process calculi has been presented in
-\cite{nicollin-overview}.
+A possible solution to this problem is to extend the join-calculus
+with a notion of time. Many other non-timed process calculi, including
+CSP and CCS, has already been extended for this purpose. An overview
+of some of the work that has been done in this area along with an
+attempt to generalize some of the concepts of timed process calculi
+has been presented in \cite{nicollin-overview}.
 
 A timed extension also exists for join-calculus, called Timed Join
-Calculus \cite{timed-join}. The calculus is extended with a model of time using
-a \emph{discrete time domain}, where every process bears a time tag denoting
-when it will be able to participate in a reaction. The syntax is extended with
-a new tagging construction for processes, and all reactions are tagged with a
+Calculus \cite{timed-join}. The calculus is extended with a model of
+time using a \emph{discrete time domain}, where every process bears a
+time tag denoting when it will be able to participate in a reaction.
+The syntax is extended with a new tagging construction for processes,
+and all reactions are tagged with a
 \emph{delay} tag:
 \begin{align*}
   P ::={} & ...    & D ::={}& J \stackrel{d}{\triangleright} P \\
           & t : P  &        & D \land D
 \end{align*}
-We can now model the example above without depending on special messages that
-get captured by the environment:
+We can now model the example above without depending on special
+messages that get captured by the environment:
 \begin{align*}
   \textbf{def}\quad & \S k<x> ~|~ \S incall<> \triangleright P_{ok} \\
   \land\quad & \S incall<> \stackrel{16}{\triangleright} P_{error} \\
   \textbf{in}\quad & \S 0:remotecall<k> ~|~ \S 0:incall<>
 \end{align*}
-Here, we assume that the response message \emph{k} gets transferred from an
-external location and gets time tagged as soon as it enters the local solution.
-The second reaction rule is tagged with a delay of $16$ time units.  This means
-that every message on the left of ``$\triangleright$'' needs to be available
-for $16$ time units before the reaction can happen, effectively allowing
-another reaction to ``steal'' messages in that time window. Rules with no tags
-implicitly gets tagged with a delay of $0$. If the \emph{k} message therefore
-arrives before the $16$ time units has passed, the first reaction can take
-place immediately.
+Here, we assume that the response message \emph{k} gets transferred
+from an external location and gets time tagged as soon as it enters
+the local solution.  The second reaction rule is tagged with a delay
+of $16$ time units.  This means that every message on the left of
+``$\triangleright$'' needs to be available for $16$ time units before
+the reaction can happen, effectively allowing another reaction to
+``steal'' messages in that time window. Rules with no tags implicitly
+gets tagged with a delay of $0$. If the \emph{k} message therefore
+arrives before the $16$ time units has passed, the first reaction can
+take place immediately.
 
 
 \subsection{Operational semantics}
 
-\fixme{Is it necessary to repeat the operational semantics of the article, or
-can we just refer to them?}
+\fixme{Is it necessary to repeat the operational semantics of the
+article, or can we just refer to them?}
 
 
 \subsection{Infinite instants}
 
-The time domain in Timed Join Calculus is \emph{abstract}, where time tags
-doesn't have any quantifiable correspondence with \emph{physical} time. It is
-assumed that any computation takes zero time unless delayed with a non-zero
-time tag, which is of course not a realistic assumption, but as assumption that
-simplifies the model. Alternatively, one could assume that any atomic
-computation took some minimum amount of time, yielding a model that is closer
-to reality.  However, as argued in \cite{nicollin-overview}, this destroys the
-generality of the model, as we will then tie the behaviour of programs to an
-arbitrary assumption about execution speed.
+The time domain in Timed Join Calculus is \emph{abstract}, where time
+tags doesn't have any quantifiable correspondence with \emph{physical}
+time. It is assumed that any computation takes zero time unless
+delayed with a non-zero time tag, which is of course not a realistic
+assumption, but as assumption that simplifies the model.
+Alternatively, one could assume that any atomic computation took some
+minimum amount of time, yielding a model that is closer to reality.
+However, as argued in \cite{nicollin-overview}, this destroys the
+generality of the model, as we will then tie the behaviour of programs
+to an arbitrary assumption about execution speed.
 
-Even if we did make very conservative choices for the minimum duration of a
-single computation, this wouldn't make it possible to guarantee that a given
-computation finishes in a well-defined time window: Since a computer has finite
-computational resources, but can (in theory) execute an arbitrary number of
-threads concurrently, the time a computation takes isn't fixed. As an example,
-say that we choose that the duration $\delta$ of a reaction in the CHAM is $1
-ms$. For a single process, this will enable us to guarantee that a computation
-involving 20 reactions will finish in $20 ms$. But if we execute an arbitrary
-number of instances of this process concurrently on the same hardware, we can
-only expect that the time it takes for all the processes to finish will be
-proportional to the number of processes. The actual wall-clock time for a
-single time step therefore increases, meaning our hypothetical (though
-conservative) choice is still too low. If we increase the number of concurrent
-processes towards infinity, even the most conservative choice for $\delta$
-will result in an assumption that we can execute an arbitrary number of
-reactions in an instant. The result is a more complicated model with exactly
-the same problems as the simpler model, where every computation is assumed to
-be instantaneous.
+Even if we did make very conservative choices for the minimum duration
+of a single computation, this wouldn't make it possible to guarantee
+that a given computation finishes in a well-defined time window: Since
+a computer has finite computational resources, but can (in theory)
+execute an arbitrary number of threads concurrently, the time a
+computation takes isn't fixed. As an example, say that we choose that
+the duration $\delta$ of a reaction in the CHAM is $1 ms$. For a
+single process, this will enable us to guarantee that a computation
+involving 20 reactions will finish in $20 ms$. But if we execute an
+arbitrary number of instances of this process concurrently on the same
+hardware, we can only expect that the time it takes for all the
+processes to finish will be proportional to the number of processes.
+The actual wall-clock time for a single time step therefore increases,
+meaning our hypothetical (though conservative) choice is still too
+low. If we increase the number of concurrent processes towards
+infinity, even the most conservative choice for $\delta$ will result
+in an assumption that we can execute an arbitrary number of reactions
+in an instant. The result is a more complicated model with exactly the
+same problems as the simpler model, where every computation is assumed
+to be instantaneous.
 
-Assuming that every atomic computation takes zero time can pose some problems
-in the form of \emph{timelocks} (also called \emph{Zeno-behaviour}). Since time
-can only progress when a computation in an instant is done, a diverging
-computation can prevent time from ever progressing, causing a global timelock.
-In \cite{timed-join} this is solved by adding a very restrictive type system to
-the join calculus, which rejects all programs that aren't guaranteed to let
-time progress. We have chosen not to study this type system in detail, for
-several reasons: (1) Identifying all non-timelocking programs is equivalent to
-solving the halting problem, meaning that the set of accepted programs in the
-proposed type system is a lot smaller than the actual set of valid programs,
-making it very difficult to express useful behaviour. (2) The authors describe
-the type system as a ``first attempt'' at solving the problem, and are yet to
-prove the soundness of it.
+Assuming that every atomic computation takes zero time can pose some
+problems in the form of \emph{timelocks} (also called
+\emph{Zeno-behaviour}). Since time can only progress when a
+computation in an instant is done, a diverging computation can prevent
+time from ever progressing, causing a global timelock.  In
+\cite{timed-join} this is solved by adding a very restrictive type
+system to the join calculus, which rejects all programs that aren't
+guaranteed to let time progress. We have chosen not to study this type
+system in detail, for several reasons: (1) Identifying all
+non-timelocking programs is equivalent to solving the halting problem,
+meaning that the set of accepted programs in the proposed type system
+is a lot smaller than the actual set of valid programs, making it very
+difficult to express useful behaviour. (2) The authors describe the
+type system as a ``first attempt'' at solving the problem, and are yet
+to prove the soundness of it.
 
 
 \section{Language definition}
