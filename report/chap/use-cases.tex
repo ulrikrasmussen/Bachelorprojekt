@@ -1,3 +1,4 @@
+\fixme{maybe make section -> subsection etc. }
 We present here some use cases for a language based on the
 distributed join calculus.
 
@@ -62,17 +63,17 @@ article:
 \end{itemize}
 \subsection{Assumptions about the underlying system}
 
-We will assume a network topology with a central processing node
-which is connected to the sensors in a star pattern, using
-unreliable communication channels (i.e. some sort of radio protocol).  
-With regards to networking, it is assumed that the runtime system
-on each node communicates via some sort of reliable network protocol á
-la TCP, such that there is no notion of packet loss from the
-programmer's point of view.
-However, sensor nodes may temporarily come out of contact and become
-unavailable for extended periods of time.
+We will assume a network topology with a central processing node which is
+connected to the sensors in a star pattern, using unreliable communication
+channels (i.e. some sort of radio protocol).  With regards to networking, it is
+assumed that the runtime system on each node communicates via some sort of
+reliable network protocol á la TCP\fixme{No more TCP. The basic communication
+between physical devices is more IP-like}, such that there is no notion of
+packet loss from the programmer's point of view.  However, sensor nodes may
+temporarily come out of contact and become unavailable for extended periods of
+time.
 
-We will start out by assuming a static network, where nodes doesn't
+We will start out by assuming a static network, where nodes don't
 move around. The central node knows the names of all its sensors.
 The central processing node will always be available, so queries
 will get initiated in this by an external client.
@@ -92,17 +93,17 @@ through a set of names, that the server node exports.
 Then, as sensors register themselves with the server node, the query
 programs are uploaded from the server to the sensors.
 
-In order for this to work, a correct query program is supposed to 
+In order for this to work, a correct query program is supposed to
 behave in a certain way with regards to distribution and internal
-structure, because process migration in the join calculus only happens on 
+structure, because process migration in the join calculus only happens on
 the initiative of the process that is to migrate, and cannot be controlled
 or observed by the surrounding environment.
-Conceptually, a query program is structured in two parts: One that 
+Conceptually, a query program is structured in two parts: One that
 treats the sensor data inside the sensor itself, and a second part
 that runs on the server node that collects and filters the data from
 the sensors and eventually aggregate these to the client. We will refer
 to these two parts as the \emph{reducer} and \emph{filter} parts, respectively.
-The interface of the query programs is more explicitly specified later
+
 in this section.
 
 When a new sensor appears in the network, it enters the registration
