@@ -3,10 +3,5 @@ def fib(n) |> match n with
               | 1 -> { return (1) to fib }
               | n -> { return (add(fib(sub(n,2)), fib(sub(n,1)))) to fib }
  or finished<x> |> finished<x>
-<<<<<<< HEAD:src/examples/test3.join
  in 1 : { let r = fib(5);
           run finished<r> }
-=======
- in { let r = fib(10);
-      run finished<x> }
->>>>>>> 0fddaa647558c181404904b66ac4a1bad0a326f1:src/examples/test3.join
