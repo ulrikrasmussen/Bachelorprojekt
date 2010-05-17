@@ -94,17 +94,17 @@ through a set of names, that the server node exports.
 Then, as sensors register themselves with the server node, the query
 programs are uploaded from the server to the sensors.
 
-In order for this to work, a correct query program is supposed to 
+In order for this to work, a correct query program is supposed to
 behave in a certain way with regards to distribution and internal
-structure, because process migration in the join calculus only happens on 
+structure, because process migration in the join calculus only happens on
 the initiative of the process that is to migrate, and cannot be controlled
 or observed by the surrounding environment.
-Conceptually, a query program is structured in two parts: One that 
+Conceptually, a query program is structured in two parts: One that
 treats the sensor data inside the sensor itself, and a second part
 that runs on the server node that collects and filters the data from
 the sensors and eventually aggregate these to the client. We will refer
 to these two parts as the \emph{reducer} and \emph{filter} parts, respectively.
-The interface of the query programs is more explicitly specified later
+
 in this section.
 
 When a new sensor appears in the network, it enters the registration
