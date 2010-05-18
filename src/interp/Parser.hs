@@ -127,8 +127,9 @@ proc =  (Proc . concat <$> atoms)
                   <|> (concat <$> (lexeme $ parens atoms))) `sepBy` (lexeme $ char '&')
         atom = defp
             <|> matchp
-            <|> MsgA <$> identifier
-                     <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
+            <|> DelayA 0 . Proc . (:[])
+                <$> (MsgA <$> identifier
+                          <*> (angles $ lexeme expr `sepBy` (lexeme $ char ',')))
             <|> InertA <$ char '0'
             <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
             <|> DelayA <$> lexeme (read <$> many1 digit)
