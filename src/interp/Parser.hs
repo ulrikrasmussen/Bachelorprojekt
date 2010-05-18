@@ -112,7 +112,11 @@ joins = (lexeme construction) `sepBy1` (lexeme $ char '&')
 defs :: Parser [Def]
 defs = (lexeme def) `sepBy1` (lexeme1 $ string "or")
      <?> "Definition"
-  where def = ReactionD <$> (try joins) <* (lexeme $ string "|>") <*> proc
+  where def = ReactionD <$> (try joins)
+                        <*  (string "|>")
+                        <*> (char '^' *> lexeme1 (read <$> many1 digit)
+                             <|> pure 0 <* many1 space)
+                        <*> proc
             <|> LocationD <$> identifier
                 <* (lexeme $ char '[') <*> defs <* (lexeme1 $ string "in") <*> proc <* char ']'
 
@@ -127,6 +131,9 @@ proc =  (Proc . concat <$> atoms)
                      <*> (angles $ lexeme expr `sepBy` (lexeme $ char ','))
             <|> InertA <$ char '0'
             <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
+            <|> DelayA <$> lexeme (read <$> many1 digit)
+                       <*  (lexeme $ char ':')
+                       <*> proc
             <?> "atom"
         -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
         -- prefixed by 'def'.

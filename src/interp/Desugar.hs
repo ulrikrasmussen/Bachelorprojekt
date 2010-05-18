@@ -42,7 +42,7 @@ desExp k (ConS n es) =
      [once] <- getFresh 1
      es' <- zipWithM desExp chans es
      let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
-     return $ DefA [ReactionD ((VarJ once []):joins)
+     return $ DefA [ReactionD ((VarJ once []):joins) 0
                               (Proc [MsgA k [ConE n $ map VarE vars]])]
                    (Proc $ (MsgA once []):es')
 
@@ -59,7 +59,7 @@ desExp k (CallS v es) =
      [once] <- getFresh 1
      let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
      es' <- zipWithM desExp chans es
-     return $ DefA [ReactionD ((VarJ once []):joins)
+     return $ DefA [ReactionD ((VarJ once []):joins) 0
                               (Proc [MsgA v (map VarE vars ++ [VarE k])])]
                    (Proc $ (MsgA once []):es')
 
@@ -79,7 +79,7 @@ desInstr mk ((LetI pats e):is) =
   do is' <- desInstr mk is
      [k, once] <- getFresh 2
      e' <- desExp k e
-     return $ [DefA [ReactionD [VarJ once [], VarJ k pats] (Proc is')]
+     return $ [DefA [ReactionD [VarJ once [], VarJ k pats] 0 (Proc is')]
                     (Proc [MsgA once [], e'])]
 
 desInstr mk ((RunI (Proc as)):is) =  -- (as ++) <$> desInstr mk is
@@ -91,7 +91,7 @@ desInstr mk ((DoI f es):is) =
   do is' <- desInstr mk is
      [k, once] <- getFresh 2
      f' <- desExp k (CallS f es)
-     return $ [DefA [ReactionD [VarJ once [], VarJ k []] (Proc is')]
+     return $ [DefA [ReactionD [VarJ once [], VarJ k []] 0 (Proc is')]
                     (Proc [MsgA once [], f'])]
 
 -- |When executing a match, we first evaluate the expression to be matched.
@@ -108,9 +108,9 @@ desInstr mk ((MatchI e mps):is) =
      -- execution.
      let mk' = if (is == []) then mk else Just m
      mps' <- mapM (\(pat, is) -> (,) pat <$> (Proc <$> desInstr mk' is)) mps
-     return [DefA [ReactionD [VarJ once [], VarJ l [VarP var_e]]
+     return [DefA [ReactionD [VarJ once [], VarJ l [VarP var_e]] 0
                              (Proc $ [MatchA (VarE var_e) mps'])
-                  ,ReactionD [VarJ m []]
+                  ,ReactionD [VarJ m []] 0
                              (Proc $ is')]
                   (Proc [MsgA once [], e'])]
 
@@ -137,7 +137,7 @@ desInstr mk ((ReturnI es f):is) =
      [once] <- getFresh 1
      es' <- zipWithM desExp chans es
      let joins = zipWith (\chan var -> VarJ chan [VarP var]) chans vars
-     return [DefA [ReactionD ((VarJ once []):joins)
+     return [DefA [ReactionD ((VarJ once []):joins) 0
                              (Proc $ (MsgA (contName f) $ map VarE vars):is')]
                   (Proc $ (MsgA once []):es')]
 
@@ -152,11 +152,14 @@ desAtom (MatchA e mps) = do
 desAtom (InstrA is) =
    do is' <- desInstr Nothing is
       return is'
+desAtom (DelayA d (Proc as)) = do
+  as' <- concat <$> mapM desAtom as
+  return $ [DelayA d (Proc as')]
 desAtom a = return [a]
 
 desDef :: Def -> DesugarM Def
-desDef (ReactionD js (Proc as)) =
-  ReactionD (map desJoin js) <$> (Proc . concat <$> mapM desAtom as)
+desDef (ReactionD js d (Proc as)) =
+  ReactionD (map desJoin js) d <$> (Proc . concat <$> mapM desAtom as)
 desDef (LocationD name ds (Proc as)) = do
   ds' <- mapM desDef ds
   as' <- concat <$> mapM desAtom as

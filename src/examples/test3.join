@@ -1,9 +1,7 @@
-def add(Z, x)   |> { return (x) to add }
- or add(S x, y) |> { return (add(x, S y)) to add }
- or fib(Z)      |> { return (S Z) to fib }
- or fib(S Z)    |> { return (S Z) to fib }
- or fib(S S x)  |> { return (add(fib(x), fib(S x))) to fib }
+def fib(n) |> match n with
+                0 -> { return (1) to fib }
+              | 1 -> { return (1) to fib }
+              | n -> { return (add(fib(sub(n,2)), fib(sub(n,1)))) to fib }
  or finished<x> |> finished<x>
- in { let x = fib(S S S S S S S S S S S S Z);
-      run finished<x>
-    }
+ in 1 : { let r = fib(5);
+          run finished<r> }
