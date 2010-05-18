@@ -171,7 +171,7 @@ runApi funMap ctx = do
         if d > cTime ctx
             then return ([del], S.empty)
             else do (as, set) <- matchAtm atm
-                    return ([DelayA (cTime ctx) (Proc as)], set)
+                    return ([DelayA d (Proc as)], set)
     matchAtm atm@(MsgA nm exp) = maybe (return ([atm], S.empty)) (\f -> (,) <$> (f atm) <*> (pure $ freeVars atm))  (M.lookup nm funMap)
     matchAtm atm = return ([atm], S.empty)
 
@@ -283,12 +283,19 @@ exchangeMessages comP gp rGen cs =
 takeMessages ::  Context -> (Context, [(String, Atom)])
 takeMessages context =
   let dvs = S.unions . map definedVars $ cDefs context
-      (locals, nonlocals) = partition (isLocal dvs) $ cAtoms context
-      exports = S.unions $ map getExports nonlocals
+      (locals, nonlocals) = partition (\m -> isLocal dvs m
+                                             || not (hasDelay (cTime context) m))
+                                      (cAtoms context)
+      nonlocals' = map rmDelay nonlocals
+      exports = S.unions $ map getExports nonlocals'
       context' = context { cAtoms = locals
                          , cExportedNames = cExportedNames context `S.union` exports }
-   in (context', [tagged| nl <- nonlocals, tagged <- [(cLocation context, nl)]])
+   in (context', [(cLocation context, nl) | nl <- nonlocals'])
     where getExports (MsgA _ es) = S.unions $ map freeVars es
+          hasDelay t (DelayA d (Proc _)) = d == t
+          hasDelay _ _ = False
+          rmDelay (DelayA d (Proc [atm])) = atm
+          rmDelay x = trace (show x) x
 
 putMessages :: M.Map (String, String) Double
                -> M.Map String String
@@ -301,10 +308,12 @@ putMessages comP gp rGen ms (context:cs) =
  let (rGen', rGen'') = R.split rGen
      dvs = S.unions . map definedVars $ cDefs context
      (locals, ms') = partition (snd >>> isLocal dvs) $ ms
-     succCom = tryCom rGen' locals
+     succCom = map setDelay $ tryCom rGen' locals
      context' = context { cAtoms = cAtoms context ++ succCom }
   in context':putMessages comP gp rGen'' ms' cs
   where
+    setDelay = DelayA (succ $ cTime context) . Proc . (:[])
+
     tryCom _  [] = []
     tryCom rg ((loc,a):ls) =
       let destLoc = gp M.! cLocation context
@@ -318,6 +327,7 @@ putMessages comP gp rGen ms (context:cs) =
                                               else tryCom rg' ls
 
 isLocal ::  S.Set String -> Atom -> Bool
+isLocal dvs (DelayA d (Proc [msg])) = isLocal dvs msg
 isLocal dvs (MsgA name _) = S.member name dvs
 isLocal _ _ = True
 

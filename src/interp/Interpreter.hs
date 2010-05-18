@@ -54,7 +54,7 @@ data Context = Context { cTime :: Integer -- ^ Abstract time representation
 instance Show Context where
   show context =      "Loc  :\t" ++ cLocation context ++ " (" ++ cLocationParent context ++ ")"
                ++ "\n\nExps :\t" ++ (concat . intersperse ", " . S.toList $ cExportedNames context)
-             --  ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
+               ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
                ++ "\n\nFailure Cs:\t" ++ (concat . intersperse "\n\t" . map show $ cFailureConts context)
 
