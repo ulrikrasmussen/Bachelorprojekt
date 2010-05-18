@@ -123,8 +123,8 @@ data GlobalState = GS {
 type EventLog = [[Event]]
 data Event = EvLinkUp   String String
            | EvLinkDown String String
-           | EvSpecial  String [Pat] ([Expr] -> [Atom])
-                        -- ^special atoms intended for 
+           | EvSpecial  String (Atom -> ([Output], [Atom]))
+                        -- ^special atoms intended for
                         -- reading from simulated hardware (e.g. sensors)
 
 
@@ -133,24 +133,27 @@ data Output = Message String String -- Machine Message
             | Debug   String String -- Machine Message
 
 
-runInterpreter :: InterpConfig -> GlobalState -> IO [Context]
+runInterpreter :: InterpConfig -> GlobalState -> IO ([Output], [Context])
 runInterpreter conf st = do
     let comP = cacheCom (comGraph st)
     stdGen <- R.newStdGen
-    runInterpreter' comP 0 st $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
-  where runInterpreter' comP n st contexts  = do
+    runInterpreter' comP 0 st [] $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
+  where runInterpreter' comP n st out contexts  = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
            --newAtms <- runExternals $ manipulators conf
            -- Apply external events.
            let (now:evts) = eventLog st
-           let st' = st{eventLog = evts}
+           let st'    = st{eventLog = evts}
            let comGr' = foldl (flip ($)) (comGraph st) (map alterCom now)
-           let comP' = if comGr' /= (comGraph st) then cacheCom comGr' else comP
+           let comP'  = if comGr' /= (comGraph st) then cacheCom comGr' else comP
+
+           let nowApi = M.fromList $ map unSpecial $ filter isSpecial now
 
            -- Execute API messages
-           contexts' <- mapM (runApi $ apiMap conf) contexts
+           (contexts', output) <- return $ unzip $ map (runSpecial n nowApi) contexts
+           contexts'' <- mapM (runApi $ apiMap conf) contexts'
            -- Spawn new contexts for sublocations
-           let cSpawned = concatMap (heatLocations stdGen1) contexts'
+           let cSpawned = concatMap (heatLocations stdGen1) contexts''
            -- Move contexts with a "go" atom
            let cMoved = map migrate cSpawned
            -- Map sublocation names to their grandest parent location name.
@@ -167,8 +170,12 @@ runInterpreter conf st = do
                                 then map (\x -> x {cTime = succ $ cTime x}) cStepped
                                 else cStepped
            if maybe True (n/=) (breakAt conf)
-                then runInterpreter' comP (n+1) st' cProgressed
-                else return contexts
+                then runInterpreter' comP (n+1) st' ((concat output) ++ out) cProgressed
+                else return ((concat output) ++ out, contexts)
+
+        unSpecial (EvSpecial a f) = (a,f)
+        isSpecial (EvSpecial _ _) = True
+        isSpecial               _ = False
 
         -- Alter the communication graph.
         alterCom :: Event -> M.Map String [(String, Double)] -> M.Map String [(String, Double)]
@@ -218,6 +225,22 @@ runApi funMap ctx = do
                     return ([DelayA d (Proc as)], set)
     matchAtm atm@(MsgA nm exp) = maybe (return ([atm], S.empty)) (\f -> (,) <$> (f atm) <*> (pure $ freeVars atm))  (M.lookup nm funMap)
     matchAtm atm = return ([atm], S.empty)
+
+-- | Remove atoms that match a special word and run the corresponding function.
+runSpecial :: Integer -> M.Map String (Atom -> ([Output],[Atom])) -> Context -> (Context, [Output])
+runSpecial time funMap ctx =
+  let ((output, atms), exports) = first (unzip) ( unzip $ map matchAtm (cAtoms ctx))
+  in
+    (ctx{cAtoms = concat atms, cExportedNames = S.unions $ (cExportedNames ctx):exports }, concat output)
+  where
+    matchAtm :: Atom -> (([Output], [Atom]), S.Set String)
+    matchAtm del@(DelayA d (Proc [atm])) =
+        if d > time
+            then (([],[del]), S.empty)
+            else let ((out,as), set) = matchAtm atm
+                  in ((out, [DelayA d (Proc as)]), set)
+    matchAtm atm@(MsgA nm exp) = maybe (([],[atm]), S.empty) (\f -> (f atm, freeVars atm)) (M.lookup nm funMap)
+    matchAtm atm = (([],[atm]), S.empty)
 
 runExternals :: [Manipulator] -> IO [Atom]
 runExternals funs = do

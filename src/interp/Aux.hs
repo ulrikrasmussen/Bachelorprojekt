@@ -72,10 +72,11 @@ stdJoinMain (man, api) machines mClasses cfg state = do
   -- Parse files from the given list of machine classes
   let (cls, paths) = unzip mClasses
   progs <- map ((\(Proc as) -> as) . desugar) <$> mapM openJF paths
-  ctxs <- runInterpreter conf{ -- manipulators = manips
+  (output, ctxs) <- runInterpreter conf{ -- manipulators = manips
                              apiMap = apiMap
                              , machineClasses =
                                    M.fromList $ ("Default", as):(zip cls progs)
                              } state
   mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  putStr (intersperse "\n" output)
   return ()
