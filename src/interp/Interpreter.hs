@@ -117,9 +117,6 @@ isFailed = gets cFail
 getTime :: JoinM Integer
 getTime = gets cTime
 
-incTime :: JoinM ()
-incTime = modify $ \s -> s { cTime = succ $ cTime s }
-
 initContext ::    [Def]    -- initial definitions
               -> [Atom]    -- initial atoms
               -> String    -- initial location name
@@ -172,15 +169,12 @@ execInterp conf context
 -- |Performs a single step of interpretation
 interp :: InterpConfig -> JoinM ()
 interp conf = do
-  atms <- getAtoms
   when (runGC conf) garbageCollect
   when (nondeterministic conf) scrambleContext
   (dss, ass) <- unzip <$> (mapM heatAtom =<< getAtoms)
   replaceAtoms $ concat ass
   mapM_ putDef $ concat dss
-  bs <- mapM applyReaction =<< getDefs
-  atms' <- getAtoms
-  when ((not $ or bs) && atms == atms') incTime
+  mapM_ applyReaction =<< getDefs
 
 scrambleContext :: JoinM ()
 scrambleContext = do
@@ -188,23 +182,20 @@ scrambleContext = do
    where scramble stdGen xs =
             map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
-applyReaction :: Def -> JoinM Bool
+applyReaction :: Def -> JoinM ()
 applyReaction d@(ReactionD js delay p) =
   sequence <$> mapM matchJoin js >>=
-  maybe (return False)
+  maybe (return ())
         (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
                    t <- getTime
                    let reactionTime = max t $ delay + foldl max 0 (map getDelay atoms)
-                   if reactionTime > t
-                      then return False
-                      else do mapM_ rmAtom atoms
-                              putAtom $ DelayA reactionTime (sigma `subst` p)
-                              return True)
+                   when (reactionTime > t) $ do mapM_ rmAtom atoms
+                                                putAtom $ DelayA reactionTime (sigma `subst` p))
   where
     getDelay (DelayA d _) = d
     getDelay _ = 0
 
-applyReaction (LocationD _ _ _) = return False
+applyReaction (LocationD _ _ _) = return ()
 
 {- Check whether a join pattern is matched by the atoms in the context -}
 matchJoin :: Join -> JoinM (Maybe (M.Map String Expr, Atom))
