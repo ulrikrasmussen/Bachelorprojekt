@@ -1,4 +1,10 @@
-module Aux( stdJoinMain, defaultConfig ) where
+module Aux( stdJoinMain
+          , defaultConfig
+          , Output
+          , OutputLog
+          , Event
+          , EventLog
+          , GlobalState(..) ) where
 
 import Parser
 import Language

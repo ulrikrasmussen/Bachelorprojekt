@@ -4,6 +4,11 @@ module GlobalInterpreter( runInterpreter
                         , ApiMap
                         , Manipulator
                         , mkUniGraph
+                        , GlobalState(..)
+                        , Event
+                        , EventLog
+                        , OutputLog
+                        , Output
                         ) where
 
 import Interpreter
@@ -112,6 +117,21 @@ data GlobalState = GS {
   , outLog   :: OutputLog
   , comGraph :: M.Map String [(String, Double)]
 }
+
+-- The event log is a list of the external events that
+-- influence the global state of the interpreter
+type EventLog = [[Event]]
+data Event = EvLinkUp   String String
+           | EvLinkDown String String
+           | EvSpecial  String [Pat] ([Expr] -> [Atom])
+                        -- ^special atoms intended for 
+                        -- reading from simulated hardware (e.g. sensors)
+
+
+type OutputLog = [[Output]]
+data Output = Message String String -- Machine Message
+            | Debug   String String -- Machine Message
+
 
 runInterpreter :: InterpConfig -> GlobalState -> IO [Context]
 runInterpreter conf st = do

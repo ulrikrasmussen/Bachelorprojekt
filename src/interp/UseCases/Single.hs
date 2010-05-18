@@ -1,6 +1,6 @@
 module Main() where
 
-import Aux( stdJoinMain, defaultConfig )
+import Aux
 
 machineClasses = []
 
@@ -11,4 +11,6 @@ api = ([], [
   ("readTemp", undefined)
   ])
 
-main = stdJoinMain api machines machineClasses comEdges defaultConfig
+state = GS {}
+
+main = stdJoinMain api machines machineClasses defaultConfig state
