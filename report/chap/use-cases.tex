@@ -68,7 +68,7 @@ article:
 
 We will assume a network topology with a central processing node
 which is connected to the sensors in a star pattern, using
-unreliable communication channels (i.e. some sort of radio protocol).  
+unreliable communication channels (i.e. some sort of radio protocol).
 We do not assume that the runtime system ensures delivery of messages,
 but we do assume that any message that \emph{does} get delivered are
 ensured not to be corrupted in any way.
@@ -80,9 +80,10 @@ it will be from this node that all queries are initiated.
 It is also assumed that there is a built in name-exchange facility,
 such that the network can be bootstrapped. In our scenario, this is a
 global key-value store that can be accessed programmatically from any
-device through the API messages \verb!register! and \verb!search!. Any
+device through the API messages \verb!register! and \verb!search!. A
 call to one of these messages always succeeds. In a real-world
-scenario, 
+scenario, bootstrapping an ad-hoc network may be more involved, since
+we cannot rely on a global, centralized non-failing database.
 
 
 \subsection{Implementation}
