@@ -5,6 +5,10 @@ module Interpreter( InterpConfig(..)
                   , MachineConfig(..)
                   , Context(..)
                   , initContext
+                  , Event (..)
+                  , EventLog
+                  , Output (..)
+                  , OutputLog
                   , execInterp) where
 
 import Language
@@ -141,6 +145,18 @@ initContext ds as locName locParent exports stdGen = Context {
 
 --}
 
+-- The event log is a list of the external events that
+-- influence the global state of the interpreter
+type EventLog = [[Event]]
+data Event = EvLinkUp   String String
+           | EvLinkDown String String
+           | EvSpecial  String [Pat] ([Expr] -> [Atom]) -- special atoms intended for reading from simulated hardware (e.g. sensors)
+
+
+type OutputLog = [[Output]]
+data Output = Message String String -- Machine Message
+            | Debug   String String -- Machine Message
+
 --{ Configuration data
 
 data InterpConfig = IC {
@@ -148,11 +164,11 @@ data InterpConfig = IC {
   , gcInterval :: Integer
   , breakAt :: Maybe Integer
   , nondeterministic :: Bool
-  , apiMap :: ApiMap  -- ^ A map from atom names to functions. Used to enable IO in join programs.
-  , manipulators :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.
-  , machineClasses :: M.Map String [Atom]
+  , apiMap          :: ApiMap  -- ^ A map from atom names to functions. Used to enable IO in join programs.
+  --, manipulators    :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.
+  , machineClasses  :: M.Map String [Atom]
   , initialMachines :: [MachineConfig]
-  , comLinks :: M.Map String [(String, Double)]
+  -- , comLinks :: M.Map String [(String, Double)]
 }
 
 type MachineConfig = (String , String)
