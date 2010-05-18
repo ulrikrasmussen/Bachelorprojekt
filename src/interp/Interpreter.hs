@@ -189,8 +189,8 @@ applyReaction d@(ReactionD js delay p) =
         (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
                    t <- getTime
                    let reactionTime = max t $ delay + foldl max 0 (map getDelay atoms)
-                   when (reactionTime > t) $ do mapM_ rmAtom atoms
-                                                putAtom $ DelayA reactionTime (sigma `subst` p))
+                   when (reactionTime <= t) $ do mapM_ rmAtom atoms
+                                                 putAtom $ DelayA reactionTime (sigma `subst` p))
   where
     getDelay (DelayA d _) = d
     getDelay _ = 0
