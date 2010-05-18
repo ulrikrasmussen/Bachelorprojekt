@@ -133,8 +133,11 @@ runInterpreter conf = do
            let cStepped =
                 (putMessages comP gp stdGen4 [(rootLocation,na) | na <- newAtms] >>>
                  map (execInterp conf)) cExchanged
-           if maybe (contexts /= cStepped) (n/=) (breakAt conf)
-                then runInterpreter' comP (n+1) cStepped
+           let cProgressed = if map cAtoms cStepped == map cAtoms contexts
+                                then map (\x -> x {cTime = succ $ cTime x}) cStepped
+                                else cStepped
+           if maybe True (n/=) (breakAt conf)
+                then runInterpreter' comP (n+1) cProgressed
                 else return contexts
 
         mkInitialCtxs      _   _     [] = []
