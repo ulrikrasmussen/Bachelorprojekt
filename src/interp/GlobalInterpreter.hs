@@ -251,7 +251,8 @@ runExternals funs = do
 halt :: Context -> Context
 halt context =
   context { cFail = any isHalt $ cAtoms context }
-    where isHalt (MsgA "halt" _) = True
+    where isHalt (DelayA d (Proc [MsgA "halt" _])) = d <= cTime context
+          isHalt (MsgA "halt" _) = True
           isHalt _ = False
 
 -- |Propagates failure to subcontexts, and removes failed
@@ -394,7 +395,7 @@ putMessages comP gp rGen ms (context:cs) =
                                               else tryCom rg' ls
 
 isLocal ::  S.Set String -> Atom -> Bool
-isLocal dvs (DelayA d (Proc [msg])) = isLocal dvs msg
+isLocal dvs (DelayA d (Proc [msg@(MsgA _ _)])) = isLocal dvs msg
 isLocal dvs (MsgA name _) = S.member name dvs
 isLocal _ _ = True
 
