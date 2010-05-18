@@ -328,7 +328,7 @@ putMessages comP gp rGen ms (context:cs) =
                                               else tryCom rg' ls
 
 isLocal ::  S.Set String -> Atom -> Bool
-isLocal dvs (DelayA d (Proc [msg])) = isLocal dvs msg
+isLocal dvs (DelayA d (Proc [msg@(MsgA _ _)])) = isLocal dvs msg
 isLocal dvs (MsgA name _) = S.member name dvs
 isLocal _ _ = True
 
