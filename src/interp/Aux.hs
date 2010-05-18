@@ -43,7 +43,7 @@ parseArgs conf fs ("-nogc":xs) =
 parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
-stdJoinMain (man, api) machines mClasses comEdges cfg = do
+stdJoinMain (man, api) machines mClasses cfg state = do
   let cfg' = cfg { initialMachines = machines
                  , comLinks = mkUniGraph (fst . unzip $ machines) comEdges }
   (fs, conf) <- parseArgs cfg' [] <$> getArgs
@@ -65,10 +65,10 @@ stdJoinMain (man, api) machines mClasses comEdges cfg = do
   -- Parse files from the given list of machine classes
   let (cls, paths) = unzip mClasses
   progs <- map ((\(Proc as) -> as) . desugar) <$> mapM openJF paths
-  ctxs <- runInterpreter conf { manipulators = manips
-                              , apiMap = apiMap
-                              , machineClasses =
-                                    M.fromList $ ("Default", as):(zip cls progs)
-                              }
+  ctxs <- runInterpreter conf{ manipulators = manips
+                             , apiMap = apiMap
+                             , machineClasses =
+                                   M.fromList $ ("Default", as):(zip cls progs)
+                             } state
   mapM_ putStrLn . intersperse "----------" $ map show ctxs
   return ()

@@ -1,9 +1,9 @@
 -- vim:set foldmethod=marker foldmarker=--{,--}:
-module GlobalInterpreter(runInterpreter
-                        ,InterpConfig(..)
-                        ,ApiMap
-                        ,Manipulator
-                        ,mkUniGraph
+module GlobalInterpreter( runInterpreter
+                        , InterpConfig(..)
+                        , ApiMap
+                        , Manipulator
+                        , mkUniGraph
                         ) where
 
 import Interpreter
@@ -107,16 +107,26 @@ destV (_, d, _)  = d
 origV (o, _, _)  = o
 --}
 
-runInterpreter :: InterpConfig -> IO [Context]
-runInterpreter conf = do
-    let comP = M.fromList [ p | x <- M.keys $ comLinks conf,
-                                y <- M.keys $ comLinks conf,
-                                p <- [((x,y), comProb (comLinks conf) x y)]]
+data GlobalState = GS {
+    eventLog :: EventLog
+  , outLog   :: OutputLog
+  , comGraph :: M.Map String [(String, Double)]
+}
+
+runInterpreter :: InterpConfig -> GlobalState -> IO [Context]
+runInterpreter conf st = do
+    let comP = cacheCom (comGraph st)
     stdGen <- R.newStdGen
-    runInterpreter' comP 0 $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
-  where runInterpreter' comP n contexts = do
+    runInterpreter' comP 0 st $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
+  where runInterpreter' comP n st contexts  = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
-           newAtms <- runExternals $ manipulators conf
+           --newAtms <- runExternals $ manipulators conf
+           -- Apply external events.
+           let (now:evts) = eventLog st
+           let st' = st{eventLog = evts}
+           let comGr' = foldl (flip ($)) (comGraph st) (map alterCom now)
+           let comP' = if comGr' /= (comGraph st) then cacheCom comGr' else comP
+
            -- Execute API messages
            contexts' <- mapM (runApi $ apiMap conf) contexts
            -- Spawn new contexts for sublocations
@@ -131,14 +141,28 @@ runInterpreter conf = do
            -- Exchange messages between locations
            let cExchanged = exchangeMessages comP gp stdGen3 cFailed
            let cStepped =
-                (putMessages comP gp stdGen4 [(rootLocation,na) | na <- newAtms] >>>
-                 map (execInterp conf)) cExchanged
+                --(putMessages comP gp stdGen4 [(rootLocation,na) | na <- []] >>>
+                map (execInterp conf) cExchanged
            let cProgressed = if map cAtoms cStepped == map cAtoms contexts
                                 then map (\x -> x {cTime = succ $ cTime x}) cStepped
                                 else cStepped
            if maybe True (n/=) (breakAt conf)
-                then runInterpreter' comP (n+1) cProgressed
+                then runInterpreter' comP (n+1) st' cProgressed
                 else return contexts
+
+        -- Alter the communication graph.
+        alterCom :: Event -> M.Map String [(String, Double)] -> M.Map String [(String, Double)]
+        alterCom (EvLinkUp m1 m2) comG = M.alter (addEdg m1) m2 (M.alter (addEdg m2) m1 comG)
+        alterCom (EvLinkDown m1 m2) comG = M.alter (rmEdg m1) m2 (M.alter (rmEdg m2) m1 comG)
+        alterCom              _ comG = comG
+        addEdg nm (Just es) = Just $ [(nm,1)] `union` es
+        addEdg nm   Nothing = Just [(nm,1)]
+        rmEdg  nm (Just es) = Just $ es \\ [(nm,1)]
+        rmEdg  nm   Nothing = Nothing
+
+        cacheCom gr = M.fromList [ p | x <- M.keys gr,
+                                   y <- M.keys gr,
+                                   p <- [((x,y), comProb gr x y)]]
 
         mkInitialCtxs      _   _     [] = []
         mkInitialCtxs stdGen cls (m:ms) =
