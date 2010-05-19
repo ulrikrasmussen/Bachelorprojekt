@@ -1,18 +1,19 @@
 module Main() where
 
 import Aux
+import Language
+import Interpreter
 
-machineClasses = []
 
-machines = [ ("A", "Default") ]
-comEdges = [ ]
+mClasses = [ ("Single", "UseCases/Single.join")]
 
-api = ([], [])
+machines = [ ("Single", "Single")
+           ]
 
-state = GS {
-   eventLog = []
- , outLog = []
- , comGraph = mkUniGraph (fst . unzip $ machines) comEdges
-}
+api = []
 
-main = stdJoinMain api machines machineClasses defaultConfig state
+jPrint t (MsgA _ [jStr, VarE k]) = ([OutMessage t (fromJoin jStr)],[MsgA k []])
+
+events = (mkSpecial 1 "print" jPrint)
+
+main = stdJoinMain api machines mClasses defaultConfig{breakAt = Just 1000} events

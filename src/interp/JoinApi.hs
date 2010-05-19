@@ -3,14 +3,14 @@
 module JoinApi(integerArith
               ,jPrint
               ,initApi
-              ,initTimeout
+              --,initTimeout
               ,initNameServer
-              ,initTempSensor
+              --,initTempSensor
               ,output
               ,boolean
-              ,ApiMap
-              ,Manipulator) where
+              ) where
 
+import GlobalInterpreter
 import Control.Applicative
 import Control.Monad
 import Control.Arrow
@@ -22,18 +22,18 @@ import qualified Data.Map as M
 
 import Debug.Trace
 
-type ApiMap      = M.Map String (Atom -> IO [Atom])
-type Manipulator = IO [Atom]
+--type Manipulator = IO [Atom]
 
-boolean :: ([Manipulator], ApiMap)
-boolean = ([], M.fromList [
+boolean :: ApiMap
+boolean = M.fromList [
     ("eq", exprEq)
   , ("and", exprAnd)
-  ])
+  ]
  where
   exprEq (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin (e1 == e2)]]
   exprAnd (MsgA _ [e1, e2, VarE k]) = return [MsgA k [toJoin ((fromJoin e1) && (fromJoin e2))]]
 
+{-
 initTempSensor :: IO ([Manipulator], ApiMap)
 initTempSensor = do
   tV <- newMVar 0
@@ -55,16 +55,17 @@ initTempSensor = do
                    "Sensor_D" -> tempFun 20 0.0009 1 t
                    _ -> error $ "Unknown sensor: " ++ fromJoin machineId
       return [MsgA k [toJoin (temp :: Int)]]
+-}
 
-integerArith :: ([Manipulator], ApiMap)
-integerArith = ([], M.fromList [
+integerArith :: ApiMap
+integerArith = M.fromList [
     ("add", jAdd)
   , ("sub", jSub)
   , ("mult", jMult)
   , ("div", jDiv)
   , ("mod", jMod)
   , ("leq", jLeq)
-  ])
+  ]
   where
     jAdd (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 + op2]]
     jSub (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin . max 0 $ op1 - op2]]
@@ -73,16 +74,16 @@ integerArith = ([], M.fromList [
     jMod (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 `mod` op2]]
     jLeq (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 <= op2]]
 
-output = ([], M.fromList [
+output = M.fromList [
     ("print", jPrint)
   , ("printInt", jPrintInt)
   , ("dump", jDump)
-  ])
+  ]
 
-initApi :: [([Manipulator], ApiMap)] -> ([Manipulator], ApiMap)
-initApi xs = let (manips, maps) = unzip xs
-              in (concat manips, M.unions maps)
+initApi :: [ApiMap] -> (ApiMap)
+initApi xs = M.unions xs
 
+{-
 initTimeout :: IO ([Manipulator], ApiMap)
 initTimeout = do
   reportMv <- newEmptyMVar :: IO (MVar [Atom])
@@ -93,13 +94,14 @@ initTimeout = do
       forkIO (threadDelay muS >> putMVar repMv [(MsgA cont [])]) >> return []
     checkTimeout :: MVar [Atom] -> IO [Atom]
     checkTimeout repMv = tryTakeMVar repMv >>= (maybe [] id >>> return)
+    -}
 
 
-initNameServer :: IO ([Manipulator], ApiMap)
+initNameServer :: IO (ApiMap)
 initNameServer = do
   nsVar <- newEmptyMVar :: IO (MVar (M.Map String Expr))
   nsVar `putMVar` M.empty
-  return ([], M.fromList([("search", jSearch nsVar), ("register", jRegister nsVar)]))
+  return (M.fromList([("search", jSearch nsVar), ("register", jRegister nsVar)]))
   where
     jSearch nsVar (MsgA _ [name, VarE k]) =
       withMVar nsVar $ \m -> return [MsgA k [toJoin $ M.lookup (fromJoin name) m]]

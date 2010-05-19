@@ -4,11 +4,11 @@
 module Interpreter( InterpConfig(..)
                   , MachineConfig(..)
                   , Context(..)
+                  , ApiMap
                   , initContext
                   , execInterp) where
 
 import Language
-import JoinApi(ApiMap, Manipulator)
 
 import Control.Monad
 import Control.Applicative
@@ -158,6 +158,8 @@ data InterpConfig = IC {
 type MachineConfig = (String , String)
 
 --}
+
+type ApiMap      = M.Map String (Atom -> IO [Atom])
 
 -- Executes a single step of the interpreter. If the context is in a failed state,
 -- nothing happens.

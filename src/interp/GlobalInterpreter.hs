@@ -2,18 +2,17 @@
 module GlobalInterpreter( runInterpreter
                         , InterpConfig(..)
                         , ApiMap
-                        , Manipulator
                         , mkUniGraph
                         , GlobalState(..)
-                        , Event
+                        , initialState
+                        , Event(..)
                         , EventLog
                         , OutputLog
-                        , Output
+                        , Output(..)
                         ) where
 
 import Interpreter
 import Language
-import JoinApi(ApiMap, Manipulator)
 
 import Control.Monad
 import Control.Applicative
@@ -62,17 +61,18 @@ takeElem p xs = takeElem' [] xs
   where takeElem' l [] = (Nothing, l)
         takeElem' l (x:xs) = if p x then (Just x, l++xs) else takeElem' (l++[x]) xs
 
-comProb :: M.Map String [(String, Double)] -> String -> String -> Double
+comProb :: M.Map String [String] -> String -> String -> Bool
 comProb graph n1 n2 =
-    maybe 0 (\p -> 1/p) $ dijkstra graph (\(_, _, w) -> w) (\o n -> o * (1/n)) n1 n2 1
+    maybe False (const True) $ dijkstra graph (const 1) (+) n1 n2 0
 
+dijkstra :: M.Map String [String] -> ((String, String) -> Int) -> (Int -> Int -> Int) -> String -> String -> Int -> Maybe Int
 dijkstra graph wFun adder start dest initW =
     dijkstra' (Just start) (M.fromList [(start, (False, initW))])
   where
     -- graph maps vertices to edges. wFun maps edges to weights
     dijkstra' cur paths =  -- paths map vertexes to path lengths and visited/unvisited status
       case cur of
-        Just cur' -> let edges  = outE graph cur'
+        Just cur' -> let edges  = outE graph cur' :: [(String, String)]
                          curW   = snd . fromJust $ M.lookup cur' paths
                          paths' = updatePaths paths cur' curW edges
                      in dijkstra' (getLowestUnvisited paths) paths'
@@ -98,25 +98,27 @@ dijkstra graph wFun adder start dest initW =
                 else updatePaths paths curV curW es
               Nothing   -> updatePaths (M.insert dV (False, w) paths) curV curW es
 
-mkUniGraph :: [String] -> [(String, String, Double)] -> M.Map String [(String, Double)]
-mkUniGraph vs es = mkGraph' M.empty vs [ e | (o,d,w) <- es, e <- [(o,d,w),(d,o,w)] ]
+mkUniGraph :: [String] -> [(String, String)] -> M.Map String [String]
+mkUniGraph vs es = mkGraph' M.empty vs [ e | (o,d) <- es, e <- [(o,d),(d,o)] ]
   where
     mkGraph' m []     _  = m
     mkGraph' m (v:vs) es =
-      let (vEdgs, restE) = partition (\(v', _, _) -> v' == v) es
-          vEdgs'         = [(d,w) | (_,d,w) <- vEdgs]
+      let (vEdgs, restE) = partition (\(v', _) -> v' == v) es
+          vEdgs'         = [d | (_,d) <- vEdgs]
       in M.insert v vEdgs' (mkGraph' m vs restE)
 
-outE g o = maybe [] (\e -> [(o,d,w) | (d,w) <- e]) (M.lookup o g)
-destV (_, d, _)  = d
-origV (o, _, _)  = o
+outE g o = maybe [] (\e -> [(o,d) | (d) <- e]) (M.lookup o g)
+destV (_, d)  = d
+origV (o, _)  = o
 --}
 
 data GlobalState = GS {
     eventLog :: EventLog
   , outLog   :: OutputLog
-  , comGraph :: M.Map String [(String, Double)]
+  , comGraph :: M.Map String [String]
 }
+
+initialState = GS {eventLog = [], outLog = [], comGraph = M.empty}
 
 -- The event log is a list of the external events that
 -- influence the global state of the interpreter
@@ -129,23 +131,27 @@ data Event = EvLinkUp   String String
 
 
 type OutputLog = [[Output]]
-data Output = Message String String -- Machine Message
-            | Debug   String String -- Machine Message
+data Output = OutMessage Integer String -- time message
+            | OutDebug   Integer String -- time message
+  deriving (Show)
 
 
 runInterpreter :: InterpConfig -> GlobalState -> IO ([Output], [Context])
 runInterpreter conf st = do
     let comP = cacheCom (comGraph st)
     stdGen <- R.newStdGen
-    runInterpreter' comP 0 st [] $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
-  where runInterpreter' comP n st out contexts  = do
+    runInterpreter' comP 0 st [] True $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
+  where runInterpreter' comP n st out timePassed contexts = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
            --newAtms <- runExternals $ manipulators conf
            -- Apply external events.
            let (now:evts) = eventLog st
-           let st'    = st{eventLog = evts}
-           let comGr' = foldl (flip ($)) (comGraph st) (map alterCom now)
-           let comP'  = if comGr' /= (comGraph st) then cacheCom comGr' else comP
+           let (comP', st') = if not timePassed then (comP, st)
+                              else let
+                                     comGr' = foldl (flip ($)) (comGraph st) (map alterCom now)
+                                     st_    = st{eventLog = evts, comGraph = comGr'}
+                                     comP_  = if comGr' /= (comGraph st) then cacheCom comGr' else comP
+                                    in (comP_, st_)
 
            let nowApi = M.fromList $ map unSpecial $ filter isSpecial now
 
@@ -160,17 +166,17 @@ runInterpreter conf st = do
            let gp = grandestParents cMoved
            -- Handle fail handler registration and halting
            let cFailed =
-                (registerFail >>> map halt >>> killFailed comP gp stdGen2) cMoved
+                (registerFail >>> map halt >>> killFailed comP gp) cMoved
            -- Exchange messages between locations
-           let cExchanged = exchangeMessages comP gp stdGen3 cFailed
+           let cExchanged = exchangeMessages comP gp cFailed
            let cStepped =
                 --(putMessages comP gp stdGen4 [(rootLocation,na) | na <- []] >>>
                 map (execInterp conf) cExchanged
-           let cProgressed = if map cAtoms cStepped == map cAtoms contexts
-                                then map (\x -> x {cTime = succ $ cTime x}) cStepped
-                                else cStepped
+           let (cProgressed,tpassed) = if map cAtoms cStepped == map cAtoms contexts
+                                then (map (\x -> x {cTime = succ $ cTime x}) cStepped, True)
+                                else (cStepped, False)
            if maybe True (n/=) (breakAt conf)
-                then runInterpreter' comP (n+1) st' ((concat output) ++ out) cProgressed
+                then runInterpreter' comP' (n+1) st' ((concat output) ++ out) tpassed cProgressed
                 else return ((concat output) ++ out, contexts)
 
         unSpecial (EvSpecial a f) = (a,f)
@@ -178,13 +184,13 @@ runInterpreter conf st = do
         isSpecial               _ = False
 
         -- Alter the communication graph.
-        alterCom :: Event -> M.Map String [(String, Double)] -> M.Map String [(String, Double)]
+        alterCom :: Event -> M.Map String [String] -> M.Map String [String]
         alterCom (EvLinkUp m1 m2) comG = M.alter (addEdg m1) m2 (M.alter (addEdg m2) m1 comG)
         alterCom (EvLinkDown m1 m2) comG = M.alter (rmEdg m1) m2 (M.alter (rmEdg m2) m1 comG)
         alterCom              _ comG = comG
-        addEdg nm (Just es) = Just $ [(nm,1)] `union` es
-        addEdg nm   Nothing = Just [(nm,1)]
-        rmEdg  nm (Just es) = Just $ es \\ [(nm,1)]
+        addEdg nm (Just es) = Just $ [nm] `union` es
+        addEdg nm   Nothing = Just [nm]
+        rmEdg  nm (Just es) = Just $ es \\ [nm]
         rmEdg  nm   Nothing = Nothing
 
         cacheCom gr = M.fromList [ p | x <- M.keys gr,
@@ -242,11 +248,6 @@ runSpecial time funMap ctx =
     matchAtm atm@(MsgA nm exp) = maybe (([],[atm]), S.empty) (\f -> (f atm, freeVars atm)) (M.lookup nm funMap)
     matchAtm atm = (([],[atm]), S.empty)
 
-runExternals :: [Manipulator] -> IO [Atom]
-runExternals funs = do
-  atms <- sequence funs
-  return $ concat $ atms
-
 -- |Marks a context as failed if it contains a halt<> atom.
 halt :: Context -> Context
 halt context =
@@ -256,16 +257,15 @@ halt context =
           isHalt _ = False
 
 -- |Propagates failure to subcontexts, and removes failed
-killFailed :: M.Map (String, String) Double
+killFailed :: M.Map (String, String) Bool
               -> M.Map String String
-              -> R.StdGen
               -> [Context]
               -> [Context]
-killFailed comP gp rGen cs =
+killFailed comP gp cs =
    let (failed, ok) = propagateFail cs
        msgs = concatMap (\ctx -> [(gp M.! cLocation ctx, MsgA fc []) | fc <- cFailureConts ctx])
                         failed
-    in putMessages comP gp rGen msgs ok
+    in putMessages comP gp msgs ok
      where propagateFail cs =
              let (failed, ok) = partition cFail cs
                  failNames = S.fromList $ map cLocation failed
@@ -339,14 +339,13 @@ heatLocations stdGen context =
             in initContext ds as name locParent (S.toList exports) stdGen
 
 -- | Exchanges messages between a list of contexts.
-exchangeMessages :: M.Map (String, String) Double
+exchangeMessages :: M.Map (String, String) Bool
                     -> M.Map String String
-                    -> R.StdGen
                     -> [Context]
                     -> [Context]
-exchangeMessages comP gp rGen cs =
+exchangeMessages comP gp cs =
   let (cs', ms) = second concat . unzip $ map takeMessages cs
-   in putMessages comP gp rGen ms cs'
+   in putMessages comP gp ms cs'
 
 takeMessages ::  Context -> (Context, [(String, Atom)])
 takeMessages context =
@@ -365,34 +364,30 @@ takeMessages context =
           rmDelay (DelayA d (Proc [atm])) = atm
           rmDelay x = trace (show x) x
 
-putMessages :: M.Map (String, String) Double
+putMessages :: M.Map (String, String) Bool
                -> M.Map String String
-               -> R.StdGen
                -> [(String, Atom)]
                -> [Context]
                -> [Context]
-putMessages comP gp rGen ms [] = []
-putMessages comP gp rGen ms (context:cs) =
- let (rGen', rGen'') = R.split rGen
-     dvs = S.unions . map definedVars $ cDefs context
+putMessages comP gp ms [] = []
+putMessages comP gp ms (context:cs) =
+ let dvs = S.unions . map definedVars $ cDefs context
      (locals, ms') = partition (snd >>> isLocal dvs) $ ms
-     succCom = map setDelay $ tryCom rGen' locals
+     succCom = map setDelay $ tryCom locals
      context' = context { cAtoms = cAtoms context ++ succCom }
-  in context':putMessages comP gp rGen'' ms' cs
+  in context':putMessages comP gp ms' cs
   where
     setDelay = DelayA (succ $ cTime context) . Proc . (:[])
 
-    tryCom _  [] = []
-    tryCom rg ((loc,a):ls) =
+    tryCom           [] = []
+    tryCom ((loc,a):ls) =
       let destLoc = gp M.! cLocation context
           loc' = gp M.! loc
        in if loc == rootLocation || loc' == destLoc
-             then a:tryCom rg ls
-             else case M.lookup (loc', destLoc) comP of
-                    Nothing -> tryCom rg ls
-                    Just cP -> let (p,rg') = R.randomR (0,1) rg
-                                in if cP >= p then a:tryCom rg' ls
-                                              else tryCom rg' ls
+             then a:tryCom ls
+             else case M.findWithDefault False (loc', destLoc) comP of
+                    False -> tryCom ls
+                    True  -> a:tryCom ls
 
 isLocal ::  S.Set String -> Atom -> Bool
 isLocal dvs (DelayA d (Proc [msg@(MsgA _ _)])) = isLocal dvs msg

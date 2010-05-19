@@ -1,10 +1,13 @@
 module Aux( stdJoinMain
           , defaultConfig
-          , Output
           , OutputLog
-          , Event
+          , Event(..)
+          , Output(..)
           , EventLog
           , GlobalState(..)
+          , (+&+)
+          , linkUpProb
+          , mkSpecial
           , mkUniGraph) where
 
 import Parser
@@ -20,6 +23,7 @@ import Control.Monad
 import Control.Arrow
 
 import JoinApi
+import System.Random
 
 openJF f = do res <- parseFromFile program f
               case res of
@@ -34,11 +38,23 @@ defaultConfig = IC {
   , breakAt = Nothing
   , nondeterministic = False
   , apiMap = M.fromList []
-  --, manipulators = []
   , machineClasses = M.empty
   , initialMachines = []
-  --, comLinks = (M.empty)
 }
+
+(+&+) = zipWith (++)
+
+linkUpProb :: Int -> String -> String -> Double -> [[Event]]
+linkUpProb seed m1 m2 p =
+  linkUpProb' (mkStdGen seed) m1 m2 p
+  where
+    linkUpProb' rg m1 m2 p = let
+      (dice, rg') = randomR (0,1) rg
+      in
+        [(if dice >= p then EvLinkUp m1 m2 else EvLinkDown m1 m2)]:(linkUpProb' rg' m1 m2 p)
+
+mkSpecial n nm fun =
+  [EvSpecial nm (fun n)]:(mkSpecial (n+1) nm fun)
 
 parseArgs conf fs [] = (fs, conf)
 parseArgs conf fs ("-n":xs) =
@@ -50,21 +66,16 @@ parseArgs conf fs ("-nogc":xs) =
 parseArgs conf fs (f:xs) =
     parseArgs conf (f:fs) xs
 
-stdJoinMain (man, api) machines mClasses cfg state = do
+stdJoinMain api machines mClasses cfg events = do
   let cfg' = cfg { initialMachines = machines}
-                 --, comLinks = mkUniGraph (fst . unzip $ machines) comEdges }
-
   (fs, conf) <- parseArgs cfg' [] <$> getArgs
-  timeout <- initTimeout
+  --timeout <- initTimeout
   ns <- initNameServer
-  temp <- initTempSensor
-  let (manips, apiMap) =
+  --temp <- initTempSensor
+  let apiMap =
        initApi
-         [ (man, M.fromList api)
-         , output
+         [ M.fromList api
          , ns
-         , timeout
-         , temp
          , integerArith
          , boolean
          ]
@@ -73,11 +84,12 @@ stdJoinMain (man, api) machines mClasses cfg state = do
   -- Parse files from the given list of machine classes
   let (cls, paths) = unzip mClasses
   progs <- map ((\(Proc as) -> as) . desugar) <$> mapM openJF paths
-  (output, ctxs) <- runInterpreter conf{ -- manipulators = manips
+  (output, ctxs) <- runInterpreter conf{
                              apiMap = apiMap
                              , machineClasses =
                                    M.fromList $ ("Default", as):(zip cls progs)
-                             } state
+                             } initialState{eventLog = events}
   mapM_ putStrLn . intersperse "----------" $ map show ctxs
 --  putStr (intersperse "\n" output)
+  mapM_ putStrLn $ map show output
   return ()
