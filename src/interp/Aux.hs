@@ -4,7 +4,8 @@ module Aux( stdJoinMain
           , OutputLog
           , Event
           , EventLog
-          , GlobalState(..) ) where
+          , GlobalState(..)
+          , mkUniGraph) where
 
 import Parser
 import Language
@@ -78,5 +79,5 @@ stdJoinMain (man, api) machines mClasses cfg state = do
                                    M.fromList $ ("Default", as):(zip cls progs)
                              } state
   mapM_ putStrLn . intersperse "----------" $ map show ctxs
-  putStr (intersperse "\n" output)
+--  putStr (intersperse "\n" output)
   return ()

@@ -141,3 +141,71 @@ to prove the soundness of it.
 
 
 \section{Language definition}
+
+\subsection{Syntax}
+
+The syntax of our prototype language is defined in figure \ref{fig:syntax}. In
+this definition, $x,a$ range over names, $s$ range over strings of characters,
+and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' is syntactic
+sugar, and has equivalent encodings in the core Join language.
+
+\subsection{Semantics}
+
+\begin{figure}
+\newcommand{\alt}{\mid\kern-1pt\mid}
+\begin{align*}
+P,Q\quad::={}&             && \textbf{processes} \\
+          & 0              && \quad\textrm{inert process} \\
+ \alt\quad& x\langle e_1, e_2, ..., e_n \rangle
+                           && \quad\textrm{asynchronous message} \\
+ \alt\quad& P~\&~Q         && \quad\textrm{parallel composition} \\
+ \alt\quad& \textbf{def}~D~\textbf{in}~P
+                           && \quad\textrm{local definition} \\
+ \alt\quad& t : P          && \quad\textrm{timed process} \\
+ \alt\quad& \textbf{match}~e~\textbf{with}~\pi_1
+               \rightarrow P_1 ~|~ ... ~|~ \pi_n \rightarrow P_n
+                           && \quad\textrm{pattern matching} \\
+ \alt\quad& \{ I_1; I_2; ...; I_n \}
+                           && \quad\textrm{*instruction sequence} \\
+D\quad ::={}&              && \textbf{join definitions} \\
+         & J \stackrel{d}{\triangleright} P
+                           && \quad\textrm{delayed reaction} \\
+\alt\quad& D~\textbf{or}~D && \quad\textrm{disjunction} \\
+\alt\quad& a[D~\textbf{in}~P] && \quad\textrm{sublocation} \\
+J\quad ::={}&              && \textbf{join patterns}\\
+         & x\langle \pi_1, \pi_2, ..., \pi_n \rangle
+                           && \quad\textrm{message} \\
+\alt\quad& x(\pi_1, \pi_2, ..., \pi_n)
+                           && \quad\textrm{*synchronous message} \\
+\alt\quad& J~\&~J          && \quad\textrm{synchronization} \\
+\pi\quad ::={}&            && \textbf{algebraic patterns} \\
+\alt\quad& x               && \quad\textrm{variable} \\
+\alt\quad& \kappa(\pi_1, \pi_2, ..., \pi_n)
+                           && \quad\textrm{constructor pattern} \\
+e\quad ::={}&              && \textbf{expressions} \\
+         & i               && \quad\textrm{*integer} \\
+\alt\quad& " s "         && \quad\textrm{*string} \\
+\alt\quad& x               && \quad\textrm{variable} \\
+\alt\quad& \kappa(e_1, e_2, ..., e_n)
+                           && \quad\textrm{constructor expression} \\
+e^\star\quad ::={}&         && \textbf{*sugared expressions} \\
+         & i               && \quad\textrm{*integer} \\
+\alt\quad& " s "         && \quad\textrm{*string} \\
+\alt\quad& x               && \quad\textrm{*variable} \\
+\alt\quad& \kappa(e^\star_1, e^\star_2, ..., e^\star_n)
+                           && \quad\textrm{*constructor expression} \\
+\alt\quad& x(e^\star_1, e^\star_2, ..., e^\star_ n)
+                           && \quad\textrm{*synchronous call} \\
+I\quad ::={}&              && \textbf{*instructions} \\
+\alt\quad& \mathbf{let}~\pi~=~e^\star
+                           && \quad\textrm{*named values} \\
+\alt\quad& \mathbf{run}~P  && \quad\textrm{*asynchronous process} \\
+\alt\quad& \mathbf{do}~e^\star && \quad\textrm{*synchronous call} \\
+\alt\quad& \textbf{match}~e^\star~\textbf{with}~\pi_1
+               \rightarrow \{ I* \} ~|~ ... ~|~ \pi_n \rightarrow \{ I* \}
+                           && \quad\textrm{*pattern match} \\
+\alt\quad& \textbf{return}~e^\star~\textbf{to}~x
+                           && \quad\textrm{*implicit continuation}
+\end{align*}
+\caption{Syntax of the Join language.\label{fig:syntax}}
+\end{figure}

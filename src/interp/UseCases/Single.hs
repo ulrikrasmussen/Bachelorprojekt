@@ -7,10 +7,12 @@ machineClasses = []
 machines = [ ("A", "Default") ]
 comEdges = [ ]
 
-api = ([], [
-  ("readTemp", undefined)
-  ])
+api = ([], [])
 
-state = GS {}
+state = GS {
+   eventLog = []
+ , outLog = []
+ , comGraph = mkUniGraph (fst . unzip $ machines) comEdges
+}
 
 main = stdJoinMain api machines machineClasses defaultConfig state
