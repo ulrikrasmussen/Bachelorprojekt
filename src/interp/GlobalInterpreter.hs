@@ -156,28 +156,33 @@ runInterpreter conf st = do
            let nowApi = M.fromList $ map unSpecial $ filter isSpecial now
 
            -- Execute API messages
-           (contexts', output) <- return $ unzip $ map (runSpecial n nowApi) contexts
+           (contexts', output) <- return $ second concat $ unzip $ map (runSpecial n nowApi) contexts
            contexts'' <- mapM (runApi $ apiMap conf) contexts'
+
+           if (length output) > 0 then do {mapM_ putStrLn $ map show output} else return ()
+
            -- Spawn new contexts for sublocations
            let cSpawned = concatMap (heatLocations stdGen1) contexts''
+
            -- Move contexts with a "go" atom
            let cMoved = map migrate cSpawned
+
            -- Map sublocation names to their grandest parent location name.
            let gp = grandestParents cMoved
+
            -- Handle fail handler registration and halting
            let cFailed =
                 (registerFail >>> map halt >>> killFailed comP gp) cMoved
+
            -- Exchange messages between locations
            let cExchanged = exchangeMessages comP gp cFailed
-           let cStepped =
-                --(putMessages comP gp stdGen4 [(rootLocation,na) | na <- []] >>>
-                map (execInterp conf) cExchanged
-           let (cProgressed,tpassed) = if map cAtoms cStepped == map cAtoms contexts
+           let cStepped   = map (execInterp conf) cExchanged
+           let (cProgressed, tpassed) = if map cAtoms cStepped == map cAtoms contexts
                                 then (map (\x -> x {cTime = succ $ cTime x}) cStepped, True)
                                 else (cStepped, False)
            if (maybe True (n<=) (breakAtIter conf)) && (maybe True (time'<=) (breakAtTime conf))
-                then runInterpreter' comP' (n+1) st' ((concat output) ++ out) tpassed time' cProgressed
-                else return ((concat output) ++ out, contexts)
+                then runInterpreter' comP' (n+1) st' (output ++ out) tpassed time' cProgressed
+                else return (output ++ out, contexts)
 
         unSpecial (EvSpecial a f) = (a,f)
         isSpecial (EvSpecial _ _) = True
@@ -200,7 +205,7 @@ runInterpreter conf st = do
         mkInitialCtxs      _   _     [] = []
         mkInitialCtxs stdGen cls (m:ms) =
           let (stdGen', stdGen'') = R.split stdGen
-              as = makeIdMsg (fst m) (cls M.! snd m)
+              as = makeIdMsg (fst m) (M.findWithDefault (error $ "not found:" ++ (show $ snd m) ++ " in " ++ (show cls) ) (snd m) cls )
               ctx = initContext []
                                 as
                                 (fst m)

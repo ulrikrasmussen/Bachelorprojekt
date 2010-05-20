@@ -92,7 +92,6 @@ stdJoinMain api machines mClasses cfg events = do
                              , machineClasses =
                                    M.fromList $ ("Default", as):(zip cls progs)
                              } initialState{eventLog = events}
-  mapM_ putStrLn . intersperse "----------" $ map show ctxs
---  putStr (intersperse "\n" output)
-  mapM_ putStrLn $ map show output
+  --mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  --mapM_ putStrLn $ map show output
   return ()

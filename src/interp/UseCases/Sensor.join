@@ -1,21 +1,41 @@
-def mkSensor<sensorConnect> |>
-    def start(threshold, callback) |>
-         def query[
-               stop<> |> halt<>
-               or loop<> |> {
-                    let t = readTemp(machineId());
-                    match leq(threshold, t) with
-                      True -> { run callback<t> }
-                    | False -> { };
-                    run loop<>
-                  }
-               in loop<>
-             ]
-          in { return (stop) to start }
-     in { let id = machineId();
-          run sensorConnect<id, start> }
+def
+    intToStr(n) |>
+      def intToStr'(n,acc) |>
+            match n with
+              0 -> { return (acc) to intToStr' }
+            | n -> { let n' = div(n, 10);
+                     let d = mod(n, 10);
+                     let acc' = Cons(add(d, 48), acc);
+                     return (intToStr'(n', acc')) to intToStr'
+                   }
+       in { return (intToStr'(n, Nil)) to intToStr }
+ or concat(Nil, ys) |> { return (ys) to concat }
+ or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+
+  or mkSensor<mscId, callback> |>
+    { let num = 10
+    ; let threshold = 20
+    ; run def query[
+                     stop<> |> halt<>
+                  or collect<n, tAkk> |> { do print("collecting..")
+                                         ; let t = readTemp(mscId)
+                                         ; do print(concat("Collecting.. t = ", intToStr(t)))
+                                         ; match leq(threshold, t) with
+                                             True  -> { run callback<mscId, Above(t)> & 1:collect<0,t>}
+                                           | False -> { match eq(n,num) with
+                                                          True  -> { let avg= div(add(t,tAkk),num)
+                                                                   ; run callback<mscId, Avg(avg)> & 1:collect<0,t> }
+                                                        | False -> { let tAkk' = add(t, tAkk)
+                                                                   ; let nextT = add(n,1)
+                                                                   ; run 1:collect<nextT, t> }
+                                                      }
+                                         }
+                    in {let t = readTemp(mscId); run collect<0,t>}
+              ] in 0
+    }
  or connect<> |>
       { match search("server") with
-          Nothing -> { run connect<> }
-        | Just sensorConnect -> { run mkSensor<sensorConnect> } }
- in connect<> & count<0>
+          Nothing -> { do print("retrying..\n"); run 1:connect<> }
+        | Just callback -> { let mscId = machineId()
+                           ; run mkSensor<mscId, callback> } }
+ in connect<>

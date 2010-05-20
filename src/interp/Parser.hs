@@ -95,6 +95,7 @@ pat  =   ConP  <$> (lexeme constructor)
                     <|> (pure []))
      <|> VarP  <$> (lexeme identifier)
      <|> IntP . read  <$> (lexeme $ many1 digit)
+     <|> genericString (ConP "Cons") (ConP "Nil" []) IntP
      <?> "pattern"
 
 -- |Parses one or more join expressions, separated by '&'.
@@ -128,14 +129,15 @@ proc =  (Proc . concat <$> atoms)
         atom = defp
             <|> matchp
             <|> DelayA 0 . Proc . (:[])
-                <$> (MsgA <$> identifier
-                          <*> (angles $ lexeme expr `sepBy` (lexeme $ char ',')))
+                <$> msga
             <|> InertA <$ char '0'
             <|> InstrA <$> (braces $ lexeme instr `sepBy` (lexeme $ char ';'))
             <|> DelayA <$> lexeme (read <$> many1 digit)
                        <*  (lexeme $ char ':')
-                       <*> proc
+                       <*> (Proc . (:[]) <$> msga)
             <?> "atom"
+        msga = (MsgA <$> identifier
+                          <*> (angles $ lexeme expr `sepBy` (lexeme $ char ',')))
         -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
         -- prefixed by 'def'.
         defp = DefA <$  try (lexeme1 $ string "def")

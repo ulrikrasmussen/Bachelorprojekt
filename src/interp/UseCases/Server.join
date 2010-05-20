@@ -9,50 +9,63 @@ def intToStr(n) |>
                  }
      in { return (intToStr'(n, Nil)) to intToStr }
 
+ or tempToStr(Above(t)) |> {return concat("Above(",concat(intToStr(t),")")) to tempToStr}
+ or tempToStr(Avg(t)) |> {return concat("Avg(",concat(intToStr(t),")")) to tempToStr}
+
+ or ageToStr(now, n) |> { let diff =  sub(now, n)
+                        ; match leq(diff, 20) with
+                            True  -> { return "Current" to ageToStr}
+                          | False -> { match leq(diff, 30) with
+                                         True  -> { return "Old" to ageToStr}
+                                       | False -> { return "Replace" to ageToStr}
+                                     }
+                        }
+
  or length(Nil) |> { return (0) to length }
  or length(Cons(x,xs)) |> { return (add(1,length(xs))) to length }
 
-or concat(Nil, ys) |> { return (ys) to concat }
-or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+ or concat(Nil, ys) |> { return (ys) to concat }
+ or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
 
-or map(f, Nil) |> { return (Nil) to map }
-or map(f, Cons(x,xs)) |> { return (Cons(f(x), map(f,xs))) to map }
+ or map(f, Nil) |> { return (Nil) to map }
+ or map(f, Cons(x,xs)) |> { return (Cons(f(x), map(f,xs))) to map }
 
-or mkReducer<ss> |>
-  def recv'(id) |> def f<v> |> recv<id, v> in {return (f) to recv'}
-   or recv<id, v> & state<xs> |> {
-     let xs' = update(xs, id, v);
-     do print(id);
-     do print(": ");
-     do print(intToStr(v));
-     do print("\n");
-     run state<xs'>
-   }
-   or update(Nil, id, v) |> { return (Nil) to update }
-   or update(Cons(QueryData(qid, qstop, mlast), xs), id, v) |> {
-        match eq(id, qid) with
-          True -> { return (Cons(QueryData(qid,qstop,Just v), xs)) to update }
-        | False -> { return (Cons(QueryData(qid,qstop,mlast), update(xs,id,v))) to update }
-      }
+ or mkClock(init) |> def
+                         getTime() & time<n> |> { return n to getTime } & time<n>
+                      or time<n> & time<m> |> { match leq(n,m) with
+                                                  True  -> { run time<m>}
+                                                | False -> { run time<n> }}
+                  in mkTimeSrc<time,init> & { return getTime to mkClock }
 
-   or startQuery(Sensor(id, start)) |> {
-        let stop = start(23, recv'(id));
-        return (QueryData(id, stop, Nothing)) to startQuery
-      }
-   in { let xs = map(startQuery, ss);
-        run state<xs>
-      }
+ or mkTimeSrc<sink,init> |> def
+                                time<n> |> { let next = add(n,1)
+                                           ; run 1:time<next> & sink<n>}
+                             in { let init' = add(init,1);
+                                  run 1:time<init'> }
 
-or mkServer<> |>
-  def sensorConnect<id, start> & sensors<ss> |> {
-        run sensors<Cons(Sensor(id, start), ss)>;
-        match add(1, length(ss)) with
-          3 -> { run runQuery<> }
-        | n -> { }
-      }
-   or runQuery<> & sensors<ss> |> mkReducer<ss> & sensors<ss>
-   or recv<id, t> |> 0
-   in { do register("server", sensorConnect) } & sensors<Nil>
+ or sensorCallback<id, temp> & collected<Sensors(aT, aN, bT, bN)>
+    & sensorClock<cl> |> sensorClock<cl>
+                         & {
+                             do print(concat("Received data from ", id))
+                           ; let time = cl()
+                           ; match id with
+                               "Sensor_A" -> {run collected<Sensors(temp, time, bT, bN)>}
+                             | "Sensor_B" -> {run collected<Sensors(aT, aN, temp, time)>}
+                           }
+
+ or printCollected<t>
+    & collected<Sensors(aT, aN, bT, bN)> |> { do print(concat("Status: (Sensor_A: ",
+                                                        concat(tempToStr(aT),
+                                                        concat(" ",
+                                                        concat(ageToStr(t,aN),
+                                                        concat(") (Sensor_B: ",
+                                                        concat(tempToStr(bT),
+                                                        concat(" ",
+                                                        concat(ageToStr(t,bN),
+                                                        ")"
+                                                        )))))))))
+                                            } & {let nextT = add(t,10); run 10:printCollected<nextT>} & collected<Sensors(aT, aN, bT, bN)>
 
 
-in mkServer<>
+ in { do register("server", sensorConnect) } & collected<Sensors(0,0,0,0)>
+    & {let cl = mkClock(0); run sensorClock<cl>} & printCollected<0>

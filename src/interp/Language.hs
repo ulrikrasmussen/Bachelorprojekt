@@ -162,8 +162,8 @@ instance Subst Atom where
   subst sigma (MsgA s es) =
     let es' = subst sigma <$> es
     in  maybe (MsgA s es')
-              (\(VarE s') -> MsgA s' es') $ M.lookup s sigma
-              -- debug: (\a -> case a of { VarE s' -> MsgA s' es'; _ -> error ("Unmatching subst: " ++ show a ++ " sigma: " ++ show sigma)}) $ M.lookup s sigma
+              --(\(VarE s') -> MsgA s' es') $ M.lookup s sigma
+              {- debug: -}(\a -> case a of { VarE s' -> MsgA s' es'; _ -> error ("Unmatching subst: " ++ show a ++ "\nsigma: " ++ show sigma)}) $ M.lookup s sigma
   subst _ InertA = InertA
   subst sigma (DefA ds p) =
     let sigma' = foldl (flip M.delete) sigma (S.toList . S.unions $ map definedVars ds)
