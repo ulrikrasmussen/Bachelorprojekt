@@ -41,4 +41,4 @@ events = ([
          +&+ (mkSpecial 1 "readTemp" readTemp)
          +&+ (mkSpecial 1 "print" jPrint)
 
-main = stdJoinMain api machines mClasses defaultConfig{breakAt = Just 10000} events
+main = stdJoinMain api machines mClasses defaultConfig{breakAtTime = Just 100} events

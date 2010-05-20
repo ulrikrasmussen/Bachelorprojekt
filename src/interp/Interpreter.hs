@@ -146,7 +146,8 @@ initContext ds as locName locParent exports stdGen = Context {
 data InterpConfig = IC {
     runGC :: Bool
   , gcInterval :: Integer
-  , breakAt :: Maybe Integer
+  , breakAtIter :: Maybe Integer
+  , breakAtTime :: Maybe Integer
   , nondeterministic :: Bool
   , apiMap          :: ApiMap  -- ^ A map from atom names to functions. Used to enable IO in join programs.
   --, manipulators    :: [Manipulator]  -- ^ A list of atom-returning functions, that alter the state of the interpreter.

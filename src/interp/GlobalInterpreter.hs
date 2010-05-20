@@ -140,18 +140,18 @@ runInterpreter :: InterpConfig -> GlobalState -> IO ([Output], [Context])
 runInterpreter conf st = do
     let comP = cacheCom (comGraph st)
     stdGen <- R.newStdGen
-    runInterpreter' comP 0 st [] True $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
-  where runInterpreter' comP n st out timePassed contexts = do
+    runInterpreter' comP 0 st [] True 1 $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
+  where runInterpreter' comP n st out timePassed time contexts = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
            --newAtms <- runExternals $ manipulators conf
            -- Apply external events.
            let (now:evts) = eventLog st
-           let (comP', st') = if not timePassed then (comP, st)
+           let (comP', st',time') = if not timePassed then (comP, st, time)
                               else let
                                      comGr' = foldl (flip ($)) (comGraph st) (map alterCom now)
                                      st_    = st{eventLog = evts, comGraph = comGr'}
                                      comP_  = if comGr' /= (comGraph st) then cacheCom comGr' else comP
-                                    in (comP_, st_)
+                                    in (comP_, st_, succ time)
 
            let nowApi = M.fromList $ map unSpecial $ filter isSpecial now
 
@@ -175,8 +175,8 @@ runInterpreter conf st = do
            let (cProgressed,tpassed) = if map cAtoms cStepped == map cAtoms contexts
                                 then (map (\x -> x {cTime = succ $ cTime x}) cStepped, True)
                                 else (cStepped, False)
-           if maybe True (n/=) (breakAt conf)
-                then runInterpreter' comP' (n+1) st' ((concat output) ++ out) tpassed cProgressed
+           if (maybe True (n<=) (breakAtIter conf)) && (maybe True (time'<=) (breakAtTime conf))
+                then runInterpreter' comP' (n+1) st' ((concat output) ++ out) tpassed time' cProgressed
                 else return ((concat output) ++ out, contexts)
 
         unSpecial (EvSpecial a f) = (a,f)
