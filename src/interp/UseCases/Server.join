@@ -43,29 +43,34 @@ def intToStr(n) |>
                              in { let init' = add(init,1);
                                   run 1:time<init'> }
 
- or sensorCallback<id, temp> & collected<Sensors(aT, aN, bT, bN)>
-    & sensorClock<cl> |> sensorClock<cl>
-                         & {
-                             do print(concat("Received data from ", id))
-                           ; let time = cl()
-                           ; match id with
-                               "Sensor_A" -> {run collected<Sensors(temp, time, bT, bN)>}
-                             | "Sensor_B" -> {run collected<Sensors(aT, aN, temp, time)>}
-                           }
+ or mkServer<> |> { do print("making clock..")
+                  ; let cl = mkClock(0)
+                  ; do print("clock made")
+                  ; run def
+                            sensorCallback<id, temp>
+                          & collected<Sensors(aT, aN, bT, bN)> |>
+                                                   { let time = cl()
+                                                   ; match id with
+                                                       "Sensor_A" -> {run collected<Sensors(temp, time, bT, bN)>}
+                                                     | "Sensor_B" -> {run collected<Sensors(aT, aN, temp, time)>}
+                                                   }
+                         or printCollected<>
+                          & collected<Sensors(aT, aN, bT, bN)> |> { let t = cl()
+                                                                  ; do print(concat("Status: (Sensor_A: ",
+                                                                             concat(tempToStr(aT),
+                                                                             concat(" ",
+                                                                             concat(ageToStr(t,aN),
+                                                                             concat(") (Sensor_B: ",
+                                                                             concat(tempToStr(bT),
+                                                                             concat(" ",
+                                                                             concat(ageToStr(t,bN),
+                                                                             ")"
+                                                                             )))))))))
+                                                                  } & 5:printCollected<>
+                                                                    & collected<Sensors(aT, aN, bT, bN)>
+                         in collected<Sensors(Above 0,0,Above 0,0)>
+                          & { do register("server", sensorCallback) }
+                          & 5:printCollected<>
+                  }
 
- or printCollected<t>
-    & collected<Sensors(aT, aN, bT, bN)> |> { do print(concat("Status: (Sensor_A: ",
-                                                        concat(tempToStr(aT),
-                                                        concat(" ",
-                                                        concat(ageToStr(t,aN),
-                                                        concat(") (Sensor_B: ",
-                                                        concat(tempToStr(bT),
-                                                        concat(" ",
-                                                        concat(ageToStr(t,bN),
-                                                        ")"
-                                                        )))))))))
-                                            } & {let nextT = add(t,10); run 10:printCollected<nextT>} & collected<Sensors(aT, aN, bT, bN)>
-
-
- in { do register("server", sensorConnect) } & collected<Sensors(0,0,0,0)>
-    & {let cl = mkClock(0); run sensorClock<cl>} & printCollected<0>
+ in mkServer<>

@@ -1,0 +1,8 @@
+def
+    connect<> |> { do print("searching..")
+                 ; match search("printServer") with
+                     Just ps -> {do ps("hurra");do ps("hurra");do ps("hurra")}
+                   | Nothing -> {do print("no cigar"); run connect<>}
+                 }
+ or printloop<> |> 1:printloop<> & {do print("heya")}
+ in 20:printloop<> & connect<>

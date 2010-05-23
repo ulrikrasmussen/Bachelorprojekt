@@ -52,7 +52,7 @@ linkUpProb seed m1 m2 p =
     linkUpProb' rg m1 m2 p = let
       (dice, rg') = randomR (0,1) rg
       in
-        [(if dice >= p then EvLinkUp m1 m2 else EvLinkDown m1 m2)]:(linkUpProb' rg' m1 m2 p)
+        [(if dice <= p then EvLinkUp m1 m2 else EvLinkDown m1 m2)]:(linkUpProb' rg' m1 m2 p)
 
 mkSpecial n nm fun =
   [EvSpecial nm (fun n)]:(mkSpecial (n+1) nm fun)
@@ -92,6 +92,6 @@ stdJoinMain api machines mClasses cfg events = do
                              , machineClasses =
                                    M.fromList $ ("Default", as):(zip cls progs)
                              } initialState{eventLog = events}
-  --mapM_ putStrLn . intersperse "----------" $ map show ctxs
-  --mapM_ putStrLn $ map show output
+  mapM_ putStrLn . intersperse "----------" $ map show ctxs
+  mapM_ putStrLn $ map show output
   return ()

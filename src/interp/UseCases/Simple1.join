@@ -1,0 +1,9 @@
+def
+
+    printServer<str,k> |> { do print(str); run k<> }
+ or concat(Nil, ys)        |> { return (ys) to concat }
+ or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+ or hey<> |>^10 ho<>
+ or ho<>  |> rom<>
+ or rom<> |> {do print("Hey ho og en hel flaske rom")}
+ in {do print("hey ho")} & 10:hey<> & { do print("heya"); do print(concat("hey","ho")); let mscId = machineId(); do print(mscId); do register("printServer", printServer) }
