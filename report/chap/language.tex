@@ -149,8 +149,6 @@ this definition, $x,a$ range over names, $s$ range over strings of characters,
 and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' is syntactic
 sugar, and has equivalent encodings in the core Join language.
 
-\subsection{Semantics}
-
 \begin{figure}
 \newcommand{\alt}{\mid\kern-1pt\mid}
 \begin{align*}
@@ -179,7 +177,7 @@ J\quad ::={}&              && \textbf{join patterns}\\
                            && \quad\textrm{*synchronous message} \\
 \alt\quad& J~\&~J          && \quad\textrm{synchronization} \\
 \pi\quad ::={}&            && \textbf{algebraic patterns} \\
-\alt\quad& x               && \quad\textrm{variable} \\
+         & x               && \quad\textrm{variable} \\
 \alt\quad& \kappa(\pi_1, \pi_2, ..., \pi_n)
                            && \quad\textrm{constructor pattern} \\
 e\quad ::={}&              && \textbf{expressions} \\
@@ -197,7 +195,7 @@ e^\star\quad ::={}&         && \textbf{*sugared expressions} \\
 \alt\quad& x(e^\star_1, e^\star_2, ..., e^\star_ n)
                            && \quad\textrm{*synchronous call} \\
 I\quad ::={}&              && \textbf{*instructions} \\
-\alt\quad& \mathbf{let}~\pi~=~e^\star
+         & \mathbf{let}~\pi~=~e^\star
                            && \quad\textrm{*named values} \\
 \alt\quad& \mathbf{run}~P  && \quad\textrm{*asynchronous process} \\
 \alt\quad& \mathbf{do}~e^\star && \quad\textrm{*synchronous call} \\
@@ -209,3 +207,93 @@ I\quad ::={}&              && \textbf{*instructions} \\
 \end{align*}
 \caption{Syntax of the Join language.\label{fig:syntax}}
 \end{figure}
+
+
+\subsection{Semantics}
+
+We model the state of our system as a series of CHAMs composed in parallel. A
+CHAM is a four tuple $\mathcal{M} = (\mathcal{D}, \mathcal{A}, \phi, t)$
+denoted by $\mathcal{D} \vdash^\phi_t \mathcal{A}$, having active definitions
+$\mathcal{D}$, running processes $\mathcal{A}$, location string $\phi$ and time
+$t$. Multiple CHAMs are composed in parallel using the associative-commutative
+operator $\parallel$.
+
+We model locality explicitly using the following rule, which says that a
+reduction involving only a subset of a machine can be performed without
+affecting the state of the rest of the machine:
+\begin{align*}
+\textsc{Red-Loc}\quad&
+\frac
+{ \mathcal{M} \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1
+\qquad \mathcal{M}' \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1'
+\qquad \mathcal{M} \longrightarrow \mathcal{M}'}
+{ \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1,\mathcal{A}_2
+\longrightarrow \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1',\mathcal{A}_2
+}
+\end{align*}
+
+We include a relaxed version of the time semantics from \cite{timed-join}. Our
+version provides less guarantees about the order in which messages on the same
+port is processed, and each CHAM is explicitly tagged with a natural number
+that denotes the current time.
+
+We begin by inductively defining a ternary relation $\cdot
+\stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
+CHAM, and tags them with the time they became ready:
+\begin{align*}
+\textsc{Sched-Msg}\quad&
+\frac
+{ \mathcal{M} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A}', t' : x\langle \tilde u \rangle
+\qquad t' \leq t
+}
+{\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}\\
+\textsc{Sched-Par}\quad&
+\frac
+{\mathcal{M} \stackrel{t}{\propto} P
+\qquad \mathcal{M} \stackrel{t}{\propto} Q}
+{ \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
+\end{align*}
+Using the collector, we can define reduction using the following rule:
+\begin{align*}
+\textsc{Red}\quad&
+\frac
+{\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t P
+\qquad\mathcal{M} \stackrel{t'}{\propto} P
+\qquad t'+d = t
+\qquad \mathcal{P}(P) = \sigma_{rv}J }
+{ M \longrightarrow
+  J \stackrel{d}{\triangleright} Q \vdash_t t : \sigma_{rv}Q }
+\end{align*}
+In \textsc{Red}, $\sigma_{rv}$ replaces received variables with closed
+expressions.
+
+Prioritized pattern matching is performed using the following rule:
+\begin{align*}
+\textsc{Red-Match}\quad&
+ ...
+\end{align*}
+
+To model unreliable communication between locations, we introduce the
+$\diamond$ relation, which relates pairs of location names at specific times.
+For example, $a \stackrel{t}{\diamond} b$ means that locations $a$ and $b$ can
+communicate at time $t$. The relation is commutative. Using this, we can
+specify how the system behaves when the connection between two units
+disappear:
+\begin{align*}
+\textsc{Comm-Link}\quad &
+\frac
+{ x \in dv(\mathcal{D}_2)
+  \quad a \stackrel{t}{\diamond} b}
+{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
+  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e \rangle } \\
+\textsc{Comm-Lost}\quad &
+\frac
+{ x \in dv(\mathcal{D}_2)
+  \quad \neg(a \stackrel{t}{\diamond} b)}
+{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
+  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 }
+\end{align*}
+Note that the above rules also state that communication can only take place
+when the time of the two communicating machines are synchronised.
+\fixme{We still need to specify that communication can't take place when one of
+the locations are failed.}
