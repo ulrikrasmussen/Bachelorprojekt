@@ -222,11 +222,10 @@ We model locality explicitly using the following rule, which says that a
 reduction involving only a subset of a machine can be performed without
 affecting the state of the rest of the machine:
 \begin{align*}
-\textsc{Red-Loc}\quad&
-\frac
+\inferrule[Red-Loc]
 { \mathcal{M} \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1
-\qquad \mathcal{M}' \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1'
-\qquad \mathcal{M} \longrightarrow \mathcal{M}'}
+\\ \mathcal{M}' \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1'
+\\ \mathcal{M} \longrightarrow \mathcal{M}'}
 { \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1,\mathcal{A}_2
 \longrightarrow \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1',\mathcal{A}_2
 }
@@ -240,37 +239,44 @@ that denotes the current time.
 We begin by inductively defining a ternary relation $\cdot
 \stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
 CHAM, and tags them with the time they became ready:
-\begin{align*}
-\textsc{Sched-Msg}\quad&
-\frac
+\begin{equation*}
+\inferrule[Sched-Msg]
 { \mathcal{M} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A}', t' : x\langle \tilde u \rangle
-\qquad t' \leq t
+\\ t' \leq t
 }
-{\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}\\
-\textsc{Sched-Par}\quad&
-\frac
+{\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Sched-Par]
 {\mathcal{M} \stackrel{t}{\propto} P
-\qquad \mathcal{M} \stackrel{t}{\propto} Q}
+\\ \mathcal{M} \stackrel{t}{\propto} Q}
 { \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
-\end{align*}
+\end{equation*}
 Using the collector, we can define reduction using the following rule:
-\begin{align*}
-\textsc{Red}\quad&
-\frac
-{\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t P
-\qquad\mathcal{M} \stackrel{t'}{\propto} P
-\qquad t'+d = t
-\qquad \mathcal{P}(P) = \sigma_{rv}J }
-{ M \longrightarrow
-  J \stackrel{d}{\triangleright} Q \vdash_t t : \sigma_{rv}Q }
-\end{align*}
-In \textsc{Red}, $\sigma_{rv}$ replaces received variables with closed
+\begin{equation*}
+\inferrule[Reaction]
+{
+\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi P
+\hva\\ \mathcal{M}' \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi t : \sigma_{rv}Q
+\\ \mathcal{M} \stackrel{t'}{\propto} P
+\\ t'+d = t
+\\ \mathcal{P}(P) = \sigma_{rv}J }
+{ \mathcal{M} \longrightarrow
+  \mathcal{M}' }
+\end{equation*}
+In \textsc{Reaction}, $\sigma_{rv}$ replaces received variables with closed
 expressions.
 
 Prioritized pattern matching is performed using the following rule:
 \begin{align*}
-\textsc{Red-Match}\quad&
- ...
+\inferrule[Match]
+{\mathcal{M} \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
+   \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
+ \\ \mathcal{M}' \equiv~\vdash_t^\phi \eta_{rv}Q_i
+ \\ \mathcal{P}(P) = \eta_{rv}\pi_i
+ \\ \forall j < i.~\pi_j \not\preceq \eta_{rv} \pi_i}
+{\mathcal{M} \longrightarrow \mathcal{M}'}
 \end{align*}
 
 To model unreliable communication between locations, we introduce the
@@ -279,21 +285,48 @@ For example, $a \stackrel{t}{\diamond} b$ means that locations $a$ and $b$ can
 communicate at time $t$. The relation is commutative. Using this, we can
 specify how the system behaves when the connection between two units
 disappear:
-\begin{align*}
-\textsc{Comm-Link}\quad &
-\frac
-{ x \in dv(\mathcal{D}_2)
-  \quad a \stackrel{t}{\diamond} b}
-{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
-  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e \rangle } \\
-\textsc{Comm-Lost}\quad &
-\frac
-{ x \in dv(\mathcal{D}_2)
-  \quad \neg(a \stackrel{t}{\diamond} b)}
-{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
-  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 }
-\end{align*}
+\begin{equation*}
+\inferrule[Comm-Link]
+{
+\mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
+\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\hva\\ \mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
+\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e
+\rangle
+\hva\\\\ x \in dv(\mathcal{D}_2)
+\\ a \stackrel{t}{\diamond} b}
+{ \mathcal{C} ~\longrightarrow~ \mathcal{C}' }
+\end{equation*}
+\begin{equation*}
+\inferrule[Comm-Lost]
+{
+\mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
+\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\\
+\mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
+\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\hva\\\\
+x \in dv(\mathcal{D}_2)
+  \\ \neg(a \stackrel{t}{\diamond} b)}
+{ \mathcal{C} ~\longrightarrow~ \mathcal{C}'}
+\end{equation*}
 Note that the above rules also state that communication can only take place
 when the time of the two communicating machines are synchronised.
 \fixme{We still need to specify that communication can't take place when one of
 the locations are failed.}
+
+In our system, time can only progress when no CHAM can take another step,
+effectively synchronising all machines on a global clock. In a real setting,
+this is of course not feasible, but it makes it easier to reason about
+communicating devices in a simulated setting.
+
+To be able to detect when a machine can't do any computations, we need to
+ensure that the rules \textsc{Reaction} and \textsc{Match} cannot be applied.
+
+%\begin{equation*}
+%\inferrule[Par-Loc]
+%{\mathcal{C} \equiv \mathcal{M}_1 ~||~ \mathcal{M}_2 \\
+% \mathcal{C}' \equiv \mathcal{M}_1' ~||~ \mathcal{M}_2 \\
+% \mathcal{M}_1 \longrightarrow \mathcal{M}_1'}
+%{\mathcal{C} \longrightarrow \mathcal{C}'}
+%\end{equation*}
