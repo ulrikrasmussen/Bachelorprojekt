@@ -213,24 +213,74 @@ I\quad ::={}&              && \textbf{*instructions} \\
 
 We model the state of our system as a series of CHAMs composed in parallel. A
 CHAM is a four tuple $\mathcal{M} = (\mathcal{D}, \mathcal{A}, \phi, t)$
-denoted by $\mathcal{D} \vdash^\phi_t \mathcal{A}$, having active definitions
-$\mathcal{D}$, running processes $\mathcal{A}$, location string $\phi$ and time
-$t$. Multiple CHAMs are composed in parallel using the associative-commutative
-operator $\parallel$.
+denoted by $\mathcal{D} \vdash^\phi_t \mathcal{A}$, where $\mathcal{D}$ is a
+set of active definitions, $\mathcal{A}$ is a multiset of running processes,
+$\phi$ is an ordered string of location names, and $t$ is a natural number
+denoting the current time. Multiple CHAMs are composed in parallel using the
+associative-commutative operator $\parallel$.
 
-We model locality explicitly using the following rule, which says that a
+We need the following structural equivalences in our semantics:
+\begin{align*}
+ \textsc{Str-Def}&&
+ \mathcal{D} \vdash_{t'}^\phi \mathcal{A}, t : \mathbf{def}~D~\mathbf{in}~P
+    \equiv{}& \mathcal{D} \vdash_{t'}^\phi \mathcal{A}, \mathbf{def}~D~\mathbf{in}~t:P \\
+ \textsc{Str-Time}&&
+ \mathcal{D} \vdash_{t''}^\phi \mathcal{A}, t : (t' : P)
+    \equiv{}& \mathcal{D} \vdash_{t''}^\phi \mathcal{A}, (t+t') : P \\
+ \textsc{Str-Par}&&
+ \mathcal{D} \vdash_{t''}^\phi \mathcal{A}, t : (P_1 ~\&~ P_2)
+    \equiv{}& \mathcal{D} \vdash_{t''}^\phi \mathcal{A}, t:P_1, t:P_2 \\
+ \textsc{Str-Or}&&
+ \mathcal{D}, D_1~\mathbf{or}~D_2 \vdash_{t''}^\phi \mathcal{A}
+    \equiv{}& \mathcal{D}, D_1, D_2 \vdash_{t''}^\phi \mathcal{A} \\
+\end{align*}
+
+We model locality explicitly using the following rule, which states that a
 reduction involving only a subset of a machine can be performed without
 affecting the state of the rest of the machine:
 \begin{align*}
-\textsc{Red-Loc}\quad&
-\frac
+\inferrule[Local-Red]
 { \mathcal{M} \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1
-\qquad \mathcal{M}' \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1'
-\qquad \mathcal{M} \longrightarrow \mathcal{M}'}
+\\ \mathcal{M}' \equiv \mathcal{D}_1' \vdash_t^\phi \mathcal{A}_1'
+\\ \mathcal{M} \longrightarrow \mathcal{M}'}
 { \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1,\mathcal{A}_2
-\longrightarrow \mathcal{D}_2,\mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1',\mathcal{A}_2
+\longrightarrow \mathcal{D}_2,\mathcal{D}_1' \vdash_t^\phi \mathcal{A}_1',\mathcal{A}_2
 }
 \end{align*}
+A similar rule for machines running in parallel states that machines can take
+local steps without affecting each other:
+\begin{equation*}
+\inferrule[Par-Red]
+{\mathcal{C} \equiv \mathcal{M}_1 ~||~ \mathcal{M}_2 \\
+ \mathcal{C}' \equiv \mathcal{M}_1' ~||~ \mathcal{M}_2 \\
+ \mathcal{M}_1 \longrightarrow \mathcal{M}_1'}
+{\mathcal{C} \longrightarrow \mathcal{C}'}
+\end{equation*}
+
+In the original join-calculus semantics, a two-way reduction relation called a
+``heating/cooling relation'' is defined for doing scope extrusion and forking
+off new locations. We only provide one-way reduction rules for this:
+\begin{equation*}
+\inferrule[Red-Def]
+{
+\mathcal{M} \equiv~\vdash_t^\phi \mathbf{def}~D~\mathbf{in}~P
+\\ \mathcal{M}' \equiv \sigma_{dv}D \vdash_t^\phi \sigma_{dv}P
+}
+{
+  \mathcal{M} \longrightarrow \mathcal{M}'
+}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Red-Loc]
+{
+\mathcal{M} \equiv \mathcal{D}, a[D~\mathbf{in}~P] \vdash_t^\phi \mathcal{A}
+\\ \mathcal{C} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A} ~||~ D \vdash_t^{\phi a} t : P
+}
+{
+ \mathcal{M} \longrightarrow \mathcal{C}
+}
+\end{equation*}
 
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
 version provides less guarantees about the order in which messages on the same
@@ -240,60 +290,90 @@ that denotes the current time.
 We begin by inductively defining a ternary relation $\cdot
 \stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
 CHAM, and tags them with the time they became ready:
-\begin{align*}
-\textsc{Sched-Msg}\quad&
-\frac
+\begin{equation*}
+\inferrule[Sched-Msg]
 { \mathcal{M} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A}', t' : x\langle \tilde u \rangle
-\qquad t' \leq t
+\\ t' \leq t
 }
-{\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}\\
-\textsc{Sched-Par}\quad&
-\frac
+{\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Sched-Par]
 {\mathcal{M} \stackrel{t}{\propto} P
-\qquad \mathcal{M} \stackrel{t}{\propto} Q}
+\\ \mathcal{M} \stackrel{t}{\propto} Q}
 { \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
-\end{align*}
-Using the collector, we can define reduction using the following rule:
-\begin{align*}
-\textsc{Red}\quad&
-\frac
-{\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t P
-\qquad\mathcal{M} \stackrel{t'}{\propto} P
-\qquad t'+d = t
-\qquad \mathcal{P}(P) = \sigma_{rv}J }
-{ M \longrightarrow
-  J \stackrel{d}{\triangleright} Q \vdash_t t : \sigma_{rv}Q }
-\end{align*}
-In \textsc{Red}, $\sigma_{rv}$ replaces received variables with closed
+\end{equation*}
+Using the collector, we can define reaction using the following rule:
+\begin{equation*}
+\inferrule[Red-React]
+{
+\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi P
+\hva\\ \mathcal{M}' \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi t : \sigma_{rv}Q
+\\ \mathcal{M} \stackrel{t'}{\propto} P
+\\ t'+d = t
+\\ \mathcal{P}(P) = \sigma_{rv}J }
+{ \mathcal{M} \longrightarrow
+  \mathcal{M}' }
+\end{equation*}
+In the above, $\sigma_{rv}$ replaces received variables with closed
 expressions.
 
 Prioritized pattern matching is performed using the following rule:
 \begin{align*}
-\textsc{Red-Match}\quad&
- ...
+\inferrule[Red-Match]
+{\mathcal{M} \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
+   \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
+ \\ \mathcal{M}' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
+ \\ \mathcal{P}(P) = \sigma_{rv}\pi_i
+ \\ \forall j < i.~\pi_j \not\preceq \sigma_{rv} \pi_i}
+{\mathcal{M} \longrightarrow \mathcal{M}'}
 \end{align*}
+In the above, $\preceq$ involves application of algorithm $\mathcal{U}$ to
+determine if the pattern on the left is more general than the pattern on the
+right.
 
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
 For example, $a \stackrel{t}{\diamond} b$ means that locations $a$ and $b$ can
-communicate at time $t$. The relation is commutative. Using this, we can
-specify how the system behaves when the connection between two units
+communicate at time $t$. The relation is commutative and reflexive. Using this,
+we can specify how the system behaves when the connection between two units
 disappear:
-\begin{align*}
-\textsc{Comm-Link}\quad &
-\frac
-{ x \in dv(\mathcal{D}_2)
-  \quad a \stackrel{t}{\diamond} b}
-{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
-  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e \rangle } \\
-\textsc{Comm-Lost}\quad &
-\frac
-{ x \in dv(\mathcal{D}_2)
-  \quad \neg(a \stackrel{t}{\diamond} b)}
-{ \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle \tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 ~\longrightarrow~
-  \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2 }
-\end{align*}
+\begin{equation*}
+\inferrule[Comm-Link]
+{
+\mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
+\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\hva\\ \mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
+\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e
+\rangle
+\hva\\\\ x \in dv(\mathcal{D}_2)
+\\ a \stackrel{t}{\diamond} b}
+{ \mathcal{C} ~\longrightarrow~ \mathcal{C}' }
+\end{equation*}
+\begin{equation*}
+\inferrule[Comm-Lost]
+{
+\mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
+\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\\
+\mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
+\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
+\hva\\\\
+x \in dv(\mathcal{D}_2)
+  \\ \neg(a \stackrel{t}{\diamond} b)}
+{ \mathcal{C} ~\longrightarrow~ \mathcal{C}'}
+\end{equation*}
 Note that the above rules also state that communication can only take place
 when the time of the two communicating machines are synchronised.
 \fixme{We still need to specify that communication can't take place when one of
 the locations are failed.}
+
+In our system, time can only progress when no CHAM can take another step,
+effectively synchronising all machines on a global clock. In a real setting,
+this is of course not feasible, but it makes it easier to reason about
+communicating devices in a simulated setting.
+
+To be able to detect when a machine can't do any computations, we need to
+ensure that no reductions can be applied to a machine.
+\fixme{How do we state this in an elegant way?}
