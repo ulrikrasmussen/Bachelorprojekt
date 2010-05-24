@@ -71,6 +71,7 @@ integerArith = M.fromList [
     jSub (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin . max 0 $ op1 - op2]]
     jMult (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 * op2]]
     jDiv (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [IntE $ op1 `div` op2]]
+    jDiv a = error ("Unmatched atom: " ++ (show a))
     jMod (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 `mod` op2]]
     jLeq (MsgA _ [IntE op1, IntE op2, VarE k]) = return [MsgA k [toJoin $ op1 <= op2]]
 

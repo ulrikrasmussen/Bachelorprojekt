@@ -54,9 +54,10 @@ data Context = Context { cTime :: Integer -- ^ Abstract time representation
 instance Show Context where
   show context =      "Loc  :\t" ++ cLocation context ++ " (" ++ cLocationParent context ++ ")"
                ++ "\n\nExps :\t" ++ (concat . intersperse ", " . S.toList $ cExportedNames context)
-               ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
+             --  ++ "\n\nDefs :\t" ++ (concat . intersperse "\n\t" . map show $ cDefs context)
                ++ "\n\nAtoms:\t" ++ (concat . intersperse "\n\t" . map show $ cAtoms context)
                ++ "\n\nFailure Cs:\t" ++ (concat . intersperse "\n\t" . map show $ cFailureConts context)
+               ++ "\n"
 
 instance Eq Context where
   a == b = cDefs a == cDefs b && cAtoms a == cAtoms b
@@ -77,6 +78,13 @@ putDef def = modify $ \s -> s { cDefs = def : cDefs s }
 
 getAtoms :: JoinM [Atom]
 getAtoms = gets cAtoms
+
+takeAtoms :: (Atom -> Bool) -> JoinM [Atom]
+takeAtoms p = do
+  atms <- getAtoms
+  let (ret,rest) = partition p atms
+  replaceAtoms rest
+  return ret
 
 rmAtom :: Atom -> JoinM ()
 rmAtom atm = modify $ \s -> s { cAtoms = delete atm $ cAtoms s }
@@ -187,13 +195,16 @@ scrambleContext = do
 
 applyReaction :: Def -> JoinM ()
 applyReaction d@(ReactionD js delay p) =
-  sequence <$> mapM matchJoin js >>=
-  maybe (return ())
-        (\xs -> do let (sigma, atoms) = first M.unions $ unzip xs
+  --trace "applyReaction.\n"
+  matchJoins js >>=
+  maybe ({-trace "no match" $-} return ())
+        (\(sigma, atoms) -> do
+                   --trace ("matched: " ++ show atoms) return()
                    t <- getTime
                    let reactionTime = max t $ delay + foldl max 0 (map getDelay atoms)
-                   when (reactionTime <= t) $ do mapM_ rmAtom atoms
-                                                 putAtom $ DelayA reactionTime (sigma `subst` p))
+                   if reactionTime <= t then do mapM_ rmAtom atoms
+                                                putAtom $ DelayA reactionTime (sigma `subst` p)
+                                        else do mapM_ putAtom atoms)
   where
     getDelay (DelayA d _) = d
     getDelay _ = 0
@@ -201,20 +212,45 @@ applyReaction d@(ReactionD js delay p) =
 applyReaction (LocationD _ _ _) = return ()
 
 {- Check whether a join pattern is matched by the atoms in the context -}
-matchJoin :: Join -> JoinM (Maybe (M.Map String Expr, Atom))
-matchJoin (VarJ var pats) = do
-  atoms <- filter (chanIs var) <$> getAtoms
-  let matches = map matchPatterns atoms
-  return . getFirst . mconcat . map First $ matches
-   where chanIs v (MsgA v' _)                   = v == v'
-         chanIs v (DelayA d (Proc [MsgA v' _])) = v == v'
-         chanIs v _                             = False
-         matchPatterns atom@(DelayA d (Proc [msg])) = do
-            (sigma, _) <- matchPatterns msg
-            return (sigma, atom)
-         matchPatterns atom@(MsgA _ es) = do
-            sigma <- M.unions <$> zipWithM matchPat pats es
-            return (sigma, atom)
+matchJoins js = do
+  atms <- getCand [] js
+  --trace ("Candidates: " ++ (show atms)) $ return ()
+  maybe (mapM putAtom atms >> return Nothing)
+        (\(sigma,atms,rest) -> do
+          mapM putAtom rest
+          return $ Just (sigma,atms))
+        (foldr matchJoin (Just(M.empty, [], atms)) js)
+  where
+    getCand :: [Atom] -> [Join] -> JoinM [Atom]
+    getCand akk (j:js) = do
+      atms <- takeAtoms (chanIs (getJNm j))
+      getCand (atms ++ akk) js
+    getCand akk []   = return akk
+
+    chanIs v (MsgA v' _)                   = v == v'
+    chanIs v (DelayA d (Proc [MsgA v' _])) = v == v'
+    chanIs v _                             = False
+
+    getJNm (VarJ var _ ) = var
+    matchJoin :: Join
+              -> Maybe(M.Map String Expr, [Atom], [Atom])
+              -> Maybe(M.Map String Expr, [Atom], [Atom])
+    matchJoin j (Just (subst, atms, rest)) =
+      let (candidates,rest') = partition (chanIs $ getJNm j) rest
+       in maybe Nothing (\(subst', atm, rest'') -> Just (M.union subst subst',atm:atms, rest''++rest' ))
+            (matchPattern j candidates [])
+    matchJoin _ Nothing = Nothing
+
+    matchPattern _          []     rest = Nothing
+    matchPattern j (a@(DelayA d (Proc msg)):as) rest =
+      maybe (matchPattern j as (a:rest))
+            (\(subst, _, []) -> Just(subst, a, as++rest ))
+            (matchPattern j msg [])
+    matchPattern j@(VarJ _ ps) (a@(MsgA _ es):as) rest =
+      case sequence $ map (\(p,e) -> matchPat p e) (zip ps es) of
+        Just subst -> Just(M.unions subst, a, as++rest)
+        Nothing    -> matchPattern j as (a:rest)
+
 
 -- | Match a pattern against an expression. Returns Nothing if the pattern
 -- doesn't match, otherwise returns `Just m` where m maps variable names to

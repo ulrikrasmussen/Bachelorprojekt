@@ -19,3 +19,10 @@ change the desguar module, so we get something like this::
 
 The ``incall`` message is only generated once, and the GC can therefore safely
 unmark the ``k``.
+
+Message exchange between locations on the same machine should be instantaneous
+------
+
+DelayA should be Expr rather than Integer
+-----
+

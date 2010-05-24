@@ -129,6 +129,11 @@ data Event = EvLinkUp   String String
                         -- ^special atoms intended for
                         -- reading from simulated hardware (e.g. sensors)
 
+instance Show Event where
+  show (EvSpecial s _) = "EvSpecial " ++ s ++ " fun"
+  show (EvLinkUp s t) = "EvLinkUp " ++ s ++ " " ++ t
+  show (EvLinkDown s t) = "EvLinkDown " ++ s ++ " " ++ t
+
 
 type OutputLog = [[Output]]
 data Output = OutMessage Integer String -- time message
@@ -143,8 +148,8 @@ runInterpreter conf st = do
     runInterpreter' comP 0 st [] True 1 $ mkInitialCtxs stdGen (machineClasses conf) (initialMachines conf)
   where runInterpreter' comP n st out timePassed time contexts = do
            [stdGen1, stdGen2, stdGen3, stdGen4] <- replicateM 4 R.newStdGen
-           --newAtms <- runExternals $ manipulators conf
            -- Apply external events.
+           if timePassed then putStrLn ("Time passed: " ++ show time) else return ()
            let (now:evts) = eventLog st
            let (comP', st',time') = if not timePassed then (comP, st, time)
                               else let
@@ -179,7 +184,12 @@ runInterpreter conf st = do
            let cStepped   = map (execInterp conf) cExchanged
            let (cProgressed, tpassed) = if map cAtoms cStepped == map cAtoms contexts
                                 then (map (\x -> x {cTime = succ $ cTime x}) cStepped, True)
-                                else (cStepped, False)
+                                else {-trace (
+                                  let cSt = S.fromList $ map cAtoms cStepped
+                                      cCtx = S.fromList $ map cAtoms contexts
+                                  in
+                                  "atoms diff:" ++ (show $ (cSt `S.union` cCtx) `S.difference` (cSt `S.intersection` cCtx)))-} (cStepped, False)
+           --putStrLn $ "Current ctxs: " ++ (show $ map cLocation cProgressed)
            if (maybe True (n<=) (breakAtIter conf)) && (maybe True (time'<=) (breakAtTime conf))
                 then runInterpreter' comP' (n+1) st' (output ++ out) tpassed time' cProgressed
                 else return (output ++ out, contexts)
@@ -338,7 +348,7 @@ heatLocations stdGen context =
       context' = context {cDefs = defs,
                           cExportedNames = cExportedNames context
                                           `S.union` exports}
-   in context' : zipWith (mkContext $ cLocation context) stdGens locations
+   in {-seq (if locations == [] then "" else trace ("heating loc: " ++ (show $ map (\(LocationD n _ _) -> n) locations)) "")-} context' : zipWith (mkContext $ cLocation context) stdGens locations
    where mkContext locParent stdGen (LocationD name ds (Proc as)) =
            let exports = S.unions . map definedVars $ filter isReactionD ds
             in initContext ds as name locParent (S.toList exports) stdGen
@@ -350,7 +360,7 @@ exchangeMessages :: M.Map (String, String) Bool
                     -> [Context]
 exchangeMessages comP gp cs =
   let (cs', ms) = second concat . unzip $ map takeMessages cs
-   in putMessages comP gp ms cs'
+   in {-seq (if ms /= [] then trace ("Exchanging :" ++ show ms) "" else "") $-} putMessages comP gp ms cs'
 
 takeMessages ::  Context -> (Context, [(String, Atom)])
 takeMessages context =
@@ -380,9 +390,9 @@ putMessages comP gp ms (context:cs) =
      (locals, ms') = partition (snd >>> isLocal dvs) $ ms
      succCom = map setDelay $ tryCom locals
      context' = context { cAtoms = cAtoms context ++ succCom }
-  in context':putMessages comP gp ms' cs
+  in {-seq (if succCom /= [] then trace ("Successfull com: " ++ show succCom) "" else "")-} context':putMessages comP gp ms' cs
   where
-    setDelay = DelayA (succ $ cTime context) . Proc . (:[])
+    setDelay = DelayA ({-succ $ -}cTime context) . Proc . (:[])
 
     tryCom           [] = []
     tryCom ((loc,a):ls) =

@@ -1,0 +1,23 @@
+Hej Andrzej.
+
+I den forgangne uge er det lykkedes os at implementere distribution
+og standsning (fail), samt "magiske" funktionskald der gør det muligt
+at detektere timeouts og at simulere hardwarefunktioner som fx 
+temperatursensoren.
+
+Nu er vi så ved at overveje i hvilket omfang fortolkeren skal tilpasses
+til at reflektere det at der simuleres flere fysiske enheder, hvor
+kommunikationen kan svigte.
+
+Samtidig er vi i færd med at implementere det simple scenarie, hvor
+hver sensor kører et statisk omend konfigurerbart program, og hvor
+kommunikationen mellem enhederne er fejlfri.
+
+Yderligere overvejer vi også så småt, hvilke kriterier vi vil vurdere
+programmeringssproget efter, når vi skal udtale os om dets anvendelighed.
+Særligt har vi foreløbig overvejet din tanke om at udtrykke CSP-primitiver
+i join.
+
+
+Vi ses i morgen
+-Ulrik og Philip

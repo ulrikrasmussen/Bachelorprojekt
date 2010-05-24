@@ -35,7 +35,7 @@ class Subst a where subst :: Sigma -> a -> a
 data Expr = VarE String
           | IntE Int
           | ConE String [Expr]
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Expr where
@@ -55,7 +55,7 @@ data SExpr = VarS String
            | ConS String [SExpr]
            | IntS Int
            | CallS String [SExpr]
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show SExpr where
@@ -68,7 +68,7 @@ instance Show SExpr where
 data Pat  = VarP String
           | IntP Int
           | ConP String [Pat]
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Pat where
@@ -80,7 +80,7 @@ instance Show Pat where
 {- A join pattern -}
 data Join = VarJ String [Pat]
           | SyncJ String [Pat]
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Join where
@@ -97,7 +97,7 @@ instance Subst Join where
 
 data Def  = ReactionD [Join] Integer Proc
           | LocationD String [Def] Proc
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Utility functions
 isLocationD (LocationD _ _ _) = True
@@ -123,7 +123,7 @@ instance Subst Def where
 --}
 
 newtype Proc = Proc {pAtoms :: [Atom]}
-   deriving (Eq, Data, Typeable)
+   deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Proc where
@@ -139,7 +139,7 @@ data Atom = InertA
           | MatchA Expr [(Pat, Proc)]
           | InstrA [Instr]
           | DelayA Integer Proc
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Atom where
@@ -182,7 +182,7 @@ data Instr = LetI [Pat] SExpr
            | DoI String [SExpr]
            | MatchI SExpr [(Pat, [Instr])]
            | ReturnI [SExpr] String
-    deriving (Eq, Data, Typeable)
+    deriving (Eq, Ord, Data, Typeable)
 
 --{ Instances
 instance Show Instr where
