@@ -5,6 +5,8 @@
 \def\P{\mathcal{P}}
 \def\S{\mathcal{S}}
 \def\Q{\mathcal{Q}}
+\def\Go#1{\text{go}\langle#1, k\rangle}
+\def\Halt#1{\text{Halt}\langle\rangle}
 \def\toJ#1{\stackrel{#1}{\triangleright}}
 \def\inJ{~\mathbf{in}~}
 \def\join#1in#2#3{#1\toJ{#2}#3}
@@ -236,7 +238,7 @@ denoted by
  \boxed{\mathcal{M} = \mathcal{D} \vdash^\phi_t \mathcal{A}}
 \end{equation*}
 where $\mathcal{D}$ is a set of active definitions, $\mathcal{A}$ is a multiset
-of running processes, $\phi$ is an ordered string of location names, and $t$ is
+of running processes, $\phi$ is an ordered sequence of location names, and $t$ is
 a natural number denoting the current time. Multiple CHAMs are composed in
 parallel using the operator $\parallel$. We denote one or more CHAMs composed
 in parallel by
@@ -296,7 +298,7 @@ machines can make an evaluation step, we denote it with
  \boxed{\mathcal{X} \longrightarrow \mathcal{X}'}
 \end{equation*}
 
-Independent processes in a single machine can take evaluation steps independent
+Independent processes in a single machine can take evaluation steps independently
 of each other. We model this explicitly using the following rule:
 \begin{align*}
 \inferrule[Local-Red]
@@ -425,48 +427,49 @@ x \in dv(\mathcal{D}_2)
 { \mathcal{C} ~\longrightarrow~ \mathcal{C}'}
 \end{equation*}
 Note that the above rules also states that communication can only take place
-when the time of the two communicating machines are synchronised.\fixme{But, isn't this the always the case in this semantics :o}
-\fixme{We still need to specify that communication can't take place when one of
-the locations are failed.}
+when the time of the two communicating machines are synchronised.\fixme{But,
+isn't this the always the case in this semantics :o} \fixme{We still need to
+specify that communication can't take place when one of the locations are
+failed.}
 
 In our system, time can only progress when no CHAM can take another step,
 effectively synchronising all machines on a global clock. In a real setting,
 this is of course not feasible, but it makes it easier to reason about
 communicating devices in a simulated setting.
 
+We model this by a binary relation, that serves as a marking of machines and
+groups of machines as having reached a fixed point, in which time instant no
+further reduction or communication may happen:
+
+\[\boxed{\C\Rightarrow\C}\]
+
 To be able to detect when a machine can't do any computations, we need to
-ensure that no reductions can be applied to a machine, and that all external
-communication has been carried out:
+ensure, that no reductions can be applied to a machine, and that all external
+communication has been carried out. This is ensured by the
+\textsc{Step-Machine} rule below.
 
-\begin{equation*}
-\inferrule[Quiet-Location]
-{
-\M \equiv \D \mscJ \P\qquad \lnot\exists P' \in \P : \text{reducable}[P'] \qquad \forall P \in \P : P \in dv[\D] \\
-\forall0\leq i\leq k : \left(\D_i \equiv J\toJ{d}Q \qquad t'+d\leq t \right.\\
-\left.\qquad \lnot\exists P' \subseteq(\P):\left( \M \time{t'} P' \qquad \P (P'') \equiv \sigma_{dv}J\right)\right)
-}{
-\text{quiet}\left[\M\right]
-}
-\end{equation*}
-where $\text{reducable}[P]$ is true for \[\P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right],
-\ \match e \with \pi,\  go\langle\rangle ,\ halt\langle\rangle \}\]
-
-This marking of machines as quiet serves as a means for detecting when the
-network has arrived at a fixed point, and time should be allowed to pass.  When
-all machines have become quiet, the time of each machine is incremented as
-denoted by the following rules:
+When all machines have fulfilled the $\Rightarrow$ relation, the time of each machine is
+incremented in one global step, as $\S_c$ is reduced to $\S_{c'}$, with $\S$ representing
+the entire state of the interpreter.
 
 \noindent$\boxed{\C\Rightarrow\C'}$ \\
 $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 \begin{equation*}
-\inferrule[Step-Msc]
+\inferrule[Step-Machine]
 {
-  \M \equiv \D \mscJ \A \qquad \text{quiet}[M]
+\M \equiv \D \mscJ \A \\
+\lnot\exists P' \in \A ~.~ \text{reducable}[P'] \\
+\forall P \in \A~.~ (P\equiv t' : a\langle \tilde u  \rangle \\
+                    \P(P)\in dv[\D]) \\
+\forall0\leq i\leq k ~.~ (\D_i \equiv J\toJ{d}Q \\
+                         t'+d\leq t \\
+                         \lnot\exists P' \subseteq\A~.~( \M \time{t'} P' \\ \P (P'') \equiv \sigma_{dv}J))
 }
 {
   \M \Rightarrow \D \mscG{t+1}{\phi} \A
 }
-\qquad
+\end{equation*}\\
+\begin{equation*}
 \inferrule[Step-Par]
 {
   \C \equiv \M \parallel \C' \qquad \C' \Rightarrow \C'' \qquad \M \Rightarrow \M'
@@ -474,8 +477,7 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 {
   \C \Rightarrow \M' \parallel \C''
 }
-\end{equation*}
-\begin{equation*}
+\qquad
 \inferrule[Step-System]
 {
   \C \Rightarrow \C'
@@ -484,8 +486,25 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
   \S_c \rightarrow \S_{c'}
 }
 \end{equation*}
-\fixme{For the time being we'll just let time pass here and allow
-communication in to happen within an instance, partly because it seems simpler
-to me, partly because it reflects what the code actually does, and partly
-because I don't really get the motivation for forcing the communication to pile
-up and happen at the end of an instance\ldots wall of text :o}
+where $\text{reducable}[P]$ is true for
+\begin{multline*}
+\P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right], \\
+\ \match e \with \pi_1 \to e_1~|~..~|~\pi_n \to e_n,\  go\langle\rangle ,\ halt\langle\rangle \}
+\end{multline*}
+
+\subsection*{Mobility}
+Special meaning is attributed to the messages $\text{halt}\langle\rangle$ and
+$\text{go}\langle a, k\rangle$, and they are regarded as primitives of the
+language, separate from normal atoms, though similar in syntax.
+
+\fixme{Doesn't handle changing locations with prefix $\phi a$ yet :(}
+\begin{equation*}
+\inferrule[Red-Go]
+{
+  \M \equiv \D \mscG{t}{\phi a} \Go{b}, \A \\
+  \M' \equiv \D' \mscG{t}{\psi b} \A'
+}
+{
+  \M \longrightarrow \D \mscG{t}{\psi b a} \A
+}
+\end{equation*}
