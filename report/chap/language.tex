@@ -1,3 +1,21 @@
+\def\A{\mathcal{A}}
+\def\C{\mathcal{C}}
+\def\M{\mathcal{M}}
+\def\D{\mathcal{D}}
+\def\P{\mathcal{P}}
+\def\S{\mathcal{S}}
+\def\Q{\mathcal{Q}}
+\def\toJ#1{\stackrel{#1}{\triangleright}}
+\def\inJ{~\mathbf{in}~}
+\def\join#1in#2#3{#1\toJ{#2}#3}
+\def\mscG#1#2{\vdash^{#1}_{#2}}
+\def\mscJ{\mscG{t}{\phi}}
+\def\time#1{\stackrel{t'}{\propto}}
+\def\defJ{~\mathbf{def}~}
+\def\match{~\mathbf{match}~}
+\def\with{~\mathbf{with}~}
+\def\linkUp#1{\stackrel{#1}{\diamond}}
+
 In this chapter we will document our prototype language, Join.  The
 language is very similar to the original core join-calculus in many
 aspects, but has been extended with various syntactic and semantic
@@ -217,8 +235,7 @@ denoted by $\mathcal{D} \vdash^\phi_t \mathcal{A}$, where $\mathcal{D}$ is a
 set of active definitions, $\mathcal{A}$ is a multiset of running processes,
 $\phi$ is an ordered string of location names, and $t$ is a natural number
 denoting the current time. Multiple CHAMs are composed in parallel using the
-associative-commutative operator $\parallel$, and the set of all connected
-CHAMS is denoted by $\mathcal{N}$
+associative-commutative operator $\parallel$.
 
 We need the following structural equivalences in our semantics:
 \begin{align*}
@@ -252,10 +269,10 @@ A similar rule for machines running in parallel states that machines can take
 local steps without affecting each other:
 \begin{equation*}
 \inferrule[Par-Red]
-{\mathcal{C} \equiv \mathcal{M}_1 ~||~ \mathcal{M}_2 \\
- \mathcal{C}' \equiv \mathcal{M}_1' ~||~ \mathcal{M}_2 \\
- \mathcal{M}_1 \longrightarrow \mathcal{M}_1'}
-{\mathcal{C} \longrightarrow \mathcal{C}'}
+{\C_1 \equiv \M ~||~ \C_1' \\
+ \C_2 \equiv \mathcal{M}' ~||~ \C_2' \\
+ \M \longrightarrow \M'}
+{\C_1 \longrightarrow \C_2}
 \end{equation*}
 
 In the original join-calculus semantics, a two-way reduction relation called a
@@ -334,28 +351,12 @@ In the above, $\preceq$ involves application of algorithm $\mathcal{U}$ to
 determine if the pattern on the left is more general than the pattern on the
 right.
 
-\def\A{\mathcal{A}}
-\def\M{\mathcal{M}}
-\def\D{\mathcal{D}}
-\def\P{\mathcal{P}}
-\def\Q{\mathcal{Q}}
-\def\toJ#1{\stackrel{#1}{\triangleright}}
-\def\inJ{~\mathbf{in}~}
-\def\join#1in#2#3{#1\toJ{#2}#3}
-\def\mscG#1#2{\vdash^{#1}_{#2}}
-\def\mscJ{\mscG{t}{\phi}}
-\def\time#1{\stackrel{t'}{\propto}}
-\def\defJ{~\mathbf{def}~}
-\def\match{~\mathbf{match}~}
-\def\with{~\mathbf{with}~}
-\def\linkUp#1{\stackrel{#1}{\diamond}}
-
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
 For example, $a \stackrel{t}{\diamond} b$ means that locations $a$ and $b$ can
-communicate at time $t$. The relation is reflexive. Using this,
-we can specify how the system behaves when the connection between two units
-disappear:
+communicate at time $t$. The relation is reflexive, because internal
+communication of a machine is assumed to be reliable. Using this, we can
+specify how the system behaves when the connection between two units disappear:
 \begin{equation*}
 \inferrule[Comm-Link]
 {
@@ -386,56 +387,58 @@ when the time of the two communicating machines are synchronised.\fxfatal{But, i
 \fxfatal{We still need to specify that communication can't take place when one of
 the locations are failed.}
 
-As spawning a new location doesn't cause a new physical machine to spontaneusly materialise, we have modeled the distinction between locations that corresponds to physical machines and those that don't by the convention, that the first symbol in the location string \fixme{bedre ord end ``location string''?} denotes the physical machine, that hosts the given location. By this convention it is reasonable to demand, that locations that share a common prefix exchange messages reliably, as they should only be subjected to the same physical limits as whatever else runs on that given machine.
-\begin{equation*}
-\inferrule[Same-Machine]
-{
-  \M\equiv \D\mscG{t}{\phi\alpha} \A \qquad \M'\equiv \D'\mscG{t}{\phi\beta} \A'
-}
-{
-  \M \linkUp{t} \M'
-}
-\end{equation*}
-
 In our system, time can only progress when no CHAM can take another step,
 effectively synchronising all machines on a global clock. In a real setting,
 this is of course not feasible, but it makes it easier to reason about
 communicating devices in a simulated setting.
 
 To be able to detect when a machine can't do any computations, we need to
-ensure that no reductions can be applied to a machine:
+ensure that no reductions can be applied to a machine, and that all external
+communication has been carried out:
 
 \begin{equation*}
 \inferrule[Quiet-Location]
 {
-\M \equiv \D \mscJ \P \qquad \forall0\leq i\leq k : (\D_i \equiv J\toJ{d}Q \\
-\lnot\exists P' \in \mathcal{POW}(\P): ( \M \time{t'} P' \qquad t'+d\leq t \\
-\P (P'') \equiv \sigma_{dv}J)) \qquad \lnot\exists P' \in \P : \text{reducable}(P')
+\M \equiv \D \mscJ \P\qquad \lnot\exists P' \in \P : \text{reducable}[P'] \qquad \forall P \in \P : P \in dv[\D] \\
+\forall0\leq i\leq k : \left(\D_i \equiv J\toJ{d}Q \qquad t'+d\leq t \right.\\
+\left.\qquad \lnot\exists P' \subseteq(\P):\left( \M \time{t'} P' \qquad \P (P'') \equiv \sigma_{dv}J\right)\right)
 }{
 \text{quiet}\left[\M\right]
 }
-\end{equation*}\fixme{Actually, it shouldn't be the powerset, but rather the set of subsets.}
-\fixme{How do we state this in an elegant way?}
-
-where $\text{reducable}(P)$ is true for \[\P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right],
+\end{equation*}
+where $\text{reducable}[P]$ is true for \[\P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right],
 \ \match e \with \pi,\  go\langle\rangle ,\ halt\langle\rangle \}\]
 
 This marking of machines as quiet serves as a means for detecting when the
 network has arrived at a fixed point, and time should be allowed to pass.  When
 all machines have become quiet, the time of each machine is incremented as
-denoted by the following rule:
+denoted by the following rules:
 
+\noindent$\boxed{\C\Rightarrow\C'}$ \\
+$\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 \begin{equation*}
-\inferrule[Time-Step]
+\inferrule[Step-Msc]
 {
-\forall\M\in\mathcal{N}: \text{quiet}[\M]
+  \M \equiv \D \mscJ \A \qquad \text{quiet}[M]
 }
 {
-  \forall\M\in\mathcal{N}:\left( \M \equiv \D \mscJ \A \qquad \M \longrightarrow \D \mscG{t+1}{\phi}\A \qquad \lnot\text{quiet}[\M]\right)
+  \M \Rightarrow \D \mscG{t+1}{\phi} \A
+}
+\qquad
+\inferrule[Step-Par]
+{
+  \C \equiv \M \parallel \C' \qquad \C' \Rightarrow \C'' \qquad \M \Rightarrow \M'
+}
+{
+  \C \Rightarrow \M' \parallel \C''
 }
 \end{equation*}
-\fxfatal{For the time being we'll just let time pass here and allow
-communication in to happen within an instance, partly because it seems simpler
-to me, partly because it reflects what the code actually does, and partly
-because I don't really get the motivation for forcing the communication to pile
-up and happen at the end of an instance\ldots wall of text :o}
+\begin{equation*}
+\inferrule[Step-System]
+{
+  \C \Rightarrow \C'
+}
+{
+  \S_c \rightarrow \S_{c'}
+}
+\end{equation*}
