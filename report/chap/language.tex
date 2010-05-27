@@ -7,7 +7,7 @@
 \def\Q{\mathcal{Q}}
 \def\atm#1<#2>{#1\left\langle#2\right\rangle}
 \def\Go<#1>{\text{go}\left\langle#1\right\rangle}
-\def\Halt<>{\text{Halt}\langle\rangle}
+\def\Halt<>{\text{halt}\langle\rangle}
 \def\toJ#1{\stackrel{#1}{\triangleright}}
 \def\inJ{~\mathbf{in}~}
 \def\join#1in#2#3{#1\toJ{#2}#3}
@@ -19,7 +19,7 @@
 \def\with{~\mathbf{with}~}
 \def\linkUp#1{\stackrel{#1}{\diamond}}
 \def\migrateable(#1){\text{migrateable}\left(#1\right)}
-\def\becomes\longrightarrow
+\def\reduceable(#1){\text{reduceable}\left(#1\right)}
 
 In this chapter we will document our prototype language, Join.  The
 language is very similar to the original core join-calculus in many
@@ -325,8 +325,7 @@ local steps without affecting each other:
 In the original join-calculus semantics, a two-way reduction relation called a
 ``heating/cooling relation'' is defined for doing scope extrusion and forking
 off new locations. We only provide one-way reduction rules for this:
-\f
-$\boxed{\C\becomes\C'}$
+$\boxed{\C\longrightarrow\C'}$
 \begin{equation*}
 \inferrule[Red-Def]
 {
@@ -457,16 +456,17 @@ When all machines have fulfilled the $\Rightarrow$ relation, the time of each ma
 incremented in one global step, as $\S_c$ is reduced to $\S_{c'}$, with $\S$ representing
 the entire state of the interpreter.
 
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
 \noindent$\boxed{\C\Rightarrow\C'}$ \\
 $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
-\fxnote{The $\C \equiv\M\parallel\C'$ is needed as Red-Loc only deals with reductions}
 \begin{equation*}
 \inferrule[Step-Machine]
 {
 \C \equiv \M\parallel \C' \\
 \M \equiv \D \mscJ \A \\
-\lnot\reducable(\M,\psi) \\
-\lnot\exists P' \in \A ~.~ \text{reducable}[P'] \\
+\lnot\migrateable(\M,\psi) \\
+\lnot\exists P' \in \A ~.~ \text{reduceable}[P'] \\
 \forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \\
                     \P(P)\in dv[\D]\Big) \\
 \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q \\
@@ -494,11 +494,14 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
   \S_c \rightarrow \S_{c'}
 }
 \end{equation*}
-where $\text{reducable}[P]$ is true for
+where $\reduceable(P)$ is true for
 \begin{multline*}
 \P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right], \\
 \ \match e \with \pi_1 \to e_1~|~..~|~\pi_n \to e_n,\  \Go<a,k> ,\ \Halt<> \}
 \end{multline*}
+\end{minipage}}
+\caption{Inference rules for the progression of time}\label{fig:rule:time-step}
+\end{figure}
 
 \subsection*{Mobility}
 Special meaning is attributed to the messages $\Halt<>$ and
