@@ -13,15 +13,16 @@
 \def\join#1in#2#3{#1\toJ{#2}#3}
 \def\mscG#1#2{\vdash^{#1}_{#2}}
 \def\mscJ{\mscG{t}{\phi}}
-\def\time#1{\stackrel{t'}{\propto}}
+\def\timeJ#1{\stackrel{#1}{\propto}}
 \def\defJ{~\mathbf{def}~}
 \def\match{~\mathbf{match}~}
 \def\with{~\mathbf{with}~}
 \def\linkUp#1{\stackrel{#1}{\diamond}}
-%\def\migrates(#1,#2){\stackrel{#1\mapsto#2}{\leadsto}}
 \def\migrates(#1,#2){\xLongrightarrow{#1\mapsto#2}}
 \def\reduceable(#1){\text{reduceable}\left(#1\right)}
 \def\quiet(#1){\text{quiet}\left(#1\right)}
+\def\halted(#1){\text{halted}\left(#1\right)}
+\def\doms#1{\fbox{\rule[-0.75em]{0pt}{2em}#1}}
 
 In this chapter we will document our prototype language, Join.  The
 language is very similar to the original core join-calculus in many
@@ -303,8 +304,13 @@ machines can make an evaluation step, we denote it with
  \boxed{\mathcal{X} \longrightarrow \mathcal{X}'}
 \end{equation*}
 
-Independent processes in a single machine can take evaluation steps independently
-of each other. We model this explicitly using the following rule:
+Independent processes in a single machine can take evaluation steps
+independently of each other, as well as independent machines can take local
+steps without affecting each other.  we model this explicitly using the
+auxilary rules in Figure \ref{fig:rule:aux}.
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\M\longrightarrow\M'$}
 \begin{align*}
 \inferrule[Local-Red]
 { \mathcal{M} \equiv \mathcal{D}_1 \vdash_t^\phi \mathcal{A}_1
@@ -314,8 +320,6 @@ of each other. We model this explicitly using the following rule:
 \longrightarrow \mathcal{D}_2,\mathcal{D}_1' \vdash_t^\phi \mathcal{A}_1',\mathcal{A}_2
 }
 \end{align*}
-A similar rule for machines running in parallel states that machines can take
-local steps without affecting each other:
 \begin{equation*}
 \inferrule[Par-Red]
 {\C_1 \equiv \M ~||~ \C_1' \\
@@ -323,56 +327,8 @@ local steps without affecting each other:
  \M \longrightarrow \M'}
 {\C_1 \longrightarrow \C_2}
 \end{equation*}
-
-In the original join-calculus semantics, a two-way reduction relation called a
-``heating/cooling relation'' is defined for doing scope extrusion and forking
-off new locations. We only provide one-way reduction rules for this:
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-$\boxed{\C\longrightarrow\C'}$
-\begin{equation*}
-\inferrule[Red-Def]
-{
-\mathcal{M} \equiv~\vdash_t^\phi \mathbf{def}~D~\mathbf{in}~P
-\\ \mathcal{M}' \equiv \sigma_{dv}D \vdash_t^\phi \sigma_{dv}P
-}
-{
-  \mathcal{M} \longrightarrow \mathcal{M}'
-}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Red-Loc]
-{
-\mathcal{M} \equiv \mathcal{D}, a[D~\mathbf{in}~P] \vdash_t^\phi \mathcal{A}
-\\ \mathcal{C} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A} ~||~ D \vdash_t^{\phi a} t : P
-}
-{
- \mathcal{M} \longrightarrow \mathcal{C}
-}
-\end{equation*}
-\begin{equation*}
-\inferrule[Red-React]
-{
-\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi P
-\hva\\ \mathcal{M}' \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi t : \sigma_{rv}Q
-\\ \mathcal{M} \stackrel{t'}{\propto} P
-\\ t'+d = t
-\\ \mathcal{P}(P) = \sigma_{rv}J }
-{ \mathcal{M} \longrightarrow
-  \mathcal{M}' }
-\end{equation*}
-\begin{align*}
-\inferrule[Red-Match]
-{\mathcal{M} \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
-   \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
- \\ \mathcal{M}' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
- \\ \mathcal{P}(P) = \sigma_{rv}\pi_i
- \\ \forall j < i.~\pi_j \not\preceq \sigma_{rv} \pi_i}
-{\mathcal{M} \longrightarrow \mathcal{M}'}
-\end{align*}
 \end{minipage}}
-\caption{Reduction rules}
+\caption{Auxilary rules to lighten the notation}\label{fig:rule:aux}
 \end{figure}
 
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
@@ -382,84 +338,112 @@ that denotes the current time.
 
 We begin by inductively defining a ternary relation $\cdot
 \stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
-CHAM, and tags them with the time they became ready:
+CHAM, and tags them with the time they became ready in Figure \ref{fig:rule:sched}.
 
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\M\timeJ{t}P$}
 \begin{equation*}
 \inferrule[Sched-Msg]
 { \mathcal{M} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A}', t' : x\langle \tilde u \rangle
 \\ t' \leq t
 }
 {\mathcal{M} \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}
-\end{equation*}
-
-\begin{equation*}
+\qquad
 \inferrule[Sched-Par]
 {\mathcal{M} \stackrel{t}{\propto} P
 \\ \mathcal{M} \stackrel{t}{\propto} Q}
 { \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
 \end{equation*}
-\begin{comment}
-Using the collector, we can define reaction using the following rule:
+\end{minipage}}
+\caption{Inference rules relating machines, times and atoms, essentially extracting the delay part of the atoms.}
+\label{fig:rule:sched}
+\end{figure}
+
+In the original join-calculus semantics, a two-way reduction relation called a
+``heating/cooling relation'' is defined for doing scope extrusion and forking
+off new locations. We only provide one-way reduction rules for this, namely \textsc{Red-Def} in Figure \ref{fig:rule:red}.
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\C\longrightarrow\C'$}
+\begin{equation*}
+\inferrule[Red-Def]
+{
+\M \equiv~\vdash_t^\phi \mathbf{def}~D~\mathbf{in}~P
+\\ \M' \equiv \sigma_{dv}D \vdash_t^\phi \sigma_{dv}P
+}
+{
+  \M \longrightarrow \M'
+}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Red-Loc]
+{
+\M \equiv \D, a[ D \inJ P] \mscJ \A
+\\ \C \equiv \D \mscJ \A ~||~ D \mscG{t}{\phi a} t : P
+}
+{
+ \M \longrightarrow \C
+}
+\end{equation*}
 \begin{equation*}
 \inferrule[Red-React]
 {
-\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi P
-\hva\\ \mathcal{M}' \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi t : \sigma_{rv}Q
-\\ \mathcal{M} \stackrel{t'}{\propto} P
+\M \equiv J \toJ{d} Q \mscJ P
+\hva\\ \M' \equiv J \toJ{d} Q \mscJ t : \sigma_{rv}Q
+\\ \M \timeJ{t'} P
 \\ t'+d = t
-\\ \mathcal{P}(P) = \sigma_{rv}J }
-{ \mathcal{M} \longrightarrow
-  \mathcal{M}' }
+\\ \P(P) = \sigma_{rv}J
+}
+{ \M \longrightarrow \M' }
 \end{equation*}
-In the above, $\sigma_{rv}$ replaces received variables with closed
-expressions.
-
-Prioritized pattern matching is performed using the following rule:
 \begin{align*}
 \inferrule[Red-Match]
-{\mathcal{M} \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
+{\M \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
    \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
- \\ \mathcal{M}' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
+ \\ \M' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
  \\ \mathcal{P}(P) = \sigma_{rv}\pi_i
  \\ \forall j < i.~\pi_j \not\preceq \sigma_{rv} \pi_i}
-{\mathcal{M} \longrightarrow \mathcal{M}'}
+{\M \longrightarrow \M'}
 \end{align*}
-In the above, $\preceq$ involves application of algorithm $\mathcal{U}$ to
-determine if the pattern on the left is more general than the pattern on the
-right.
-\end{comment}
+\end{minipage}}
+\caption{Reduction rules}\label{fig:rule:red}
+\end{figure}
 
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
-For example, $a \stackrel{t}{\diamond} b$ means that locations $a$ and $b$ can
+For example, $a \linkUp{t} b$ means that locations $a$ and $b$ can
 communicate at time $t$. The relation is reflexive, because internal
 communication of a machine is assumed to be reliable. Using this, we can
-specify how the system behaves when the connection between two units disappear:
+specify how the system behaves when the connection between two units disappear,
+as declared by the rules in Figure \ref{fig:rule:coms}.
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$a\linkUp{t}b$}
 \begin{equation*}
 \inferrule[Comm-Link]
 {
-\qquad \mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
-\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
-\hva\\ \mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
-\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2, (t+1) : x \langle \tilde e
-\rangle
-\hva\\\\ x \in dv(\mathcal{D}_2)
-\\ a \stackrel{t}{\diamond} b}
-{ \mathcal{C} ~\longrightarrow~ \mathcal{C}' }
+   \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x<\tilde e > \parallel \D_2 \mscG{t}{b\psi} \A_2
+\\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2, \atm (t+1) : x <\tilde e>
+\\ x \in dv(\D_2)
+\\ a\linkUp{t} b
+}
+{ \C \longrightarrow \C' }
 \end{equation*}
 \begin{equation*}
 \inferrule[Comm-Lost]
 {
-\mathcal{C} \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1, t:x\langle
-\tilde e \rangle ~||~ \mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
-\\
-\mathcal{C}' \equiv \mathcal{D}_1 \vdash^{a\phi}_t \mathcal{A}_1 ~||~
-\mathcal{D}_2 \vdash^{b\psi}_t \mathcal{A}_2
-\hva\\\\
-x \in dv(\mathcal{D}_2)
-  \\ \neg(a \stackrel{t}{\diamond} b)}
-{ \mathcal{C} ~\longrightarrow~ \mathcal{C}'}
+   \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x< \tilde e >\parallel \D_2 \mscG{t}{b\psi} \A_2
+\\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2
+\\ x \in dv(\D_2)
+\\ \neg(a \linkUp{t} b)}
+{ \C ~\longrightarrow~ \C'}
 \end{equation*}
+\end{minipage}}
+\caption{Inference rules for communication between machines.}\label{fig:rule:coms}
+\end{figure}
+
 Note that the above rules also states that communication can only take place
 when the time of the two communicating machines are synchronised.\fixme{But,
 isn't this the always the case in this semantics :o} \fixme{We still need to
@@ -488,9 +472,7 @@ the entire state of the interpreter.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-$\boxed{\C\Rightarrow\C'}$ \\
-$\boxed{S_{c} \longrightarrow S_{c'}}$ \\
-$\boxed{\quiet(\M)}$\\
+\doms{$\C\Rightarrow\C'$} \doms{$S_{c} \longrightarrow S_{c'}$} \doms{$\quiet(\M)$}
 \begin{equation*}
 \inferrule[Quiet-Machine]
 {
@@ -499,7 +481,7 @@ $\boxed{\quiet(\M)}$\\
 \forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \\
                     \P(P)\in dv[\D]\Big) \\
 \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q \\
-                         \lnot\exists P' \subseteq\A~.~( \M \time{t'} P' \\ t'+d\leq t \\ \P (P') \equiv \sigma_{dv}J)\Big)
+                         \lnot\exists P' \subseteq\A~.~( \M \timeJ{t'} P' \\ t'+d\leq t \\ \P (P') \equiv \sigma_{dv}J)\Big)
 }
 {
   \quiet(\M)
@@ -550,8 +532,9 @@ language, separate from normal atoms, though similar in syntax.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-$\boxed{\C\migrates(\phi,\psi)\C}$\\
-$\boxed{S_{c} \longrightarrow S_{c'}}$ \\
+\doms{$\C\migrates(\phi,\psi)\C$}
+\doms{$S_{c} \longrightarrow S_{c'}$}
+\doms{$\halted(\M)$}
 \begin{equation*}
 \inferrule[Mig-Sys]
 {
@@ -568,7 +551,8 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
   \C\equiv\M\parallel\M_{dest} \\
   \M\equiv\D\mscG{t}{\phi a}\A,t:\Go<b,k> \\
   \M_{dest}\equiv\D'\mscG{t}{\psi b}\A' \\
-  \quiet(\M)
+  \quiet(\M) \\
+  \psi \neq \phi a \beta
 }
 {
   \C\migrates(\phi a, \psi b a)\D\mscG{t}{\psi b a} \A, \atm k<> \parallel \M_{dest}
@@ -598,6 +582,25 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
   \C \migrates(\theta,\psi) \M\parallel\C_1'
 }
 \end{equation*}
+
+\begin{equation*}
+\inferrule[Mig-Halt]
+{
+  \M\equiv\D\mscG{t}{\phi a}\A,t:\Halt<> \\
+  \quiet(\M)
+}
+{
+  \M\migrates(\phi a, \Omega a)\D\mscG{t}{\Omega a} \A
+}\qquad
+\inferrule[Halted-Msc]
+{
+  \C\equiv \D\mscG{t}{\phi}\A\parallel\C' \\
+  \phi=\Omega\alpha
+}
+{
+  \halted(\D\mscG{t}{\phi}\A)
+}
+\end{equation*}
 \end{minipage}}
-\caption{Inference rules for migration}
+\caption{Inference rules for migration and failure.}
 \end{figure}
