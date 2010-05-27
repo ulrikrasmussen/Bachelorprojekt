@@ -18,8 +18,10 @@
 \def\match{~\mathbf{match}~}
 \def\with{~\mathbf{with}~}
 \def\linkUp#1{\stackrel{#1}{\diamond}}
-\def\migrateable(#1){\text{migrateable}\left(#1\right)}
+%\def\migrates(#1,#2){\stackrel{#1\mapsto#2}{\leadsto}}
+\def\migrates(#1,#2){\xLongrightarrow{#1\mapsto#2}}
 \def\reduceable(#1){\text{reduceable}\left(#1\right)}
+\def\quiet(#1){\text{quiet}\left(#1\right)}
 
 In this chapter we will document our prototype language, Join.  The
 language is very similar to the original core join-calculus in many
@@ -325,6 +327,8 @@ local steps without affecting each other:
 In the original join-calculus semantics, a two-way reduction relation called a
 ``heating/cooling relation'' is defined for doing scope extrusion and forking
 off new locations. We only provide one-way reduction rules for this:
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
 $\boxed{\C\longrightarrow\C'}$
 \begin{equation*}
 \inferrule[Red-Def]
@@ -347,6 +351,29 @@ $\boxed{\C\longrightarrow\C'}$
  \mathcal{M} \longrightarrow \mathcal{C}
 }
 \end{equation*}
+\begin{equation*}
+\inferrule[Red-React]
+{
+\mathcal{M} \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi P
+\hva\\ \mathcal{M}' \equiv J \stackrel{d}{\triangleright} Q \vdash_t^\phi t : \sigma_{rv}Q
+\\ \mathcal{M} \stackrel{t'}{\propto} P
+\\ t'+d = t
+\\ \mathcal{P}(P) = \sigma_{rv}J }
+{ \mathcal{M} \longrightarrow
+  \mathcal{M}' }
+\end{equation*}
+\begin{align*}
+\inferrule[Red-Match]
+{\mathcal{M} \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
+   \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
+ \\ \mathcal{M}' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
+ \\ \mathcal{P}(P) = \sigma_{rv}\pi_i
+ \\ \forall j < i.~\pi_j \not\preceq \sigma_{rv} \pi_i}
+{\mathcal{M} \longrightarrow \mathcal{M}'}
+\end{align*}
+\end{minipage}}
+\caption{Reduction rules}
+\end{figure}
 
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
 version provides less guarantees about the order in which messages on the same
@@ -356,6 +383,7 @@ that denotes the current time.
 We begin by inductively defining a ternary relation $\cdot
 \stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
 CHAM, and tags them with the time they became ready:
+
 \begin{equation*}
 \inferrule[Sched-Msg]
 { \mathcal{M} \equiv \mathcal{D} \vdash_t^\phi \mathcal{A}', t' : x\langle \tilde u \rangle
@@ -370,6 +398,7 @@ CHAM, and tags them with the time they became ready:
 \\ \mathcal{M} \stackrel{t}{\propto} Q}
 { \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
 \end{equation*}
+\begin{comment}
 Using the collector, we can define reaction using the following rule:
 \begin{equation*}
 \inferrule[Red-React]
@@ -398,6 +427,7 @@ Prioritized pattern matching is performed using the following rule:
 In the above, $\preceq$ involves application of algorithm $\mathcal{U}$ to
 determine if the pattern on the left is more general than the pattern on the
 right.
+\end{comment}
 
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
@@ -458,23 +488,32 @@ the entire state of the interpreter.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\noindent$\boxed{\C\Rightarrow\C'}$ \\
+$\boxed{\C\Rightarrow\C'}$ \\
 $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
+$\boxed{\quiet(\M)}$\\
 \begin{equation*}
-\inferrule[Step-Machine]
+\inferrule[Quiet-Machine]
 {
-\C \equiv \M\parallel \C' \\
 \M \equiv \D \mscJ \A \\
-\lnot\migrateable(\M,\psi) \\
 \lnot\exists P' \in \A ~.~ \text{reduceable}[P'] \\
 \forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \\
                     \P(P)\in dv[\D]\Big) \\
 \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q \\
-                         t'+d\leq t \\
-                         \lnot\exists P' \subseteq\A~.~( \M \time{t'} P' \\ \P (P') \equiv \sigma_{dv}J)\Big)
+                         \lnot\exists P' \subseteq\A~.~( \M \time{t'} P' \\ t'+d\leq t \\ \P (P') \equiv \sigma_{dv}J)\Big)
 }
 {
-  \C \Rightarrow \D \mscG{t+1}{\phi} \A \parallel \C'
+  \quiet(\M)
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[Step-Machine]
+{
+\M \equiv \D \mscJ \A \\
+\quiet(\M) \\
+\lnot\exists (t:\Go<a,k>) \in \A \\
+}
+{
+  \M \Rightarrow \D \mscG{t+1}{\phi} \A
 }
 \end{equation*}\\
 \begin{equation*}
@@ -483,7 +522,7 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
   \C \equiv \M \parallel \C' \qquad \C' \Rightarrow \C'' \qquad \M \Rightarrow \M'
 }
 {
-  \C \Rightarrow \M' \parallel \C''
+  \C \Rightarrow \M'
 }
 \qquad
 \inferrule[Step-System]
@@ -497,7 +536,7 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 where $\reduceable(P)$ is true for
 \begin{multline*}
 \P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right], \\
-\ \match e \with \pi_1 \to e_1~|~..~|~\pi_n \to e_n,\  \Go<a,k> ,\ \Halt<> \}
+\ \match e \with \pi_1 \to e_1~|~..~|~\pi_n \to e_n,\ \Halt<> \}
 \end{multline*}
 \end{minipage}}
 \caption{Inference rules for the progression of time}\label{fig:rule:time-step}
@@ -509,37 +548,56 @@ $\Go<a, k>$, and they are regarded as primitives of the
 language, separate from normal atoms, though similar in syntax.
 
 
-$\boxed{\migrateable(\M,\psi)}$
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+$\boxed{\C\migrates(\phi,\psi)\C}$\\
+$\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 \begin{equation*}
-\inferrule[Mig-Prepare]
+\inferrule[Mig-Sys]
 {
-  \C\equiv\M\parallel\C' \\
-  \M\equiv\D\mscJ t:\Go<a,k>,\A \\
+  \C\migrates(a,b)\C'
 }
 {
-  \C\longrightarrow\D\mscJ (t+1):\atm k<>,\A\parallel\C' \\
-  \migrateable(\D\mscJ (t+1):\atm k<>,\A \quad ,\quad a )
+  \S_{\C}\longrightarrow \S_{\C'}
 }
 \end{equation*}
 
 \begin{equation*}
-\inferrule[Migrate]
+\inferrule[Mig-Go]
 {
-  \M\equiv\mscG{t}{\phi a} \\
-  \migrateable(\M, \psi )
+  \C\equiv\M\parallel\M_{dest} \\
+  \M\equiv\D\mscG{t}{\phi a}\A,t:\Go<b,k> \\
+  \M_{dest}\equiv\D'\mscG{t}{\psi b}\A' \\
+  \quiet(\M)
 }
 {
-  \M\longrightarrow \mscG{t}{\psi a}
+  \C\migrates(\phi a, \psi b a)\D\mscG{t}{\psi b a} \A, \atm k<> \parallel \M_{dest}
 }
 \end{equation*}
 
 \begin{equation*}
 \inferrule[Mig-Recurse]
 {
-  \M\equiv\mscG{t}{\phi a b} \\
-  \migrateable(\D\mscG{t}{\phi a}\A,\quad \psi)
+  \C \equiv \M\parallel\C_1 \\
+  \M \equiv \D\mscG{t}{\phi a} \A \\
+  \C_1\migrates(\phi, \psi)\C_1'
 }
 {
-  \migrateable(\M,\quad \psi a)
+  \C \migrates(\phi,\psi) \D\mscG{t}{\psi a}\A\parallel\C_1'
 }
 \end{equation*}
+
+\begin{equation*}
+\inferrule[Mig-DontCare]
+{
+  \C \equiv \M\parallel\C_1 \\
+  \M \equiv \D\mscG{t}{\phi} \A \\
+  \C_1\migrates(\theta, \psi)\C_1'
+}
+{
+  \C \migrates(\theta,\psi) \M\parallel\C_1'
+}
+\end{equation*}
+\end{minipage}}
+\caption{Inference rules for migration}
+\end{figure}
