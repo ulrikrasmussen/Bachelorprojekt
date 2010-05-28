@@ -425,6 +425,7 @@ as declared by the rules in Figure \ref{fig:rule:coms}.
 \inferrule[Comm-Link]
 {
    \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x<\tilde e > \parallel \D_2 \mscG{t}{b\psi} \A_2
+\\ a \neq \Omega \neq b
 \\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2, \atm (t+1) : x <\tilde e>
 \\ x \in dv(\D_2)
 \\ a\linkUp{t} b
@@ -536,23 +537,14 @@ language, separate from normal atoms, though similar in syntax.
 \doms{$S_{c} \longrightarrow S_{c'}$}
 \doms{$\halted(\M)$}
 \begin{equation*}
-\inferrule[Mig-Sys]
-{
-  \C\migrates(a,b)\C'
-}
-{
-  \S_{\C}\longrightarrow \S_{\C'}
-}
-\end{equation*}
-
-\begin{equation*}
 \inferrule[Mig-Go]
 {
   \C\equiv\M\parallel\M_{dest} \\
   \M\equiv\D\mscG{t}{\phi a}\A,t:\Go<b,k> \\
   \M_{dest}\equiv\D'\mscG{t}{\psi b}\A' \\
   \quiet(\M) \\
-  \psi \neq \phi a \beta
+  \psi \neq \phi a \beta \\
+  \lnot \halted(\M_{dest})
 }
 {
   \C\migrates(\phi a, \psi b a)\D\mscG{t}{\psi b a} \A, \atm k<> \parallel \M_{dest}
@@ -580,6 +572,14 @@ language, separate from normal atoms, though similar in syntax.
 }
 {
   \C \migrates(\theta,\psi) \M\parallel\C_1'
+}
+\qquad
+\inferrule[Mig-Sys]
+{
+  \C\migrates(a,b)\C'
+}
+{
+  \S_{\C}\longrightarrow \S_{\C'}
 }
 \end{equation*}
 
