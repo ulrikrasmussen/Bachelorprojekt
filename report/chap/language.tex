@@ -238,18 +238,17 @@ I\quad ::={}&              && \textbf{*instructions} \\
 \subsection{Semantics}
 
 We model the state of our system as a series of CHAMs composed in parallel. A
-single CHAM is a four tuple $\mathcal{M} = (\mathcal{D}, \mathcal{A}, \phi, t)$
-denoted by
+single CHAM is a four tuple $\M = (\D, \A, \phi, t)$ denoted by
 \begin{equation*}
- \boxed{\mathcal{M} = \mathcal{D} \vdash^\phi_t \mathcal{A}}
+ \boxed{\M = \D \mscJ \A}
 \end{equation*}
-where $\mathcal{D}$ is a set of active definitions, $\mathcal{A}$ is a multiset
-of running processes, $\phi$ is an ordered sequence of location names, and $t$ is
+where $\D$ is a set of active definitions, $\A$ is a multiset
+of present atoms, $\phi$ is an ordered sequence of location names, and $t$ is
 a natural number denoting the current time. Multiple CHAMs are composed in
 parallel using the operator $\parallel$. We denote one or more CHAMs composed
 in parallel by
 \begin{equation*}
- \boxed{\mathcal{C} = \mathcal{M} \Big\slash \mathcal{C}'~||~\mathcal{C}''}
+ \boxed{\C = \M \Big\slash \C'\parallel\C''}
 \end{equation*}
 
 We also need a way to denote that a set of machines running in parallel are
@@ -264,43 +263,43 @@ We begin by defining a structural equivalence between machines and parallel
 compositions:
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\mathcal{C} \equiv \mathcal{C}'$}
+\doms{$\C \equiv \C'$}
 \begin{align*}
  \textsc{Eq-Sym}&&
  \inferrule
  {
-    \mathcal{C} \equiv \mathcal{C}'
+    \C \equiv \C'
  }
  {
-    \mathcal{C}' \equiv \mathcal{C}
+    \C' \equiv \C
  }\\
  \textsc{Eq-Trans}&&
  \inferrule
  {
-    \mathcal{C} \equiv \mathcal{C'} \\ \mathcal{C'} \equiv \mathcal{C}''
+    \C \equiv \C' \\ \C' \equiv \C''
  }
  {
-    \mathcal{C} \equiv \mathcal{C''}
+    \C \equiv \C''
  }\\
  \textsc{Str-Assoc}&&
- (\mathcal{C} ~||~ \mathcal{C}) ~||~ \mathcal{C}''
-    \equiv{}& \mathcal{C} ~||~ (\mathcal{C} ~||~ \mathcal{C}'')\\
+ (\C ~||~ \C) ~||~ \C''
+    \equiv{}& \C ~||~ (\C ~||~ \C'')\\
  \textsc{Str-Com}&&
- \mathcal{C}~||~\mathcal{C}' \equiv{}& \mathcal{C}'~||~\mathcal{C}\\
+ \C~||~\C' \equiv{}& \C'~||~\C\\
  \textsc{Str-Ref}&&
- \mathcal{C} \equiv{}& \mathcal{C}\\
+ \C \equiv{}& \C\\
  \textsc{Str-Def}&&
- \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (t' : \mathbf{def}~D~\mathbf{in}~P)
-    \equiv{}& \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (\mathbf{def}~D~\mathbf{in}~t':P) \\
+ \D \vdash_{t}^\phi \A, (t' : \defJ D\inJ P)
+    \equiv{}& \D \mscJ \A, (\defJ D \inJ t':P) \\
  \textsc{Str-Time}&&
- \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (t' : (t'' : P))
-    \equiv{}& \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (t'+t'') : P \\
+ \D \vdash_{t}^\phi \A, (t' : (t'' : P))
+    \equiv{}& \D \mscJ \A, (t'+t'') : P \\
  \textsc{Str-Par}&&
- \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (t' : (P_1 ~\&~ P_2))
-    \equiv{}& \mathcal{D} \vdash_{t}^\phi \mathcal{A}, (t':P_1), (t':P_2) \\
+ \D \mscJ \A, (t' : (P_1 ~\&~ P_2))
+    \equiv{}& \D \mscJ \A, (t':P_1), (t':P_2) \\
  \textsc{Str-Or}&&
- \mathcal{D}, D_1~\mathbf{or}~D_2 \vdash_{t''}^\phi \mathcal{A}
-    \equiv{}& \mathcal{D}, D_1, D_2 \vdash_{t''}^\phi \mathcal{A} \\
+ \D, D_1~\mathbf{or}~D_2 \mscJ \A
+    \equiv{}& \D, D_1, D_2 \mscJ \A \\
 \end{align*}
 \end{minipage}}
 \end{figure}
