@@ -305,6 +305,57 @@ compositions:
 \end{minipage}}
 \end{figure}
 
+A process with its time tags removed is denoted by $P_{\star}$, defined by
+\begin{align*}
+  (t : x\langle \tilde u \rangle)_\star ={}& x\langle \tilde u \rangle \\
+  (t : P)_\star ={}& P_\star \\
+  (t : P_1~\&~P_2)_\star ={}& P_{1\star} ~\&~ P_{2\star}
+\end{align*}
+
+We say that a join pattern $J$ \emph{matches} a process $P$ when there exists a
+$\sigma$ such that $\sigma J = P_\star$, where $\sigma$ is a function that
+replaces variable names with closed expressions. We denote this with
+$\mathcal{P}_J(J,P) = \sigma$. When a pattern $\pi$ matches a value $v$, we
+denote it with $\mathcal{P}_\pi(\pi,v) = \sigma$. The rules for these two
+judgement forms are given in the following table:
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\mathcal{P}_J(J,P) = \sigma$} \doms{$\mathcal{P}_\pi(\pi, v) = \sigma$}
+\begin{equation*}
+\inferrule[Pat-Var]
+{\pi = x}
+{\mathcal{P}_\pi(\pi,v) = (x \mapsto v)}
+\end{equation*}
+\begin{equation*}
+\inferrule[Pat-Cons]
+{\pi = \kappa(\pi_1, \pi_2, ..., \pi_n)
+\\ v = \kappa(v_1, v_2, ..., v_n)
+\\ (\forall i\leq n.~\mathcal{P}_\pi(\pi_i,v_i) = \sigma_i)}
+{
+ \mathcal{P}_\pi(\pi,v) = \bigcup_{i\leq n} \mathcal{P}_\pi(\pi_i, v_i)
+}
+\end{equation*}
+\begin{equation*}
+\inferrule[Pat-Msg]
+{P = x\langle v_1, v_2, ..., v_n \rangle
+ \\ J = x\langle \pi_1, \pi_2, ..., \pi_n \rangle
+ \\ (\forall i\leq n.~\mathcal{P}_\pi(\pi_i, v_i) = \sigma_i)}
+{
+ P_J(J,P) = \bigcup_{i\leq n} P_\pi(\pi_i, v_i)
+}
+\end{equation*}
+\begin{equation*}
+\inferrule[Pat-Par]
+{J = J_1 ~\&~ J_2
+\\ P = P_1 ~\&~ P_2
+\\ \mathcal{P}_J(J_1,P_1) = \sigma_1
+\\ \mathcal{P}_J(J_2,P_2) = \sigma_2
+}
+{\mathcal{P}_J(J,P) = \sigma_1 \cup \sigma_2}
+\end{equation*}
+\end{minipage}}
+\end{figure}
+
 When a machine, a parallel composition of machines, or a synchronised system of
 machines can make an evaluation step, we denote it with
 \begin{equation*}
