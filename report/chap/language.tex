@@ -463,7 +463,6 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
 \begin{equation*}
 \inferrule[Step-Machine]
 {
-\C \equiv \M\parallel \C' \\
 \M \equiv \D \mscJ \A \\
 \lnot\migrateable(\M,\psi) \\
 \lnot\exists P' \in \A ~.~ \text{reduceable}[P'] \\
@@ -474,7 +473,7 @@ $\boxed{S_{c} \longrightarrow S_{c'}}$ \\
                          \lnot\exists P' \subseteq\A~.~( \M \time{t'} P' \\ \P (P') \equiv \sigma_{dv}J)\Big)
 }
 {
-  \C \Rightarrow \D \mscG{t+1}{\phi} \A \parallel \C'
+  \M \Rightarrow \D \mscG{t+1}{\phi} \A
 }
 \end{equation*}\\
 \begin{equation*}
