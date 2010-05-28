@@ -252,15 +252,20 @@ in parallel by
  \boxed{\mathcal{C} = \mathcal{M} \Big\slash \mathcal{C}'~||~\mathcal{C}''}
 \end{equation*}
 
-We begin by defining a structural equivalence between machines and parallel
-compositions, denoted by
+We also need a way to denote that a set of machines running in parallel are
+synchronised on a global clock. We denote such a system with $\S_\C$, which
+means that the parallel system $\C$ is synchronised. We denote synchronised and
+unsynchronised systems with
 \begin{equation*}
- \boxed{\mathcal{C} \equiv \mathcal{C}'}
+ \boxed{\mathcal{X} = \S_\C \Big\slash \C}
 \end{equation*}
 
-The following defines the rules for equivalence:
+We begin by defining a structural equivalence between machines and parallel
+compositions:
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\mathcal{C} \equiv \mathcal{C}'$}
 \begin{align*}
- \boxed{\mathcal{C} \equiv \mathcal{C}'}\\
  \textsc{Eq-Sym}&&
  \inferrule
  {
@@ -297,6 +302,8 @@ The following defines the rules for equivalence:
  \mathcal{D}, D_1~\mathbf{or}~D_2 \vdash_{t''}^\phi \mathcal{A}
     \equiv{}& \mathcal{D}, D_1, D_2 \vdash_{t''}^\phi \mathcal{A} \\
 \end{align*}
+\end{minipage}}
+\end{figure}
 
 When a machine, a parallel composition of machines, or a synchronised system of
 machines can make an evaluation step, we denote it with
@@ -417,7 +424,9 @@ For example, $a \linkUp{t} b$ means that locations $a$ and $b$ can
 communicate at time $t$. The relation is reflexive, because internal
 communication of a machine is assumed to be reliable. Using this, we can
 specify how the system behaves when the connection between two units disappear,
-as declared by the rules in Figure \ref{fig:rule:coms}.
+as declared by the rules in Figure \ref{fig:rule:coms}. Note that the rules
+also state that communication can only take place when the time of the two
+communicating machines are synchronised.
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$a\linkUp{t}b$}
@@ -445,12 +454,6 @@ as declared by the rules in Figure \ref{fig:rule:coms}.
 \caption{Inference rules for communication between machines.}\label{fig:rule:coms}
 \end{figure}
 
-Note that the above rules also states that communication can only take place
-when the time of the two communicating machines are synchronised.\fixme{But,
-isn't this the always the case in this semantics :o} \fixme{We still need to
-specify that communication can't take place when one of the locations are
-failed.}
-
 In our system, time can only progress when no CHAM can take another step,
 effectively synchronising all machines on a global clock. In a real setting,
 this is of course not feasible, but it makes it easier to reason about
@@ -473,16 +476,18 @@ the entire state of the interpreter.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C\Rightarrow\C'$} \doms{$S_{c} \longrightarrow S_{c'}$} \doms{$\quiet(\M)$}
+\doms{$\C\Rightarrow\C'$} \doms{$\mathcal{X} \longrightarrow \mathcal{X}'$} \doms{$\quiet(\M)$}
 \begin{equation*}
 \inferrule[Quiet-Machine]
 {
 \M \equiv \D \mscJ \A \\
 \lnot\exists P' \in \A ~.~ \text{reduceable}[P'] \\
 \forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \\
-                    \P(P)\in dv[\D]\Big) \\
-\forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q \\
-                         \lnot\exists P' \subseteq\A~.~( \M \timeJ{t'} P' \\ t'+d\leq t \\ \P (P') \equiv \sigma_{dv}J)\Big)
+                    \P(P)\in dv[\D]\Big)
+\\ \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q
+                         \land \lnot\exists P' \subseteq\A~.~( \M \timeJ{t'} P'
+                         \land t'+d\leq t
+                         \land \P (P') \equiv \sigma_{dv}J)\Big)
 }
 {
   \quiet(\M)
