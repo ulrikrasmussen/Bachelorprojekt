@@ -1,3 +1,4 @@
+% vim:spell:spelllang=en_gb:
 \def\A{\mathcal{A}}
 \def\C{\mathcal{C}}
 \def\M{\mathcal{M}}
@@ -35,10 +36,59 @@ language for real-world applications.
 At last we will document the final syntax and semantics of the Join
 language language.
 
+\section{The core calculus}
+\fixme{move some of the stuff from the introduction here, since an introduction
+should rather introduce the project and more abstract concepts than the
+programming language, in my opinion.. RFC..}
 
 \section{Pattern matching}
+In the core calculus it is only possible to construct join patterns, that match
+atom names, fully disregarding the data contents of the atoms. Thus, if one wishes
+to have different reactions to take place for different types of content, one
+has to use different atom names to signify this.
+
+Consider for example these two similar implementations of a stack, drawn from \ref{MaMa2008AlgPat} :
+\begin{verbatim}
+def
+     some<x> & push<y>  |> some<y:x>
+  or empty<> & push<y>  |> some<y>
+  or some<x> & pop<k>   |> match x with
+                             x':[] -> k<x> & empty<>
+                           | x':xs -> k<x> & some<xs>
+  in empty<> & \ldots
+
+def
+    stack<x> & push<y>   |> stack<y:x>
+    stack<x:xs> & pop<k> |> stack<xs> & k<x>
+ in stack<[]> & \ldots
+\end{verbatim}
+
+Even superficial inspection reveals the latter to be preferable, as it is both
+more compact, more readable and more intuitive to someone who has tried
+programming with pattern matching like that of ML or Haskell.
+
+Also, it simply seems as a natural extension of the core join calculus.
+
+Because of this we have decided to include pattern matching on join patterns in our system.
+The precise semantics of pattern matching can be found in Figure \ref{fig:rule:pat}.
 
 \section{Distribution and mobility}
+The model of distribution is based on the concept of \emph{locations}, which
+are named collections of definitions and atoms, thus comprising separate
+join-calculus machines. Besides this, locations are characterised by being able
+to migrate from site to site by producing a special atom, $\Go<a,k>$, where $a$
+is the name of the destination location and $\atm k <>$ is a continuation to be
+triggered upon successful migration. Furthermore they are able to become inert
+by producing the special atom, $\Halt<>$, in their context.
+
+As a consequence, locations form a hierarchy or tree, that changes throughout
+the execution of a join program as locations migrate and halt.
+When a location decides to migrate or halt, the decision has consequences for
+the entire branch of the location hierarchy, of which the migrating or halting
+location is the root. Therefore, when a location migrates, the entire set of
+sublocations also migrates, and halting similarly halts every sublocation.
+
+\fixme{introduce the syntax of locations}
 
 \section{Timing}
 
@@ -353,6 +403,7 @@ judgement forms are given in the following table:
 {\mathcal{P}_J(J,P) = \sigma_1 \cup \sigma_2}
 \end{equation*}
 \end{minipage}}
+\caption{Inference rules for pattern matching.} \label{fig:rule:pat}
 \end{figure}
 
 When a machine, a parallel composition of machines, or a synchronised system of
@@ -580,7 +631,7 @@ where $\reduceable(P)$ is true for
 \caption{Inference rules for the progression of time}\label{fig:rule:time-step}
 \end{figure}
 
-\subsection*{Mobility}
+\subsubsection*{Mobility}
 Special meaning is attributed to the messages $\Halt<>$ and
 $\Go<a, k>$, and they are regarded as primitives of the
 language, separate from normal atoms, though similar in syntax.
