@@ -301,16 +301,31 @@ in parallel by
  \boxed{\C = \M \Big\slash \C'\parallel\C''}
 \end{equation*}
 
-We also need a way to denote that a set of machines running in parallel are
-synchronised on a global clock. We denote such a system with $\S_\C$, which
-means that the parallel system $\C$ is synchronised. We denote synchronised and
-unsynchronised systems with
+Communication and computation can occur in subsets of the system, without
+affecting or knowing the state of the rest of it, which is stated explicitly in
+figure \ref{fig:rule:aux}. Some steps, specifically the advancement of time and
+process migration, can only occur in a global context where the state of every
+machine can be inspected. We denote such a system with $\S_\C$, which means
+that the parallel system $\C$ is synchronised, and that process migration and
+advancement of time can only happen if every machine in $\C$ is involved. We
+denote synchronised and unsynchronised systems with
 \begin{equation*}
  \boxed{\mathcal{X} = \S_\C \Big\slash \C}
 \end{equation*}
 
-We begin by defining a structural equivalence between machines and parallel
-compositions:
+Every semantic rule that requires the presence of an $\S_\C$ construct will be
+problematic to implement in a real-world distributed setting, since it is never
+possible to know the exact state of every machine in an instant.
+\fixme{Discuss why it is ok to implement an obviously unrealistic system, and
+how global rules can be removed by throwing away global time synchronisation
+and having a better model of process migration.}
+
+Since the order processes and machines are composed doesn't matter, two
+machines with the same processes in different order will behave in exactly the
+same way. Time tags also satisfy some properties like distributivity over
+composed processes. All reduction rules are therefore defined up to equivalence
+of processes, with the equivalence relation defined in figure \ref{fig:equiv}.
+
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\C \equiv \C'$}
@@ -352,6 +367,7 @@ compositions:
     \equiv{}& \D, D_1, D_2 \mscJ \A \\
 \end{align*}
 \end{minipage}}
+\caption{Equivalence relation for processes.\label{fig:equiv}}
 \end{figure}
 
 A process with its time tags removed is denoted by $P_{\star}$, defined by
@@ -363,10 +379,19 @@ A process with its time tags removed is denoted by $P_{\star}$, defined by
 
 We say that a join pattern $J$ \emph{matches} a process $P$ when there exists a
 $\sigma$ such that $\sigma J = P_\star$, where $\sigma$ is a function that
-replaces variable names with closed expressions. We denote this with
-$\mathcal{P}_J(J,P) = \sigma$. When a pattern $\pi$ matches a value $v$, we
-denote it with $\mathcal{P}_\pi(\pi,v) = \sigma$. The rules for these two
-judgement forms are given in the following table:
+replaces variable names with closed expressions. If such a $\sigma$ exists, we
+denote it with
+\begin{equation*}
+  \boxed{\mathcal{P}_J(J,Q) = \sigma}\footnote{Where $Q$ is a process with no
+  time tags. If we need to determine whether $J$ matches a process $P$, then $Q
+  = P_\star$.}
+\end{equation*}
+The same goes for expressions: When a pattern $\pi$ matches a value $v$, we denote it with
+\begin{equation*}
+  \boxed{\mathcal{P}_\pi(\pi,v) = \sigma}
+\end{equation*}
+The rules for these two judgement forms are given in figure \ref{fig:rule:pat}.
+
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\mathcal{P}_J(J,P) = \sigma$} \doms{$\mathcal{P}_\pi(\pi, v) = \sigma$}
@@ -414,7 +439,7 @@ machines can make an evaluation step, we denote it with
 
 Independent processes in a single machine can take evaluation steps
 independently of each other, as well as independent machines can take local
-steps without affecting each other.  we model this explicitly using the
+steps without affecting each other. We model this explicitly using the
 auxilary rules in Figure \ref{fig:rule:aux}.
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -440,13 +465,16 @@ auxilary rules in Figure \ref{fig:rule:aux}.
 \end{figure}
 
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
-version provides less guarantees about the order in which messages on the same
-port is processed, and each CHAM is explicitly tagged with a natural number
-that denotes the current time.
+version provides less guarantees about the order in which messages with the
+same name is processed, and each CHAM is explicitly tagged with a natural
+number that denotes the current time.
 
-We begin by inductively defining a ternary relation $\cdot
-\stackrel{\cdot}{\propto} \cdot$, which collects all the ready molecules in a
-CHAM, and tags them with the time they became ready in Figure \ref{fig:rule:sched}.
+We begin by inductively defining a ternary relation $\propto$, which collects
+all the ready molecules in a CHAM, and tags them with the time they became
+ready. This relation effectively acts as a scheduler, that states that every
+composition of processed can only participate in a reaction when the message
+with the largest delay becomes ready. The rules for this relation is defined in
+figure \ref{fig:rule:sched}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -464,18 +492,21 @@ CHAM, and tags them with the time they became ready in Figure \ref{fig:rule:sche
 { \mathcal{M} \stackrel{max(t,t')}{\propto} P~\&~Q }
 \end{equation*}
 \end{minipage}}
-\caption{Inference rules relating machines, times and atoms, essentially extracting the delay part of the atoms.}
+\caption{Inference rules relating machines, times and atoms, essentially
+extracting the delay part of the atoms.}
 \label{fig:rule:sched}
 \end{figure}
 
 In the original join-calculus semantics, a two-way reduction relation called a
-``heating/cooling relation'' is defined for doing scope extrusion and forking
-off new locations. We only provide one-way reduction rules for this, namely \textsc{Red-Def} in Figure \ref{fig:rule:red}.
+``heating/cooling relation'' is defined for doing scope extrusion and new
+independent locations. We only provide one-way reduction rules for this, namely
+\textsc{Red-Def} and \textsc{Red-Loc}, defined in figure \ref{fig:rule:red}.
+
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\C\longrightarrow\C'$}
 \begin{equation*}
-\inferrule[Red-Def]
+\inferrule[Red-Def\footnote{Where $\sigma_{dv}$ substitutes fresh names for $dv(D)$.}]
 {
 \M \equiv~\vdash_t^\phi \mathbf{def}~D~\mathbf{in}~P
 \\ \M' \equiv \sigma_{dv}D \vdash_t^\phi \sigma_{dv}P
@@ -502,18 +533,32 @@ off new locations. We only provide one-way reduction rules for this, namely \tex
 \hva\\ \M' \equiv J \toJ{d} Q \mscJ t : \sigma_{rv}Q
 \\ \M \timeJ{t'} P
 \\ t'+d = t
-\\ \P(P) = \sigma_{rv}J
+\\ \P_J(J,P_\star) = \sigma_{rv}
 }
 { \M \longrightarrow \M' }
 \end{equation*}
 \begin{align*}
 \inferrule[Red-Match]
-{\M \equiv~\vdash_t^\phi \textbf{match}~P~\textbf{with}~\pi_1
-   \rightarrow Q_1 ~|~...~|~\pi_m \rightarrow Q_m
+{\M \equiv~\vdash_t^\phi \textbf{match}~e~\textbf{with}~\pi_1
+   \rightarrow Q_1 ~|~...
  \\ \M' \equiv~\vdash_t^\phi \sigma_{rv}Q_i
- \\ \mathcal{P}(P) = \sigma_{rv}\pi_i
- \\ \forall j < i.~\pi_j \not\preceq \sigma_{rv} \pi_i}
+ \\ \P_\pi(\pi_1, e) = \sigma_{rv}
+}
 {\M \longrightarrow \M'}
+\end{align*}
+\begin{align*}
+\inferrule[Red-Nomatch]
+{\M \equiv~\vdash_t^\phi \textbf{match}~e~\textbf{with}~\pi_1 \rightarrow Q_1 ~|~ \pi_2 \rightarrow Q_2 ~|~ ... ~|~ \pi_m \rightarrow Q_m
+\\ \M' \equiv~\vdash_t^\phi \textbf{match}~e~\textbf{with}~\pi_2 \rightarrow Q_2 ~|~ ... ~|~ \pi_m \rightarrow Q_m
+\\ \P_\pi(\pi_1,e) = fail}
+{\M \longrightarrow \M'}
+\end{align*}
+\begin{align*}
+\inferrule[Red-Match-Empty]
+{\M \equiv~\vdash_t^\phi \textbf{match}~e~\textbf{with}~\emptyset}
+{
+\M \longrightarrow \vdash_t^\phi halt\langle\rangle
+}
 \end{align*}
 \end{minipage}}
 \caption{Reduction rules}\label{fig:rule:red}
@@ -521,21 +566,26 @@ off new locations. We only provide one-way reduction rules for this, namely \tex
 
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
-For example, $a \linkUp{t} b$ means that locations $a$ and $b$ can
-communicate at time $t$. The relation is reflexive, because internal
-communication of a machine is assumed to be reliable. Using this, we can
-specify how the system behaves when the connection between two units disappear,
-as declared by the rules in Figure \ref{fig:rule:coms}. Note that the rules
-also state that communication can only take place when the time of the two
-communicating machines are synchronised.
+For example, when locations $a$ and $b$ can
+communicate at time $t$, we denote it by
+\begin{equation*}
+ \boxed{a \linkUp{t} b}
+\end{equation*}
+The relation is reflexive, because internal communication of a machine is
+assumed to be reliable. Using this, we can specify how the system behaves when
+the connection between two units disappear, as declared by the rules in figure
+\ref{fig:rule:coms}. Note that the rules also state that communication can only
+take place when the time of the two communicating machines are synchronised. In
+a real world implementation, we would have to drop this requirement.
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$a\linkUp{t}b$}
+\doms{$\mathcal{C} \longrightarrow \mathcal{C}'$}
 \begin{equation*}
 \inferrule[Comm-Link]
 {
    \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x<\tilde e > \parallel \D_2 \mscG{t}{b\psi} \A_2
-\\ a \neq \Omega \neq b
+\\ a \neq \Omega
+\\ b \neq \Omega
 \\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2, \atm (t+1) : x <\tilde e>
 \\ x \in dv(\D_2)
 \\ a\linkUp{t} b
@@ -560,19 +610,19 @@ effectively synchronising all machines on a global clock. In a real setting,
 this is of course not feasible, but it makes it easier to reason about
 communicating devices in a simulated setting.
 
-We model this by a binary relation, that serves as a marking of machines and
-groups of machines as having reached a fixed point, in which time instant no
-further reduction or communication may happen:
+When a group of machines $\C$ can no longer make any further computations, they
+will be ready to increment their time synchronously, and become the group
+$\C'$. We denote this by
 
-\[\boxed{\C\Rightarrow\C}\]
+\[\boxed{\C \Rightarrow \C'}\]
 
 To be able to detect when a machine can't do any computations, we need to
-ensure, that no reductions can be applied to a machine, and that all external
+ensure that no reductions can be applied to the machine, and that all external
 communication has been carried out. This is ensured by the
-\textsc{Step-Machine} rule below.
+\textsc{Step-Machine} rule in figure \ref{fig:rule:time-step}.
 
 When all machines have fulfilled the $\Rightarrow$ relation, the time of each machine is
-incremented in one global step, as $\S_c$ is reduced to $\S_{c'}$, with $\S$ representing
+incremented in one global step, as $\S_\C$ is reduced to $\S_{\C'}$, with $\S$ representing
 the entire state of the interpreter.
 
 \begin{figure}[!h]
@@ -582,9 +632,8 @@ the entire state of the interpreter.
 \inferrule[Quiet-Machine]
 {
 \M \equiv \D \mscJ \A \\
-\lnot\exists P' \in \A ~.~ \text{reduceable}[P'] \\
-\forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \\
-                    \P(P)\in dv[\D]\Big)
+\forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \land
+                    a\in dv[\D]\Big)
 \\ \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q
                          \land \lnot\exists P' \subseteq\A~.~( \M \timeJ{t'} P'
                          \land t'+d\leq t
@@ -614,19 +663,22 @@ the entire state of the interpreter.
   \C \Rightarrow \M'
 }
 \qquad
-\inferrule[Step-System]
+\inferrule[Step-Time]
 {
   \C \Rightarrow \C'
 }
 {
-  \S_c \rightarrow \S_{c'}
+  \S_\C \longrightarrow \S_{\C'}
+}
+\qquad
+\inferrule[Step-System]
+{
+  \C \longrightarrow \C'
+}
+{
+  \S_\C \longrightarrow \S_{\C'}
 }
 \end{equation*}
-where $\reduceable(P)$ is true for
-\begin{multline*}
-\P(P)\in \{ \defJ D \inJ Q, \ a\left[ D \inJ Q\right], \\
-\ \match e \with \pi_1 \to e_1~|~..~|~\pi_n \to e_n,\ \Halt<> \}
-\end{multline*}
 \end{minipage}}
 \caption{Inference rules for the progression of time}\label{fig:rule:time-step}
 \end{figure}
@@ -635,7 +687,8 @@ where $\reduceable(P)$ is true for
 Special meaning is attributed to the messages $\Halt<>$ and
 $\Go<a, k>$, and they are regarded as primitives of the
 language, separate from normal atoms, though similar in syntax.
-
+\fixme{We need to explain all the rules and judgement forms in figure
+\ref{fig:rule:mig}. Here \emph{may} be dragons.}
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -708,5 +761,5 @@ language, separate from normal atoms, though similar in syntax.
 }
 \end{equation*}
 \end{minipage}}
-\caption{Inference rules for migration and failure.}
+\caption{Inference rules for migration and failure.\label{fig:rule:mig}}
 \end{figure}
