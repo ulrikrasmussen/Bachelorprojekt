@@ -1,29 +1,4 @@
 % vim:spell:spelllang=en_gb:
-\def\A{\mathcal{A}}
-\def\C{\mathcal{C}}
-\def\M{\mathcal{M}}
-\def\D{\mathcal{D}}
-\def\P{\mathcal{P}}
-\def\S{\mathcal{S}}
-\def\Q{\mathcal{Q}}
-\def\atm#1<#2>{#1\left\langle#2\right\rangle}
-\def\Go<#1>{\text{go}\left\langle#1\right\rangle}
-\def\Halt<>{\text{halt}\langle\rangle}
-\def\toJ#1{\stackrel{#1}{\triangleright}}
-\def\inJ{~\mathbf{in}~}
-\def\join#1in#2#3{#1\toJ{#2}#3}
-\def\mscG#1#2{\vdash^{#1}_{#2}}
-\def\mscJ{\mscG{t}{\phi}}
-\def\timeJ#1{\stackrel{#1}{\propto}}
-\def\defJ{~\mathbf{def}~}
-\def\match{~\mathbf{match}~}
-\def\with{~\mathbf{with}~}
-\def\linkUp#1{\stackrel{#1}{\diamond}}
-\def\migrates(#1,#2){\xLongrightarrow{#1\mapsto#2}}
-\def\reduceable(#1){\text{reduceable}\left(#1\right)}
-\def\quiet(#1){\text{quiet}\left(#1\right)}
-\def\halted(#1){\text{halted}\left(#1\right)}
-\def\doms#1{\fbox{\rule[-0.75em]{0pt}{2em}#1}}
 
 In this chapter we will document our prototype language, Join.  The
 language is very similar to the original core join-calculus in many
@@ -47,21 +22,23 @@ atom names, fully disregarding the data contents of the atoms. Thus, if one wish
 to have different reactions to take place for different types of content, one
 has to use different atom names to signify this.
 
-Consider for example these two similar implementations of a stack, drawn from \ref{MaMa2008AlgPat} :
-\begin{verbatim}
-def
-     some<x> & push<y>  |> some<y:x>
-  or empty<> & push<y>  |> some<y>
-  or some<x> & pop<k>   |> match x with
-                             x':[] -> k<x> & empty<>
-                           | x':xs -> k<x> & some<xs>
-  in empty<> & \ldots
-
-def
-    stack<x> & push<y>   |> stack<y:x>
-    stack<x:xs> & pop<k> |> stack<xs> & k<x>
- in stack<[]> & \ldots
-\end{verbatim}
+Consider for example these two similar implementations of a stack, drawn from \cite{MaMa2008AlgPat} :
+\begin{displaymath}
+\begin{array}{rcll}
+\defJ
+\\ & &  \atm some<x> \andJ \atm push<y>&\toJ0 \atm some<y:x>
+\\ &\orJ&\atm empty<> \andJ \atm push<y> &\toJ0 \atm some<y>
+\\ &\orJ&\atm some<x> \andJ \atm pop<k> &\toJ0  \match x \with
+\\ &&& \qquad         x':[] \to \atm k<x> \andJ \atm empty<>
+\\ &&& \qquad    | x':xs \to \atm k<x> \andJ \atm some<xs>
+\\&\inJ& \atm empty<> \andJ \ldots
+\\
+\\\defJ &&&
+\\ & &   \atm stack<x> \andJ \atm push<y> &\toJ0 \atm stack<y:x>
+\\&\orJ&  \atm stack<x:xs> \andJ \atm pop<k>& \toJ0 \atm stack<xs> \andJ \atm k<x>
+\\&\inJ& \atm stack<[]> \andJ \ldots
+ \end{array}
+\end{displaymath}
 
 Even superficial inspection reveals the latter to be preferable, as it is both
 more compact, more readable and more intuitive to someone who has tried
@@ -82,13 +59,11 @@ triggered upon successful migration. Furthermore they are able to become inert
 by producing the special atom, $\Halt<>$, in their context.
 
 As a consequence, locations form a hierarchy or tree, that changes throughout
-the execution of a join program as locations migrate and halt.
+the execution of the join program as locations migrate and halt.
 When a location decides to migrate or halt, the decision has consequences for
-the entire branch of the location hierarchy, of which the migrating or halting
+the entire branch of the location tree, of which the migrating or halting
 location is the root. Therefore, when a location migrates, the entire set of
 sublocations also migrates, and halting similarly halts every sublocation.
-
-\fixme{introduce the syntax of locations}
 
 \section{Timing}
 
@@ -226,7 +201,6 @@ and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' is syntactic
 sugar, and has equivalent encodings in the core Join language.
 
 \begin{figure}
-\newcommand{\alt}{\mid\kern-1pt\mid}
 \begin{align*}
 P,Q\quad::={}&             && \textbf{processes} \\
           & 0              && \quad\textrm{inert process} \\

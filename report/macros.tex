@@ -6,3 +6,32 @@
 
 \newcommand{\jdef}[2]{\ensuremath{\textrm{\textbf{def}}~{#1}~\textrm{\textbf{in}}~{#2}}}
 \def\Def#1in#2.{\ensuremath{\textrm{\textbf{def}}~{#1}~\textrm{\textbf{in}}~{#2}}}
+
+\def\A{\mathcal{A}}
+\def\C{\mathcal{C}}
+\def\M{\mathcal{M}}
+\def\D{\mathcal{D}}
+\def\P{\mathcal{P}}
+\def\S{\mathcal{S}}
+\def\Q{\mathcal{Q}}
+\def\atm#1<#2>{#1\left\langle#2\right\rangle}
+\def\Go<#1>{\text{go}\left\langle#1\right\rangle}
+\def\Halt<>{\text{halt}\langle\rangle}
+\def\toJ#1{\stackrel{#1}{\triangleright}}
+\def\inJ{~\mathbf{in}~}
+\def\orJ{~\mathbf{or}~}
+\def\join#1in#2#3{#1\toJ{#2}#3}
+\def\mscG#1#2{\vdash^{#1}_{#2}}
+\def\mscJ{\mscG{t}{\phi}}
+\def\timeJ#1{\stackrel{#1}{\propto}}
+\def\defJ{~\mathbf{def}~}
+\def\match{~\mathbf{match}~}
+\def\with{~\mathbf{with}~}
+\def\linkUp#1{\stackrel{#1}{\diamond}}
+\def\migrates(#1,#2){\xLongrightarrow{#1\mapsto#2}}
+\def\reduceable(#1){\text{reduceable}\left(#1\right)}
+\def\quiet(#1){\text{quiet}\left(#1\right)}
+\def\halted(#1){\text{halted}\left(#1\right)}
+\def\doms#1{\fbox{\rule[-0.75em]{0pt}{2em}#1}}
+\def\andJ{~\&~}
+\newcommand{\alt}{\mid\kern-1pt\mid}

@@ -1,8 +1,6 @@
 \fixme{maybe make section -> subsection etc. }
-We present here some use cases for a language based on the
-distributed join calculus.
-
-Since we don't have a mature, compiled language, we will not focus
+We here present a use case programmed in our version of the join calculus.
+However, since we don't have a mature, compiled language, we will not focus
 too much on memory and processor constraints, since the resource
 usage depends a lot on the implementation. We may assume, however,
 that the number of active messages and join patterns on each device
@@ -10,7 +8,6 @@ is in some way proportional to the actual usage of memory
 resources, and that the number of reduction steps required to
 arrive at a result is proportional to the usage of computational
 resources.
-
 
 \section{Distributed queries in sensor networks}
 
@@ -34,35 +31,22 @@ implementing distributed queries was dealing with the asynchronicity
 of events, which we hope will be easy to express in a join-calculus
 based language.
 
-
 \subsection{Example scenario}
 
 The example is heavily inspired by \cite{bonnet2001towards}, and
 evolves around a factory warehouse setting where each item has a
 stick-on sensor that measures the temperature. There are also
-sensors on the walls and ceilings. All sensors has a unique id. By
-querying the central processing node, it is possible to retrieve
-some measure of the position of a given sensor id (determined by
-triangulation or proximity to known reference points).
+sensors on the walls and ceilings. All sensors have a unique id available to them.
 
-We will try to implement some of the same queries mentioned in the
-article:
+Due to the lack of data structure implementations and the general ineffeciency
+of the implementation we only consider a scenario with one collecting node and
+two sensors that run a predefined program.
 
-\begin{itemize}
-\item
-  From all the sensors, continuously return all temperatures over a
-  given threshold.
+This program simply measures the local temperature and reports it every $n$'th
+time instant.  However, if the sensor registers a temperature above a given
+threshold it will report it immediately.
 
-\item
-  From all sensors on a given floor, continously return the average
-  temperature measured over the last minute.
-
-\item
-  When two sensors in close proximity to each other in a given time
-  window measure a temperature above a given threshold, generate an
-  event.
-\end{itemize}
-
+\fixme{If time permits we will make an attempt at implementing the distributed queries.}
 
 \subsection{Assumptions about the underlying system}
 
@@ -70,12 +54,8 @@ We will assume a network topology with a central processing node
 which is connected to the sensors in a star pattern, using
 unreliable communication channels (i.e. some sort of radio protocol).
 We do not assume that the runtime system ensures delivery of messages,
-but we do assume that any message that \emph{does} get delivered are
+but we do assume that any messages that \emph{do} get delivered are
 ensured not to be corrupted in any way.
-
-We will start out by assuming a static network, where nodes doesn't
-move around. A central node will always be present in the system, and
-it will be from this node that all queries are initiated.
 
 It is also assumed that there is a built in name-exchange facility,
 such that the network can be bootstrapped. In our scenario, this is a
@@ -85,11 +65,12 @@ call to one of these messages always succeeds. In a real-world
 scenario, bootstrapping an ad-hoc network may be more involved, since
 we cannot rely on a global, centralized non-failing database.
 
-
 \subsection{Implementation}
 
-\subsubsection{Communication protocols and code conventions}
 
+
+\begin{comment}
+\subsubsection{Communication protocols and code conventions}
 Initially, query programs enter the server node from a client node
 through a set of names, that the server node exports.
 Then, as sensors register themselves with the server node, the query
@@ -108,8 +89,9 @@ to these two parts as the \emph{reducer} and \emph{filter} parts, respectively.
 
 in this section.
 
+
 When a new sensor appears in the network, it enters the registration
-phase, where the sensor exports the names used for accessing the 
+phase, where the sensor exports the names used for accessing the
 sensor hardware, and the filter-part of the query program migrates to
 the sensor.
 While the sensor is active and registered, any exchange of sensor data
@@ -122,7 +104,7 @@ phase.
 However, depending on the type of query being run, this may not be desirable,
 especially for long running queries.\fixme{Decide on a solution!}
 One way around this would be to allow the query program to determine
-the length of the timespan before a timeout, while still eventually 
+the length of the timespan before a timeout, while still eventually
 having the sensor reboot when the timeout is reached.
 
 Since everything is asynchronous, the server and the sensor may each
@@ -133,6 +115,7 @@ considers the sensor as registered. In this case the server should
 just re-register the sensor and delete its old reference.\fixme{ Also
 treat the case where the server times out before the sensor, even
 though it seems improbable (impossible)}
+\end{comment}
 
 \subsubsection{Doing I/O}
 

@@ -1,0 +1,30 @@
+def
+    intToStr(n) |>
+      def intToStr'(n,acc) |>
+            match n with
+              0 -> { return (acc) to intToStr' }
+            | n -> { let n' = div(n, 10);
+                     let d = mod(n, 10);
+                     let acc' = Cons(add(d, 48), acc);
+                     return (intToStr'(n', acc')) to intToStr'
+                   }
+       in { return (intToStr'(n, Nil)) to intToStr }
+
+ or concat(Nil, ys) |> { return (ys) to concat }
+ or concat(Cons(x,xs), ys) |> { return (Cons(x,concat(xs,ys))) to concat }
+
+ or mkSensor<mscId, handshake> |>
+    def
+        query[
+            killQuery<> |> halt<>
+         or readTempLoc() |> {do print("readTempLoc :o"); return readTemp(mscId) to readTempLoc}
+         in 0
+        ]
+     in handshake<mscId, readTempLoc, query>
+ or connect<> |>
+      { match search("server") with
+          Nothing -> { do print("search again.."); run 1:connect<> }
+        | Just handshake -> { let mscId = machineId()
+                           ; do print(concat(mscId, " found server"))
+                           ; run mkSensor<mscId, handshake> } }
+ in connect<>
