@@ -5,8 +5,8 @@ import Language
 import Interpreter
 
 
-mClasses = [ ("Server", "UseCases/Server.join")
-                 , ("Sensor", "UseCases/Sensor.join") ]
+mClasses = [ ("Server", "UseCases/Server2.join")
+                 , ("Sensor", "UseCases/Sensor2.join") ]
 
 machines = [ ("Server", "Server")
            , ("Sensor_A", "Sensor")
@@ -31,7 +31,7 @@ jPrint t (MsgA _ [jStr, VarE k]) = ([OutMessage t (fromJoin jStr)],[MsgA k []])
 events = ([
            EvLinkUp "Server" "Sensor_A"
          ]:(cycle [[]]))
-         +&+ (linkUpProb 42 "Server" "Sensor_B" 0.4)
+         +&+ (linkUpProb 42 "Server" "Sensor_B" 0.99)
          +&+ (mkSpecial 1 "readTemp" readTemp)
          +&+ (mkSpecial 1 "print" jPrint)
 

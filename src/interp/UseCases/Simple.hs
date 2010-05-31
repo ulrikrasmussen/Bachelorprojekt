@@ -1,4 +1,4 @@
-module Main() where
+module Main(main) where
 
 import Aux
 import Language
@@ -10,7 +10,7 @@ mClasses = [ ("Simple1", "UseCases/Simple1.join")
            , ("Simple2", "UseCases/Simple2.join")]
 
 machines = [ ("Simple1", "Simple1")
-           {-, ("Simple2", "Simple2")-}]
+           , ("Simple2", "Simple2")]
 
 api = []
 
