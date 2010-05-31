@@ -298,11 +298,11 @@ killFailed comP gp cs =
 migrate :: Context -> Context
 migrate ctx =
   let (mMsg, as') = takeElem isGo $ cAtoms ctx
-      isGo (MsgA "go" _) = True
+      isGo (DelayA d (Proc [MsgA "go" _])) = d <= cTime ctx
       isGo _ = False
    in maybe
         ctx
-        (\(MsgA _ ((VarE dest):(VarE cont):[]))
+        (\(DelayA _ (Proc [MsgA _ ((VarE dest):(VarE cont):[])]))
            -> ctx { cLocationParent = dest
                   , cAtoms = (MsgA cont []):as'})
         mMsg

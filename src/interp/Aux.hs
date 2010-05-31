@@ -6,6 +6,7 @@ module Aux( stdJoinMain
           , EventLog
           , GlobalState(..)
           , (+&+)
+          , atTime
           , linkUpProb
           , mkSpecial
           , mkUniGraph) where
@@ -44,6 +45,8 @@ defaultConfig = IC {
 }
 
 (+&+) = zipWith (++)
+
+atTime n ev = (replicate n [])++ev
 
 linkUpProb :: Int -> String -> String -> Double -> [[Event]]
 linkUpProb seed m1 m2 p =

@@ -30,8 +30,9 @@ jPrint t (MsgA _ [jStr, VarE k]) = ([OutMessage t (fromJoin jStr)],[MsgA k []])
 
 events = ([
            EvLinkUp "Server" "Sensor_A"
+         , EvLinkUp "Server" "Sensor_B"
          ]:(cycle [[]]))
-         +&+ (linkUpProb 42 "Server" "Sensor_B" 0.99)
+         +&+ (atTime 20 $ linkUpProb 42 "Server" "Sensor_B" 0.5)
          +&+ (mkSpecial 1 "readTemp" readTemp)
          +&+ (mkSpecial 1 "print" jPrint)
 
