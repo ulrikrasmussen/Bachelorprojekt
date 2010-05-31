@@ -44,20 +44,22 @@ def intToStr(n) |>
                                   run 1:time<init'> }
 
  or mkQuery(threshold, readTemp, callback) |>
-                 def query[
+                 { let num = 10
+                 ; run def query[
                      collect<n, tAkk> |> { let t = readTemp()
                                          ; match leq(threshold, t) with
-                                             True  -> { run callback<mscId, Above(t)> & 1:collect<1,t>}
+                                             True  -> { run callback<Above(t)> & 1:collect<1,t>}
                                            | False -> { match eq(n,num) with
                                                           True  -> { let avg= div(add(t,tAkk),add(1,num))
-                                                                   ; run callback<mscId, Avg(avg)> & 1:collect<1,avg> }
+                                                                   ; run callback<Avg(avg)> & 1:collect<1,avg> }
                                                         | False -> { let tAkk' = add(t, tAkk)
                                                                    ; let nextT = add(n,1)
                                                                    ; run 1:collect<nextT, tAkk'> }
                                                       }
                                          }
-                  or migrate<locNm> |> { do print("migrating"); do go(locNm); do print("Arrived at sensor");let t = readTemp(); run collect<1,t>}
+                  or migrate<locNm> |> { do go(locNm); let t = readTemp(); run collect<1,t>}
                   in 0 ] in {return migrate to mkQuery}
+                 }
 
  or mkServer<> |> { do print("making clock..")
                   ; let cl = mkClock(0)
@@ -65,17 +67,18 @@ def intToStr(n) |>
                   ; run def
                             sensorHandshake<mscId, readT, qLoc> |> { do print(concat("Received handshake from: ",mscId));
                               match mscId with
-                                "Sensor_A" -> {let query = mkQuery(20, readT, sensorCallback); do print("Constructed Sensor_A")
+                                "Sensor_A" -> {let query = mkQuery(20, readT, sensorACallback)
                                               ; run query<qLoc>}
-                              | "Sensor_B" -> {let query = mkQuery(22, readT, sensorCallback)
+                              | "Sensor_B" -> {let query = mkQuery(22, readT, sensorBCallback)
                                               ; run query<qLoc>}
                             }
-                         or sensorCallback<id, temp>
-                          & collected<Sensors(aT, aN, bT, bN)> |>
+                         or sensorACallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
                                                    { let time = cl()
-                                                   ; match id with
-                                                       "Sensor_A" -> {run collected<Sensors(temp, time, bT, bN)>}
-                                                     | "Sensor_B" -> {run collected<Sensors(aT, aN, temp, time)>}
+                                                   ; run collected<Sensors(temp, time, bT, bN)>
+                                                   }
+                         or sensorBCallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
+                                                   { let time = cl()
+                                                   ; run collected<Sensors(aT, aN, temp, time)>
                                                    }
                          or printCollected<>
                           & collected<Sensors(aT, aN, bT, bN)> |> { let t = cl()

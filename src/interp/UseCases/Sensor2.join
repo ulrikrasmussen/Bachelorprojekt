@@ -17,7 +17,7 @@ def
     def
         query[
             killQuery<> |> halt<>
-         or readTempLoc() |> {do print("readTempLoc :o"); return readTemp(mscId) to readTempLoc}
+         or readTempLoc() |> {return readTemp(mscId) to readTempLoc}
          in 0
         ]
      in handshake<mscId, readTempLoc, query>
