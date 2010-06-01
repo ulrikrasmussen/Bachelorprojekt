@@ -28,7 +28,8 @@
 \def\match{~\mathbf{match}~}
 \def\with{~\mathbf{with}~}
 \def\linkUp#1{\stackrel{#1}{\diamond}}
-\def\migrates(#1,#2){\xLongrightarrow{#1\mapsto#2}}
+\newextarrow{\dotarrow}{500{40}}{~{\sim\hspace{1pt}}\succ}
+\def\migrates(#1,#2){\dotarrow{#1\mapsto#2}}
 \def\reduceable(#1){\text{reduceable}\left(#1\right)}
 \def\quiet(#1){\text{quiet}\left(#1\right)}
 \def\halted(#1){\text{halted}\left(#1\right)}

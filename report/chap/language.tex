@@ -195,10 +195,10 @@ to prove the soundness of it.
 
 \subsection{Syntax}
 
-The syntax of our prototype language is defined in figure \ref{fig:syntax}. In
-this definition, $x,a$ range over names, $s$ range over strings of characters,
-and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' is syntactic
-sugar, and has equivalent encodings in the core Join language.
+The syntax of our prototype language is defined in Figure \ref{fig:syntax}. In
+this definition, $x,a$ ranges over names, $s$ range over strings of characters,
+and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' are syntactic
+sugar, and have equivalent encodings in the core Join language.
 
 \begin{figure}
 \begin{align*}
@@ -298,7 +298,7 @@ Since the order processes and machines are composed doesn't matter, two
 machines with the same processes in different order will behave in exactly the
 same way. Time tags also satisfy some properties like distributivity over
 composed processes. All reduction rules are therefore defined up to equivalence
-of processes, with the equivalence relation defined in figure \ref{fig:equiv}.
+of processes, with the equivalence relation defined in Figure \ref{fig:equiv}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -364,7 +364,7 @@ The same goes for expressions: When a pattern $\pi$ matches a value $v$, we deno
 \begin{equation*}
   \boxed{\mathcal{P}_\pi(\pi,v) = \sigma}
 \end{equation*}
-The rules for these two judgement forms are given in figure \ref{fig:rule:pat}.
+The rules for these two judgement forms are given in Figure \ref{fig:rule:pat}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -474,7 +474,7 @@ extracting the delay part of the atoms.}
 In the original join-calculus semantics, a two-way reduction relation called a
 ``heating/cooling relation'' is defined for doing scope extrusion and new
 independent locations. We only provide one-way reduction rules for this, namely
-\textsc{Red-Def} and \textsc{Red-Loc}, defined in figure \ref{fig:rule:red}.
+\textsc{Red-Def} and \textsc{Red-Loc}, defined in Figure \ref{fig:rule:red}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -547,7 +547,7 @@ communicate at time $t$, we denote it by
 \end{equation*}
 The relation is reflexive, because internal communication of a machine is
 assumed to be reliable. Using this, we can specify how the system behaves when
-the connection between two units disappear, as declared by the rules in figure
+the connection between two units disappear, as declared by the rules in Figure
 \ref{fig:rule:coms}. Note that the rules also state that communication can only
 take place when the time of the two communicating machines are synchronised. In
 a real world implementation, we would have to drop this requirement.
@@ -593,7 +593,7 @@ $\C'$. We denote this by
 To be able to detect when a machine can't do any computations, we need to
 ensure that no reductions can be applied to the machine, and that all external
 communication has been carried out. This is ensured by the
-\textsc{Step-Machine} rule in figure \ref{fig:rule:time-step}.
+\textsc{Step-Machine} rule in Figure \ref{fig:rule:time-step}.
 
 When all machines have fulfilled the $\Rightarrow$ relation, the time of each machine is
 incremented in one global step, as $\S_\C$ is reduced to $\S_{\C'}$, with $\S$ representing
@@ -661,7 +661,7 @@ the entire state of the interpreter.
 Special meaning is attributed to the messages $\Halt<>$ and
 $\Go<a, k>$, and they are regarded as primitives of the
 language, separate from normal atoms, though similar in syntax.
-\fixme{We need to explain all the rules and judgement forms in figure
+\fixme{We need to explain all the rules and judgement forms in Figure
 \ref{fig:rule:mig}. Here \emph{may} be dragons.}
 
 \begin{figure}[!h]
