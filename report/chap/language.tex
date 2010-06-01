@@ -741,3 +741,165 @@ language, separate from normal atoms, though similar in syntax.
 \end{minipage}}
 \caption{Inference rules for migration and failure.\label{fig:rule:mig}}
 \end{figure}
+
+\newpage
+\newpage
+
+\subsection*{Work in progress}
+\setlength\lineskip{1em}
+\fixme{Well, everything is work in progress currently, but this section is even more so..}
+
+\doms{$R_a( J\toJ d P,\; \A,\; \M)$}
+
+$R_a$ er en relation, der angiver at mønster J>P er aktivt i M med resterende atomer A'.
+
+\doms{$R_s( \M,\; \A)$}
+
+Angiver at et Join pattern i M er matchet, og atomerne i M kan blive til A'
+
+\doms{$R_f( J\toJ d P,\; \M)$}
+
+Angiver at pattern J>P ikke kan matches i M
+
+\doms{$\A\noMatch t J$}
+
+Angiver at ingen atomer i A kan opfylde pattern J i tiden t.
+
+\doms{$F(\M,\; \M')$}
+
+Angiver at M er fejlet. Når det første M er reduceret til en maskine med kun een def, der ikke kan matches sluttes Q(M')
+
+\doms{$Q(\M)$}
+
+Angiver at en maskine ikke kan foretage flere reduktioner i dette instant.
+
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$R_a( J\toJ d P,\; \A,\; \M)$}
+\doms{$R_s( \M,\; \A)$}
+\doms{$R_f( J\toJ d P,\; \M)$}
+\doms{$\A\noMatch t J$}
+\doms{$F(\M,\; \M')$}
+\doms{$Q(\M)$}
+\begin{equation*}
+\inferrule[No-JMatch-Empty]
+{
+}
+{\emptyset \noMatch t J}
+\qquad
+\inferrule[No-JMatch-Single]
+{
+  P\equiv \atm t' : x <\tilde v>
+  \\ P_J(J,\; P_\star ) = fail \lor t' \ge t
+}
+{
+  \{| \atm x<\tilde v>|\} \noMatch t J
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[No-JMatch-Recurse]
+{
+  \A = \{|P|\}\uplus \A'
+  \\ P \equiv \atm t': x<\tilde v>
+  \\ P_J(J,\; \atm x < \tilde v > ) = fail \lor t'\ge t
+  \\ \A'\noMatch t J
+}
+{
+  \A \noMatch t J
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[R-Activate]
+{
+  \M \equiv J\toJ d Q \mscJ \A
+}
+{
+  R_a( J \toJ d Q,\; \A, \M)
+}\qquad
+\inferrule[R-Succ-React]
+{
+  R_s(\M,\; \A')
+  \\ \M \equiv \D\mscJ\A
+}
+{
+  \M \longrightarrow \D\mscJ\A'
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[R-Activate-Recurse]
+{
+  R_a(\atm\kappa<\tilde\pi> \andJ J \toJ d Q,\; \A,\; \D\mscJ\B)
+  \\ \A = \{| P |\} \uplus \A'
+  \\ P = t' : \atm x<\tilde v>
+  \\ P_J(\atm\kappa<\tilde\pi>,\; \atm x<\tilde v>) = \sigma
+  \\ t'+d\leq t
+}
+{
+  R_a(J\toJ d \sigma Q,\; \A')
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[R-Succ]
+{
+  R_a(\atm\kappa<\tilde\pi> \toJ d  Q,\; \A,\; \D\mscJ\B)
+  \\ \A = \{| P |\} \uplus \A'
+  \\ P = t' : \atm x<\tilde v>
+  \\ P_J(\atm\kappa<\tilde\pi>, \atm x<\tilde v>) = \sigma
+  \\ t'+d\leq t
+}
+{
+  R_s(\M,\; \A'\uplus \sigma Q)
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[R-Fail]
+{
+  R_a(\atm\kappa<\tilde\pi> \toJ d P,\; \A,\; \M)
+  \\ \A\noMatch{t+d} \atm\kappa<\tilde\pi>
+}
+{
+  R_f(\atm\kappa<\tilde\pi>\toJ d P,\; \M)
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[R-Fail-Recurse]
+{
+  R_a(\atm\kappa<\tilde\pi> \andJ J \toJ d P,\; \A,\; \M)
+  \\ R_f(J\toJ d Q,\M)
+  \\ \A\noMatch{t+d} \atm\kappa<\tilde\pi>
+}
+{
+  R_f(\atm\kappa<\tilde\pi>\andJ J \toJ d P,\; \M)
+}
+\end{equation*}\\
+\begin{equation*}
+\inferrule[Fail-Pat-Msc]
+{
+}
+{
+F(\M,\;\M)
+}
+\qquad
+\inferrule[Fail-Pat]
+{
+  F(\{J\toJ d P\}\cup\D \mscJ \A,\; \M)
+  \\ R_f(J\toJ d P,\;\M)
+}
+{
+  F(\D \mscJ \A,\; \M)
+}
+\end{equation*}
+\begin{equation*}
+\inferrule[Quiet-Msc]
+{
+  F(J\toJ d P \mscJ \A,\; \M)
+  \\ R_f(J\toJ d P,\;\M)
+}
+{
+Q(\M)
+}
+\end{equation*}
+\end{minipage}}
+\caption{Another attempt at formalising what it means to be quiet, and to make reductions in a less non-deterministic way (though still non-deterministic, as sets aren't ordered.)}
+\end{figure}
