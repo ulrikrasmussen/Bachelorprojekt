@@ -65,11 +65,12 @@ call to one of these messages always succeeds. In a real-world
 scenario, bootstrapping an ad-hoc network may be more involved, since
 we cannot rely on a global, centralized non-failing database.
 
+The only type of communication that is assumed to be reliable is location
+migration, as there is no sensible way to reproduce a location, if it is lost
+in transit.
+
 \subsection{Implementation}
 
-
-
-\begin{comment}
 \subsubsection{Communication protocols and code conventions}
 Initially, query programs enter the server node from a client node
 through a set of names, that the server node exports.
@@ -115,10 +116,10 @@ considers the sensor as registered. In this case the server should
 just re-register the sensor and delete its old reference.\fixme{ Also
 treat the case where the server times out before the sensor, even
 though it seems improbable (impossible)}
-\end{comment}
 
 \subsubsection{Doing I/O}
 
+\fixme{Update to be time-join-aware}
 We will begin by defining how the sensors will read data from the
 outside world. Since the join-calculus has no way of doing I/O, we
 have to define some ``magic'' messages that forms an API for reading
@@ -152,13 +153,13 @@ reads from the temperature sensor as fast as possible in 10
 seconds, and then prints out the average temperature measured.
 
 \subsubsection{A programmable sensor}
-
+\fixme{Update to current use case version}
 We need to run a static program on each sensor, which forms a framework
 for the query programs to use.
 Each sensor is running a minimal program capable of identifying the
 sensor with the central node, and continuously verifies the
 connectivity with the central node using a ping process.
-
+\fixme{Should we include a program example directly?.. it gets quite big..}
 \begin{verbatim}
 def connect(ping, register) |>
   def here[
@@ -243,7 +244,7 @@ location (which would destroy the purpose of migrating queries to
 the sensors in the first place).
 
 \subsubsection{Programming the central nodes}
-
+\fixme{Update to current use case version}
 Each central node is running an instance of the following program:
 
 \begin{verbatim}
