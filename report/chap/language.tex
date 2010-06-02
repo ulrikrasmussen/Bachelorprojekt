@@ -490,15 +490,18 @@ independent locations. We only provide one-way reduction rules for this, namely
  \longrightarrow \D \uplus \{ \sigma_{dv}D \} \vdash_t^\phi \A \uplus \{\sigma_{dv}P\}
 }
 \end{equation*}
-
+\begin{equation*}
+\inferrule[Red-Def-Or]
+{~}
+{\D' \uplus \{ D_1~\mathbf{or}~D_2 \} \vdash_t^\phi \A
+ \longrightarrow \D' \uplus \{D_1, D_2\} \vdash_t^\phi \A }
+\end{equation*}
 \begin{equation*}
 \inferrule[Red-Loc]
+{~}
 {
-\M = \D \vdash_t^\phi \A
-\\ \D = \{ a[D~\mathbf{in}~P] \} \uplus \D'
-}
-{
- \M \longrightarrow (D \vdash_t^{\phi a} P) \parallel (\D' \vdash_t^\phi \A)
+\D' \uplus \{ a[D~\mathbf{in}~P] \} \vdash_t^\phi \A
+\longrightarrow (D \vdash_t^{\phi a} P) \parallel (\D' \vdash_t^\phi \A)
 }
 \end{equation*}
 \begin{equation*}
