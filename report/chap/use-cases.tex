@@ -1,15 +1,32 @@
-\fixme{maybe make section -> subsection etc. }
-We here present a use case programmed in our version of the join calculus.
-However, since we don't have a mature, compiled language, we will not focus
-too much on memory and processor constraints, since the resource
-usage depends a lot on the implementation. We may assume, however,
-that the number of active messages and join patterns on each device
-is in some way proportional to the actual usage of memory
-resources, and that the number of reduction steps required to
-arrive at a result is proportional to the usage of computational
-resources.
 
-\section{Distributed queries in sensor networks}
+\begin{comment}
+Disposition:
+------------
+*Present usecase, its purpose, inspiration.
+*Introduce scenario.
+  - Assumptions of underlying system.
+  - number of msc etc.
+*Show overview pseudo-code and describe implementation.
+*Discuss generalisability of the program.
+  - Argue that more general server-sensor queries may be constructed,
+  - And that more general ad-hoc registration is possible.
+\end{comment}
+
+In this chapter we present our implementation of a simplified version of a
+distributed query system applied to a sensor net. Essentially it is just an
+instance of the \fixme{insert citation!.. think its in join-tutorial.}{applet
+server} pattern, although a bit more involved.
+
+The example is heavily inspired by \cite{bonnet2001towards}, and
+evolves around a factory warehouse setting where each item has a
+stick-on sensor that measures the temperature. There are also
+sensors on the walls and ceilings. All sensors have a unique id available to them.
+
+Apart from sensors collecting nodes exist, also called \emph{servers}, that
+distribute the queries to the sensors. The term \emph{client} refers to the machine
+that distributes queries to the collecting nodes and receives the output of the queries.
+
+\subsection*{Distributed queries in sensor networks}
 
 In \cite{bonnet2001towards}, the concept of sensor databases is
 introduced, in which a set of sensors is queried using an extension of
@@ -21,34 +38,36 @@ is cheaper than transmitting it for offline processing, leading to a
 more efficient usage of resources for bandwidth and battery
 constrained devices.
 
-The COUGAR project\cite{COUGAR} has already done a lot of research in
-this area, and a complete system for executing declarative queries in
-a distributed fashion has already been created. However, it would be
-interesting to see if a join-calculus based language would prove
-useful for expressing programs that essentially does the same as a
-distributed query. The paper mentioned that one of the challenges of
-implementing distributed queries was dealing with the asynchronicity
-of events, which we hope will be easy to express in a join-calculus
-based language.
+The COUGAR project\cite{COUGAR} has already done a lot of research in this
+area, and a complete system for executing declarative queries in a distributed
+fashion has already been created. However, it would be interesting to see if a
+join-calculus based language would prove useful for expressing programs that
+essentially do the same as a distributed query. \cite{bonnet2001towards}
+mentions that one of the challenges of implementing distributed queries was
+handling the asynchronicity of events, which we hope will be easier to deal
+with in a join-calculus based language.
 
-\subsection{Example scenario}
+\subsection*{Example scenario}
 
-The example is heavily inspired by \cite{bonnet2001towards}, and
-evolves around a factory warehouse setting where each item has a
-stick-on sensor that measures the temperature. There are also
-sensors on the walls and ceilings. All sensors have a unique id available to them.
+Due to the lack of data structure libraries and the general ineffeciency of the
+interpreter, we only consider a scenario with one collecting node and two
+sensors, statically positioned. No new sensors will arrive, but sensor hardware
+failure is simulated.
 
-Due to the lack of data structure implementations and the general ineffeciency
-of the implementation we only consider a scenario with one collecting node and
-two sensors that run a predefined program.
+Since our example only features a single collecting node, the server and client
+are merged into one machine for simplicity.
 
-This program simply measures the local temperature and reports it every $n$'th
-time instant.  However, if the sensor registers a temperature above a given
-threshold it will report it immediately.
+The query program that is uploaded to the sensors simply measures the local
+temperature and reports the average every $n$'th time instant.  However, if the
+sensor registers a temperature above a given threshold it will report it
+immediately.
 
-\fixme{If time permits we will make an attempt at implementing the distributed queries.}
+Every $m$'th time instant the server outputs the received temperature readings
+along with an assessment of the age of each reading. If a reading isn't updated
+within a given time interval, the program assumes that the sensor is broken and
+prompts the operator to replace it.
 
-\subsection{Assumptions about the underlying system}
+\subsubsection*{Assumptions about the underlying system}
 
 We will assume a network topology with a central processing node
 which is connected to the sensors in a star pattern, using
@@ -57,182 +76,125 @@ We do not assume that the runtime system ensures delivery of messages,
 but we do assume that any messages that \emph{do} get delivered are
 ensured not to be corrupted in any way.
 
+However, since we don't have a mature, compiled language, we will not focus on
+memory and processor constraints, since the resource usage depends a lot on the
+implementation. We may assume, however, that the actual usage of memory
+resources is in some way proportional to the number of active messages and join
+patterns on each device , and that the usage of computational resources is
+proportional to the number of reduction steps required to arrive at a result.
+
 It is also assumed that there is a built in name-exchange facility,
 such that the network can be bootstrapped. In our scenario, this is a
 global key-value store that can be accessed programmatically from any
 device through the API messages \verb!register! and \verb!search!. A
 call to one of these messages always succeeds. In a real-world
 scenario, bootstrapping an ad-hoc network may be more involved, since
-we cannot rely on a global, centralized non-failing database.
+we cannot rely on a global, centralized non-failing database. Most likely one
+could be moderatly succesfull by implementing this name-exchange api by
+performing regular broadcasts at the \fxnote*{is it called this?}{link-level}
+of the network to anyone willing to listen.
 
 The only type of communication that is assumed to be reliable is location
 migration, as there is no sensible way to reproduce a location, if it is lost
 in transit.
 
-\subsection{Implementation}
+\subsection*{Implementation}
 
-\subsubsection{Communication protocols and code conventions}
-Initially, query programs enter the server node from a client node
-through a set of names, that the server node exports.
-Then, as sensors register themselves with the server node, the query
-programs are uploaded from the server to the sensors.
-
-In order for this to work, a correct query program is supposed to
-behave in a certain way with regards to distribution and internal
-structure, because process migration in the join calculus only happens on
-the initiative of the process that is to migrate, and cannot be controlled
-or observed by the surrounding environment.
 Conceptually, a query program is structured in two parts: One that
 treats the sensor data inside the sensor itself, and a second part
-that runs on the server node that collects and filters the data from
-the sensors and eventually aggregate these to the client. We will refer
-to these two parts as the \emph{reducer} and \emph{filter} parts, respectively.
+that runs on the server node and collects and optionally filters the data from
+the sensors and eventually aggregate these to the client.
 
-in this section.
+Sensor:
+\begin{verbatim}
+def
+ ..library definitions..
 
+ or mkSensor<mscId, handshake> |>
+    def
+        query[
+            killQuery<> |> halt<>
+         or readTempLoc() |> {return readTemp(mscId) to readTempLoc}
+         in 0
+        ]
+     in handshake<mscId, readTempLoc, query>
+ or connect<> |>
+      { match search("server") with
+          Nothing -> { run 1:connect<> }
+        | Just handshake -> { let mscId = machineId()
+                           ; run mkSensor<mscId, handshake> } }
+ in connect<>
+\end{verbatim}
 
-When a new sensor appears in the network, it enters the registration
-phase, where the sensor exports the names used for accessing the
-sensor hardware, and the filter-part of the query program migrates to
-the sensor.
-While the sensor is active and registered, any exchange of sensor data
-happens only on the initiative of the filter part of the query
-program.
+\fixme{prepare for presentation..}
 
-When the communication between a sensor and the server times out, the
-default behaviour is to reboot the sensor back into the registration
-phase.
-However, depending on the type of query being run, this may not be desirable,
-especially for long running queries.\fixme{Decide on a solution!}
-One way around this would be to allow the query program to determine
-the length of the timespan before a timeout, while still eventually
-having the sensor reboot when the timeout is reached.
+Server:
+\begin{verbatim}
+def
+  [library definitions]
+ or mkQuery(threshold, readTemp, callback) |>
+                 { let num = 10
+                 ; run def query[
+                     collect<n, tAkk> |>
+                       { let t = readTemp()
+                       ; [if threshold <= t then
+                           { run callback<Above(t)> & 1:collect<1,t>}
+                          else if n=num then
+                           { let avg= (t+tAkk)/(1+num)
+                           ; run callback<Avg(avg)> & 1:collect<1,avg> }
+                          else
+                           { let tAkk' = t + tAkk
+                                 nextT = n+1
+                           ; run 1:collect<nextT, tAkk'>
+                           }]
+                       }
+                  or migrate<locNm> |> { do go(locNm); let t = readTemp(); run collect<1,t>}
+                  in 0 ] in {return migrate to mkQuery}
+                 }
 
-Since everything is asynchronous, the server and the sensor may each
-have a slightly different idea of just when a timeout occurs, and it
-is possible that the sensor notices a timeout before the server and
-therefore attempts to register again, even though the server still
-considers the sensor as registered. In this case the server should
-just re-register the sensor and delete its old reference.\fixme{ Also
-treat the case where the server times out before the sensor, even
-though it seems improbable (impossible)}
+ or mkServer<> |>
+  {
+  ; let cl = mkClock(0)
+  ; run def
+            sensorHandshake<mscId, readT, qLoc> |> {
+              match mscId with
+                "Sensor_A" -> {let query = mkQuery(20, readT, sensorACallback)
+                              ; run query<qLoc>}
+              | "Sensor_B" -> {let query = mkQuery(22, readT, sensorBCallback)
+                              ; run query<qLoc>}
+            }
+         or sensorACallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
+                                   { let time = cl()
+                                   ; run collected<Sensors(temp, time, bT, bN)>
+                                   }
+         or sensorBCallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
+                                   { let time = cl()
+                                   ; run collected<Sensors(aT, aN, temp, time)>
+                                   }
+         or printCollected<>
+          & collected<data> |> { [output data pretty printed]} & 5:printCollected<>
+                                                    & collected<data>
+         in collected<Sensors(Above 0,0,Above 0,0)>
+          & { do register("server", sensorHandshake) }
+          & 5:printCollected<>
+  }
+ in mkServer<>
+\end{verbatim}
+\subsection*{Discussion}
 
-\subsubsection{Doing I/O}
+\subsubsection*{Doing I/O}
 
-\fixme{Update to be time-join-aware}
+\fixme*{refer to some introduction of the way we handle external input, then delete subsection}{%
 We will begin by defining how the sensors will read data from the
 outside world. Since the join-calculus has no way of doing I/O, we
 have to define some ``magic'' messages that forms an API for reading
 temperature values.
+}
+We read the temperature via explicit probing using the name \verb+read_temperature+.
 
-We read the temperature via explicit probing. We let the API
-contain a synchronous message, \verb!read_temperature!, that takes
-a continuation and returns a single sample on it as soon as it is
-available. This message can be used in the synchronous subset of
-the language:
+\subsubsection*{A programmable sensor}
 
-\begin{verbatim}
-def loop(t, c) & running<> |>
-      {
-        run running<>;
-        let temp = read_temperature();
-        return loop(t+temp, c+1) to loop
-      }
- or timeout<> & running<>  |> done<>
- or loop(t, c) & done<>    |> { return (t/c) to loop }
- in {
-      run start_timer<10, timeout>;
-      run running<>;
-      print("Average temperature: " ^ loop(0, 0))
-    }
-\end{verbatim}
-
-In the example above, we assume that we have string operations as
-well as integer and floating point arithmetics. The code repeatedly
-reads from the temperature sensor as fast as possible in 10
-seconds, and then prints out the average temperature measured.
-
-\subsubsection{A programmable sensor}
-\fixme{Update to current use case version}
-We need to run a static program on each sensor, which forms a framework
-for the query programs to use.
-Each sensor is running a minimal program capable of identifying the
-sensor with the central node, and continuously verifies the
-connectivity with the central node using a ping process.
-\fixme{Should we include a program example directly?.. it gets quite big..}
-\begin{verbatim}
-def connect(ping, register) |>
-  def here[
-           ping_back<> |>
-             def pinging<> & ack<> |>
-                    start_timer<60, ping_back>
-              or pinging<> & timeout<> |>
-                    halt<>
-              in pinging<>
-               & ping<ack>
-               & start_timer<5, timeout>
-
-        or halt_here<> |> { halt }
-        or read_temp_here() |>
-           {
-             return (read_temperature())
-                    to read_temp_here
-           }
-        in 0
-      ]
-   in {
-        let success = register(sensor_id(),
-                               here,
-                               read_temp_here);
-        case success of
-          True -> { run ping_back<> & fail<here, init> }
-        | False -> { run halt_here<> };
-        return success to connect
-      }
-
- or init<> |>
-      {
-        let servers = search();
-        match try_connnect(servers) with
-          True -> { }
-        | False -> { run start_timer<10, init> }
-      }
-
- or try_connect([])   |>
-    {
-       return (False) to try_connect
-    }
- or try_connect((p, r):ms) |> {
-       match connect(p, r) with
-         True  -> { return (True)
-                           to try_connect }
-       | False -> { return (try_connect(ms))
-                           to try_connect }
-    }
-
- in init<>
-\end{verbatim}
-
-The \verb!init! process is the first process to start. This uses an
-API message, \verb!search!, to get a list of servers within reach.
-Each element in the list is a tuple with two messages defined on
-the server: A ping message, and a message for registering the
-sensor with the server.
-
-The process \verb!try_connect! attempts to connect to each server,
-and stops when it succeeds, returning True.
-
-\verb!connect! defines a new location, \verb!here!, which will
-become the root location for all processes that migrates to the
-sensor. By using the message \verb!master!, the process tries to
-register the sensor with the server, sending the sensor id, the
-name of the \verb!here! location and the name of the API message to
-read temperature values from the sensor. If the connection
-succeeds, a ping process and a fail handler for the location is
-started - the ping process halts the location on a timeout, and the
-fail handler restarts the \verb!init! process when the location
-fails.
-
+\fxnote{Preserved because it has insights.}
 Note that in this use case, we exploit the ability to halt
 locations to ensure that any processes that may have migrated to
 the sensor is killed when we loose connection to the server. We
@@ -243,80 +205,28 @@ process can continue reading from the sensor from an external
 location (which would destroy the purpose of migrating queries to
 the sensors in the first place).
 
-\subsubsection{Programming the central nodes}
-\fixme{Update to current use case version}
-Each central node is running an instance of the following program:
+\subsubsection*{Programming the central nodes}
 
-\begin{verbatim}
-def register(id, loc, read_temp) & sensors<xs> |>
-    {
-      run sensors<(id, loc, read_temp):xs>;
-      return (True) to register
-    }
- or ping() |> return () to ping
+\emph{stuff for generalising}
+Initially, query programs enter the server node from a client node
+through a set of names, that the server node exports.
+Then, as sensors register themselves with the server node, the query
+programs are uploaded from the server to the sensors.
 
- or runQuery(constructor) & sensors<xs> |>
-    sensors<xs>
-    & def here[
-            in {
-                 let mkQ = constructor(here);
+In order for this to work, a correct query program is supposed to
+behave in a certain way with regards to distribution and internal
+structure, because process migration in the join calculus only happens on
+the initiative of the process that is to migrate, and cannot be controlled
+or observed by the surrounding environment.
+----
+When a new sensor appears in the network, it enters the registration
+phase, where the sensor exports the names used for accessing the
+sensor hardware, and the filter-part of the query program migrates to
+the sensor.
+While the sensor is active and registered, any exchange of sensor data
+happens only on the initiative of the filter part of the query
+program.
 
-               }
-          ]
-       in ...
-\end{verbatim}
+Since the nature of queries vary it is up to the query program to determine
+what to do if the connection to the server is lost.
 
-
-\subsection{Querying sensors}
-\label{querying_sensors}
-
-All queries are programs which must implement a certain interface to be
-compatible with our sensor framework. We will call such a program a well-formed
-query program. An example of such a program (which does nothing) is seen below:
-
-\begin{verbatim}
-def mkReducer(cloc) |>
-    def reducer[
-          mkFilter(sloc, read_temp) |>
-              def filter[
-                     T in { go(sloc); ... }
-                  ]
-               in { return () to mkSensorQuery }
-          in { go(cloc); ... }
-        ]
-     in { return (mkFilter) to mkReducer }
- in ...
-\end{verbatim}
-
-The client sends the the synchronous message \verb!mkReducer! message
-to the central node, which takes care of distributing the program to all
-registered sensors in the following way:
-\begin{enumerate}
- \item
-   The boot program on the central node calls \verb!mkReducer!, sending the name
-   of a location that resides on the central node with it.
- \item
-   This instantiates a new location, \verb!reducer!, which migrates to the
-   location given to \verb!mkReducer! (physically moving the \verb!reducer! to
-   the central node).
- \item
-   Inside the \verb!reducer! location, the name \verb!mkFilter! is defined.
-   This name is sent back to the caller of \verb!mkReducer! (the boot program on
-   the central node).
- \item
-   The boot program has a list of all the registered sensors. For each sensor,
-   the boot program calls \verb!mkFilter!, sending with it the name of a
-   location on the sensor and the name of a synchronous message for reading
-   temperature values on the sensor.
- \item
-   This instantiates a new location, \verb!filter! which migrates to the
-   location given to \verb!mkFilter! (phyiscally moving instances of
-   \verb!filter! to each sensor).
-\end{enumerate}
-
-When this process is done, the query program is deployed. Each of the
-\verb!filter! locations will read values from its respective sensors, and send
-messages back to the \verb!reducer! location which combines the data. Since
-the \verb!reducer! location is defined in the scope of the client program,
-it can send back results to the client using message names obtained from the
-scope.
