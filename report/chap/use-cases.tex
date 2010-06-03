@@ -1,30 +1,34 @@
-
+% vim:spell:spelllang=en_gb:
 \begin{comment}
 Disposition:
 ------------
-*Present usecase, its purpose, inspiration.
+*Present usecase, inspiration.
 *Introduce scenario.
   - Assumptions of underlying system.
   - number of msc etc.
 *Show overview pseudo-code and describe implementation.
+  - Show program output.
 *Discuss generalisability of the program.
-  - Argue that more general server-sensor queries may be constructed,
+  - Argue that more general server-sensor queries may be
+    constructed,
   - And that more general ad-hoc registration is possible.
 \end{comment}
 
 In this chapter we present our implementation of a simplified version of a
 distributed query system applied to a sensor net. Essentially it is just an
-instance of the \fixme{insert citation!.. think its in join-tutorial.}{applet
+instance of the \fixme{insert citation!.. I think its in join-tutorial.}{applet
 server} pattern, although a bit more involved.
 
-The example is heavily inspired by \cite{bonnet2001towards}, and
-evolves around a factory warehouse setting where each item has a
-stick-on sensor that measures the temperature. There are also
-sensors on the walls and ceilings. All sensors have a unique id available to them.
+The example is heavily inspired by the sensor databases of
+\cite{bonnet2001towards}, and evolves around a factory warehouse setting where
+each item has a stick-on sensor that measures the temperature. There are also
+sensors on the walls and ceilings. All sensors have a unique id available to
+them.
 
 Apart from sensors collecting nodes exist, also called \emph{servers}, that
-distribute the queries to the sensors. The term \emph{client} refers to the machine
-that distributes queries to the collecting nodes and receives the output of the queries.
+distribute the queries, manifested as join programs, to the sensors. The term
+\emph{client} refers to the machine that distributes queries to the collecting
+nodes and receives the output of the queries.
 
 \subsection*{Distributed queries in sensor networks}
 
@@ -34,7 +38,7 @@ SQL, enabling the user to extract very specific datasets from the
 network. The queries are executed in a distributed fashion, so the
 sensors only transmit data relevant to the query.  For high-resolution
 sensors generating vast amounts of data, processing the data locally
-is cheaper than transmitting it for offline processing, leading to a
+is cheaper than transmitting it for off-line processing, leading to a
 more efficient usage of resources for bandwidth and battery
 constrained devices.
 
@@ -49,32 +53,31 @@ with in a join-calculus based language.
 
 \subsection*{Example scenario}
 
-Due to the lack of data structure libraries and the general ineffeciency of the
+Due to the lack of data structure libraries and the general inefficiency of the
 interpreter, we only consider a scenario with one collecting node and two
-sensors, statically positioned. No new sensors will arrive, but sensor hardware
+sensors statically positioned. No new sensors will arrive, but sensor hardware
 failure is simulated.
 
 Since our example only features a single collecting node, the server and client
 are merged into one machine for simplicity.
 
-The query program that is uploaded to the sensors simply measures the local
-temperature and reports the average every $n$'th time instant.  However, if the
-sensor registers a temperature above a given threshold it will report it
-immediately.
+The particular query program that is uploaded to the sensors simply measures
+the local temperature, simulated by a sinusoidal function, and reports the
+average every $n^{\text{th}}$ time instant.  However, if the sensor registers a
+temperature above a given threshold it will report it immediately.
 
-Every $m$'th time instant the server outputs the received temperature readings
-along with an assessment of the age of each reading. If a reading isn't updated
-within a given time interval, the program assumes that the sensor is broken and
-prompts the operator to replace it.
+Every $m^\text{th}$ time instant the server outputs the received temperature
+readings along with an assessment of the age of each reading. If a reading
+isn't updated within a given time interval, the program assumes that the sensor
+is broken and prompts the operator to replace it.
 
-\subsubsection*{Assumptions about the underlying system}
+\subsubsection*{Details of the simulated system}
 
-We will assume a network topology with a central processing node
-which is connected to the sensors in a star pattern, using
-unreliable communication channels (i.e. some sort of radio protocol).
-We do not assume that the runtime system ensures delivery of messages,
-but we do assume that any messages that \emph{do} get delivered are
-ensured not to be corrupted in any way.
+We will assume a network topology with a central processing node which is
+connected to the sensors in a star pattern, using unreliable communication
+channels (i.e. some sort of radio protocol).  We do not assume that the runtime
+system ensures delivery of messages, but we do assume that any messages that
+\emph{do} get delivered are ensured not to be corrupted in any way.
 
 However, since we don't have a mature, compiled language, we will not focus on
 memory and processor constraints, since the resource usage depends a lot on the
@@ -83,103 +86,117 @@ resources is in some way proportional to the number of active messages and join
 patterns on each device , and that the usage of computational resources is
 proportional to the number of reduction steps required to arrive at a result.
 
-It is also assumed that there is a built in name-exchange facility,
-such that the network can be bootstrapped. In our scenario, this is a
-global key-value store that can be accessed programmatically from any
-device through the API messages \verb!register! and \verb!search!. A
-call to one of these messages always succeeds. In a real-world
-scenario, bootstrapping an ad-hoc network may be more involved, since
-we cannot rely on a global, centralized non-failing database. Most likely one
-could be moderatly succesfull by implementing this name-exchange api by
-performing regular broadcasts at the \fxnote*{is it called this?}{link-level}
-of the network to anyone willing to listen.
+A built-in name-exchange facility is also simulated, such that the network can
+be bootstrapped. This is implemented as a global key-value store that can be
+accessed programmatically from any device through the API messages
+\verb!register! and \verb!search!. A call to one of these messages always
+succeeds. In a real-world scenario, bootstrapping an ad-hoc network may be more
+involved, since we cannot rely on a global, centralized non-failing database.
+Most likely one could be moderately successful in this particular setting by
+implementing this name-exchange API by performing regular broadcasts at the
+\fxnote*{is it called this?}{link-level} of the network to anyone willing to
+listen.
 
 The only type of communication that is assumed to be reliable is location
-migration, as there is no sensible way to reproduce a location, if it is lost
+migration, as there is no sensible way to reproduce a location if it is lost
 in transit.
 
 \subsection*{Implementation}
 
-Conceptually, a query program is structured in two parts: One that
-treats the sensor data inside the sensor itself, and a second part
-that runs on the server node and collects and optionally filters the data from
-the sensors and eventually aggregate these to the client.
+Conceptually, a query program is structured in two parts: One that treats the
+sensor data inside the sensor itself, and a second part that runs on the server
+node and collects and optionally filters the data from the sensors and
+eventually aggregate these to the client.
 
-Sensor:
+\paragraph{The sensor} runs a minimal program that acts as a shell that first
+attempts to register itself with the collecting node and exposes the
+sub-location \texttt{query}, that query programs are meant to migrate to.
+Figure \ref{fig:sensor-prog} depicts an excerpt of the sensor program that
+should reveal this pattern.
+
+\begin{figure}[!h]
+\begin{minipage}{0.97\textwidth}
 \begin{verbatim}
 def
- ..library definitions..
-
+    [[library definitions]]
  or mkSensor<mscId, handshake> |>
     def
-        query[
+        querysite[
             killQuery<> |> halt<>
-         or readTempLoc() |> {return readTemp(mscId) to readTempLoc}
+         or readTempLoc() |>
+              \{return readTemp(mscId) to readTempLoc\}
          in 0
         ]
-     in handshake<mscId, readTempLoc, query>
+     in handshake<mscId, readTempLoc, querysite>
  or connect<> |>
-      { match search("server") with
+      \{ match search("server") with
           Nothing -> { run 1:connect<> }
-        | Just handshake -> { let mscId = machineId()
-                           ; run mkSensor<mscId, handshake> } }
+        | Just handshake ->
+            { let mscId = machineId()
+            ; run mkSensor<mscId, handshake> \} \}
  in connect<>
 \end{verbatim}
+\end{minipage}
+\caption{The sensor program, with irrelevant parts left out.}\label{fig:sensor-prog}
+\end{figure}
 
-\fixme{prepare for presentation..}
+\fixme{prepare more for presentation..}
 
-Server:
+\paragraph{The server} runs a program that accepts sensor handshakes and
+constructs the query programs, that migrate to the sensors.  When measurements
+arrive from the sensors they are registered and time tagged, and every once in
+a while the server prints out the latest measurements, together with their age.
+In Figure \ref{fig:server-prog} is an excerpt of the server code without the
+parts that deal with low level bookkeeping and library routines.
+\begin{figure}[!h]
+\begin{minipage}{0.97\textwidth}
 \begin{verbatim}
 def
-  [library definitions]
+    [[library definitions]]
  or mkQuery(threshold, readTemp, callback) |>
-                 { let num = 10
-                 ; run def query[
-                     collect<n, tAkk> |>
-                       { let t = readTemp()
-                       ; [if threshold <= t then
-                           { run callback<Above(t)> & 1:collect<1,t>}
-                          else if n=num then
-                           { let avg= (t+tAkk)/(1+num)
-                           ; run callback<Avg(avg)> & 1:collect<1,avg> }
-                          else
-                           { let tAkk' = t + tAkk
-                                 nextT = n+1
-                           ; run 1:collect<nextT, tAkk'>
-                           }]
-                       }
-                  or migrate<locNm> |> { do go(locNm); let t = readTemp(); run collect<1,t>}
-                  in 0 ] in {return migrate to mkQuery}
-                 }
-
- or mkServer<> |>
-  {
-  ; let cl = mkClock(0)
-  ; run def
-            sensorHandshake<mscId, readT, qLoc> |> {
-              match mscId with
-                "Sensor_A" -> {let query = mkQuery(20, readT, sensorACallback)
-                              ; run query<qLoc>}
-              | "Sensor_B" -> {let query = mkQuery(22, readT, sensorBCallback)
-                              ; run query<qLoc>}
-            }
-         or sensorACallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
-                                   { let time = cl()
-                                   ; run collected<Sensors(temp, time, bT, bN)>
-                                   }
-         or sensorBCallback<temp> & collected<Sensors(aT, aN, bT, bN)> |>
-                                   { let time = cl()
-                                   ; run collected<Sensors(aT, aN, temp, time)>
-                                   }
-         or printCollected<>
-          & collected<data> |> { [output data pretty printed]} & 5:printCollected<>
-                                                    & collected<data>
-         in collected<Sensors(Above 0,0,Above 0,0)>
-          & { do register("server", sensorHandshake) }
-          & 5:printCollected<>
-  }
- in mkServer<>
+    { let num = 10
+    ; run def query[
+        collect<n, tAkk> |>
+          [[ If readTemp() < threshold then
+               accumulate temperatures
+             else callback(temperature)
+           ; if n > num then
+               callback(acc. temp./num) ]]
+        or migrate<locNm> |>
+           { do go(locNm)
+           ; let t = readTemp()
+           ; run collect<1,t>}
+        in 0 ] in {return migrate to mkQuery}
+    }
+    sensorHandshake<mscId, readT, qLoc> |>
+      [[ query = mkQuery(..)
+       ; do query(qLoc) ]]
+ or sensorCallback<temp>
+  & collected<[[collected data]]> |>
+      [[ run collected<[[new data]]>
+ or printCollected<>
+  & collected<data> |>
+      { [output data pretty printed]}
+      & 5:printCollected<>
+      & collected<data>
+ in collected<[initial zero-readings]>
+    & { do register("server", sensorHandshake) }
+    & 5:printCollected<>
 \end{verbatim}
+\end{minipage}
+\caption{The server program, with irrelevant parts left out. Note that code
+enclosed in $\left[ \left[\ \right] \right]$ is pseudo code that has an equal join encoding,
+which is left out for the sake of readability.}\label{fig:server-prog}
+\end{figure}
+
+\paragraph{The API-calls} used in the code include the \texttt{readTemp} that
+reads the current temperature from the simulated sensor hardware.
+\texttt{readTemp} is implemented outside the interpreter as a special name.
+Also worth noting is \texttt{print}, which also a special name, and the
+\texttt{mkClock} name, which is implemented as regular join patterns.
+
+\texttt{mkClock} returns a name, that can be used to query the current time with a precision of two instants.
+
 \subsection*{Discussion}
 
 \subsubsection*{Doing I/O}

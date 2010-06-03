@@ -12,7 +12,7 @@ place among calculi and the problems it addresses.
 \item Present the syntax and semantics.
 
 \item Present and discuss the use-case and retransmission protocol. Evaluate the calculus' usefulness based on the use case.
-\item Additionally, present potential use cases and possible patterns used in implementation, and argue to the extent possible for the elegantness of the join expression of the programs.
+\item Additionally, present potential use cases and possible patterns used in implementation, and argue to the extent possible about the elegantnes of the join expression of the programs.
 
 \item Discuss unsolved problems / shortcomings of the calculus (global name
 routing, security..)
@@ -30,24 +30,24 @@ extended model is called the \emph{reflexive} CHAM.
 The join-calculus can be seen as a concurrent extension of functional
 programming, and the calculus is closer to an actual programming language than
 other process calculi, like the $\pi$-calculus. The only values are
-\emph{names}, which
-act both as port (or channel) names, and as transmitted values. For instance, if
-$x$ and $y$ are names, $\S x<y>$ means that we send $y$ over $x$. A message
-$\S x<y>$ is also called an \emph{atom}, and multiple atoms can be combined
-into \emph{molecules} using `$|$'.
+\emph{names}, which act both as port (or channel) names, and as transmitted
+values. For instance, if $x$ and $y$ are names, $\S x<y>$ means that we send
+$y$ over $x$. A message $\S x<y>$ is also called an \emph{atom}, and multiple
+atoms can be combined into \emph{molecules} using `$|$'.
 
 In this section, we will briefly explain the workings of the reflexive CHAM
-using examples.
-We denote a given state of the CHAM by $\mathcal{R} \vdash \mathcal{M}$, where
-$\mathcal{M}$ is a multiset of molecules, and $\mathcal{R}$ is a set of
-molecule reaction rules. The CHAM states are related by a bidirectional
-\emph{heating relation}, `$\HeatCool$'. Two states related by
-`$\HeatCool$' are structurally equivalent, and therefore interchangeable.
-One equivalence states that we can combine the molecules of a solution in all
+using examples.  We denote a given state of the CHAM by $\mathcal{R} \vdash
+\mathcal{M}$, where $\mathcal{M}$ is a multiset of molecules, and $\mathcal{R}$
+is a set of molecule reaction rules. The CHAM states are related by a
+bidirectional \emph{heating relation}, `$\HeatCool$'. Two states related by
+`$\HeatCool$' are structurally equivalent, and therefore interchangeable.  One
+equivalence states that we can combine the molecules of a solution in all
 possible ways:
+
 $$
   \vdash \S x<> | \S y<> \ \HeatCool{} \vdash \S x<>, \S y<>
 $$
+
 Appropriate application of heating and cooling allows molecules to take part in
 reactions, that subsequently consumes them from the solution.
 
