@@ -409,35 +409,7 @@ machines can make an evaluation step, we denote it with
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
 version provides less guarantees about the order in which messages with the
 same name is processed, and each CHAM is explicitly tagged with a natural
-number that denotes the current time.
-
-We begin by inductively defining a ternary relation $\propto$, which collects
-all the ready molecules in a CHAM, and tags them with the time they became
-ready. This relation effectively acts as a scheduler, that states that every
-composition of processed can only participate in a reaction when the message
-with the largest delay becomes ready. The rules for this relation is defined in
-figure \ref{fig:rule:sched}.
-
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\M\timeJ{t}P$}
-\begin{equation*}
-\inferrule[Sched-Msg]
-{ \M \equiv \D \vdash_t^\phi \A', t' : x\langle \tilde u \rangle
-\\ t' \leq t
-}
-{\M \stackrel{t'}{\propto} t':x\langle \tilde u \rangle}
-\qquad
-\inferrule[Sched-Par]
-{\M \stackrel{t}{\propto} P
-\\ \M \stackrel{t}{\propto} Q}
-{ \M \stackrel{max(t,t')}{\propto} P~\&~Q }
-\end{equation*}
-\end{minipage}}
-\caption{Inference rules relating machines, times and atoms, essentially
-extracting the delay part of the atoms.}
-\label{fig:rule:sched}
-\end{figure}
+number that denotes the current time. \fixme{More details about relaxations.}
 
 In the original join-calculus semantics, a two-way reduction relation called a
 ``heating/cooling relation'' is defined for doing scope extrusion and new
@@ -446,38 +418,76 @@ independent locations. We only provide one-way reduction rules for this, namely
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C\longrightarrow\C'$}
+\doms{$\mathcal{H}(P) \leadsto (\D', \A')$}
+\doms{$\widehat\H(D) \leadsto \D$}
 \begin{equation*}
-\inferrule[Red-TimeAdd]
-{~}
-{\D \vdash_t^\phi \A \uplus \{t':(t'':P)\}
- \longrightarrow \D \vdash_t^\phi \A \uplus \{(t'+t''):P\} }
+\inferrule[Heat-Or]
+{D = D_1~\mathbf{or}~D_2
+\\ \widehat\H(D_1) \leadsto (\D_1,\A_1)
+\\ \widehat\H(D_2) \leadsto (\D_2,\A_2)}
+{\widehat\H(D) \leadsto (\D_1 \cup \D_2, \A_1 \uplus \A_2)}
 \end{equation*}
 \begin{equation*}
-\inferrule[Red-TimePar]
-{~}
-{\D \vdash_t^\phi \A \uplus \{t':(P_1~\&~P_2)\}
- \longrightarrow \D \vdash_t^\phi \A \uplus \{ t':P_1, t':P_2 \}}
+\inferrule[Heat-Reaction]
+{D = J \stackrel{d}{\triangleright} Q}
+{\widehat\H(D) \leadsto \{ D \}}
+\qquad
+\inferrule[Heat-Location]
+{D = a[D~\mathbf{in}~P]}
+{\widehat\H(D) \leadsto \{ D \}}
 \end{equation*}
 \begin{equation*}
-\inferrule[Red-TimeDef]
-{~}
-{\D \vdash_t^\phi \A \uplus \{ t':\mathbf{def}~D~\mathbf{in}~P \}
- \longrightarrow \D \vdash_t^\phi \A \uplus \{\mathbf{def}~D~\mathbf{in}~t':P\}}
+\inferrule[Heat-Msg]
+{P = \atm t:x<v>}
+{\H(P) \leadsto (\emptyset, \{P\})}
 \end{equation*}
 \begin{equation*}
-\inferrule[Red-Def\footnote{Where $\sigma_{dv}$ substitutes fresh names for $dv(D)$.}]
-{~}
-{\D \vdash_t^\phi \A \uplus \{ \mathbf{def}~D~\mathbf{in}~P \}
- \longrightarrow \D \uplus \{ \sigma_{dv}D \} \vdash_t^\phi \A \uplus \{\sigma_{dv}P\}
+\inferrule[Heat-Par]
+{P = t : (P_1~\&~P_2)
+\\ \H(t:P_1) \leadsto (\D_1, \A_1)
+\\ \H(t:P_2) \leadsto (\D_2, \A_2)
 }
+{\H(P) \leadsto (\D_1 \cup \D_2, \A_1 \uplus \A_2)}
 \end{equation*}
 \begin{equation*}
-\inferrule[Red-Def-Or]
-{~}
-{\D' \uplus \{ D_1~\mathbf{or}~D_2 \} \vdash_t^\phi \A
- \longrightarrow \D' \uplus \{D_1, D_2\} \vdash_t^\phi \A }
+\inferrule[Heat-Time]
+{P = t:(t':P)
+\\ \H((t+t'):P) \leadsto (\D, \A)
+}
+{\H(P) \leadsto (\D,\A)}
 \end{equation*}
+\begin{equation*}
+\inferrule[Heat-Def\footnote{Where $\sigma_{dv}$ replaces fresh names for defined variables.}]
+{P = t:\mathbf{def}~D~\mathbf{in}~P
+\\ \widehat\H(\sigma_{dv} D) \leadsto \D_1
+\\ \H(t: \sigma_{dv} P) \leadsto (\D_2, \A)
+}
+{\H(P) \leadsto (\D_1 \cup \D_2, \A)}
+\end{equation*}
+\begin{equation*}
+\inferrule[Heat-Match]
+{P = t:\mathbf{match}~e~\mathbf{with}~\pi \rightarrow Q~|~\Pi
+\\ \P_\Pi(\pi,e) \leadsto \sigma
+}
+{\H(P) \leadsto (\emptyset, \{ t : \sigma Q \})}
+\end{equation*}
+\begin{equation*}
+\inferrule[Heat-Match-Next]
+{~}
+{~}
+\end{equation*}
+\begin{equation*}
+\inferrule[Heat-NoMatch]
+{~}
+{~}
+\end{equation*}
+\end{minipage}}
+\caption{Heating rules}\label{fig:rule:heat}
+\end{figure}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\C\longrightarrow\C'$}
 \begin{equation*}
 \inferrule[Red-Loc]
 {~}
@@ -486,43 +496,6 @@ independent locations. We only provide one-way reduction rules for this, namely
 \longrightarrow (D \vdash_t^{\phi a} P) \parallel (\D' \vdash_t^\phi \A)
 }
 \end{equation*}
-\begin{equation*}
-\inferrule[Red-React]
-{
-\M \equiv J \toJ{d} Q \mscJ P
-\hva\\ \M' \equiv J \toJ{d} Q \mscJ t : \sigma_{rv}Q
-\\ \M \timeJ{t'} P
-\\ t'+d = t
-\\ \P_\J(J,P_\star) = \sigma_{rv}
-}
-{ \M \longrightarrow \M' }
-\end{equation*}
-\begin{align*}
-\inferrule[Red-Match]
-{
-  \P_\Pi(\pi_1, e) \leadsto \sigma
-}
-{\D \vdash_t^\phi \A \uplus \{ \textbf{match}~e~\textbf{with}~\pi_1
-   \rightarrow Q_1 ~|~ \Pi \}
- \longrightarrow \D \vdash_t^\phi \A \uplus \{ \sigma Q_1 \}
-}
-\end{align*}
-\begin{align*}
-\inferrule[Red-Nomatch]
-{
-\P_\Pi(\pi_1,e) \leadsto fail
-}
-{\vdash_t^\phi \textbf{match}~e~\textbf{with}~\pi_1 \rightarrow Q_1 ~|~ \Pi
-\longrightarrow ~\vdash_t^\phi \textbf{match}~e~\textbf{with}~\Pi}
-\end{align*}
-\begin{align*}
-\inferrule[Red-Match-Empty]
-{~}
-{
- \vdash_t^\phi \textbf{match}~e~\textbf{with}~\emptyset \longrightarrow~
- \vdash_t^\phi halt\langle\rangle
-}
-\end{align*}
 \end{minipage}}
 \caption{Reduction rules}\label{fig:rule:red}
 \end{figure}
