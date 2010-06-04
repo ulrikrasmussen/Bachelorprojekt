@@ -1,0 +1,43 @@
+vim:set ft=rst tw=60:
+
+Report disposition
+==================
+
+1. Introduce the join calculus informally -- talk about the
+   calculus, its place among calculi(and the problems it
+   addresses?).
+
+2. Introduce the specific problem that we investigate and
+   present our method (i.e. use-case and discussion), and
+   grossly sketch up the implementation.
+
+3. Present the syntax and semantics.
+
+4. Present and discuss the use-case and retransmission
+   protocol. Evaluate the calculus' usefulness based on the
+   use case.
+
+5. Additionally, present potential use cases and possible
+   patterns used in implementation, and argue to the extent
+   possible about the elegantnes of the join expression of
+   the programs.
+
+6. Discuss unsolved problems / shortcomings of the calculus
+   (global name routing, security..)
+
+Use case disposition:
+=====================
+
+1. Present usecase, inspiration.
+
+2. Introduce scenario.
+   a) Assumptions of underlying system.
+   b) number of msc etc.
+
+3. Show overview pseudo-code and describe implementation.
+   a) Show program output.
+
+4. Discuss generalisability of the program.
+   a) Argue that more general server-sensor queries may be
+      constructed,
+   b) And that more general ad-hoc registration is possible.

@@ -1,25 +1,35 @@
 % vim:spell:spelllang=en_gb:
 % vim:set textwidth=80:
 
-\fixme{Be more specific with regards to the circumstances of the communication, or at least refer to what is discussed in the use case, which also needs to be edited btw.}
-In order to deal with the imperfections of basic radio and network communications
-we have implemented a rudimentary library that enables reliable, ordered delivery
-between two communicating parties.
+\section{A reliable communication protocol}
 
-The communication protocol works by the same basic principles as does TCP. In particular
-it gives the same guarantees about the message exchanges, namely those of
+\fixme{Be more specific with regards to the circumstances of the communication,
+or at least refer to what is discussed in the use case, which also needs to be
+edited btw.} In order to deal with the imperfections of basic radio and network
+communications we have implemented a rudimentary library that enables reliable,
+ordered delivery between two communicating parties.
+
+The communication protocol works by the same basic principles as does TCP. In
+particular it gives the same guarantees about the message exchanges, namely
+those of
+
 \begin{itemize}
+
 \item Retransmission of lost messages
-\item Ordered message treatment % currently implemented by assuring that no message can be sent before the
+
+\item Ordered message treatment % currently implemented by assuring that no
+%message can be sent before the
+
 \item Duplicate messages are discarded
+
 \end{itemize}
 
-Central to the workings of the protocol is the bookeeping that takes care of ordering
-the messages, by labeling each message to be sent with a sequence number. Only when
-the recipient acknowledges the reception of a message by sending an acknowledgement message
-that carries the same sequence number as the message of the sender did, the transmission
-of new messages can continue.
-An overview of the protocol is given below.
+Central to the workings of the protocol is the bookeeping that takes care of
+ordering the messages, by labeling each message to be sent with a sequence
+number. Only when the recipient acknowledges the reception of a message by
+sending an acknowledgement message that carries the same sequence number as the
+message of the sender did, the transmission of new messages can continue.  An
+overview of the protocol is given below.
 
 \paragraph{The sending side:}
 \begin{enumerate}
@@ -101,3 +111,4 @@ that each represent an end of the communication channel.
 The proxy at the server end is the name returned by the synchronous call to \texttt{listen}. This is the name that is to be published to allow for communication. Feeding this name into the \texttt{initTrans} call yields the final name that the client application interacts with.
 
 Notice that beyond the call to \texttt{initTrans} it is impossible to distinguish a proxied name from an unproxied name, and using the library involves no extra complexity, which is furthers the case that usage of the join calculus shouldn't necessarily be limited to modelling concurrent computation inside a single physical unit, but is also a decent option for a distributed system, even though the communication might be flawed.\fixme{This phrase might be wierd\ldots}
+

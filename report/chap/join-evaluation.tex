@@ -1,11 +1,9 @@
 % vim:spell:spelllang=en_gb:
 % vim:set textwidth=80:
 
-In order to assess to some degree the usefulness of programming
-distributed devices in the style of the join calculus \fixme{Hm. It'd
-be nice with a clearer verbal distinction between the calculus and the
-programming language}, we have decided to investigate by constructing
-miniature examples, which we will then evaluate upon.
+In order to assess to some degree the usefulness of programming distributed
+devices in the style of the join calculus, we have decided to investigate by
+constructing miniature examples, which we will then evaluate upon.
 
 As the scenarios we intend to model involve communication mostly over
 unreliable channels, it is interesting to look into the ways of
@@ -20,3 +18,345 @@ Lastly we include a discussion of some of the implications of the distributed
 model of computation and identify potentially interesting subjects for future
 work.
 
+\input{use-cases.tex}
+\input{retransmission.tex}
+\input{general-discussion.tex}
+
+\section{Use Cases}
+
+In this chapter we present our implementation of a simplified version of a
+distributed query system applied to a sensor net. Essentially it is just an
+instance of the \fixme{insert citation!.. I think its in join-tutorial.}{applet
+-server} pattern, although a bit more involved.
+
+The example is heavily inspired by the sensor databases of
+\cite{bonnet2001towards}, and evolves around a factory warehouse setting where
+each item has a stick-on sensor that measures the temperature. There are also
+sensors on the walls and ceilings. All sensors have a unique id available to
+them.
+
+Apart from sensors collecting nodes exist, also called \emph{servers}, that
+distribute the queries, manifested as join programs, to the sensors. The term
+\emph{client} refers to the machine that distributes queries to the collecting
+nodes and receives the output of the queries.
+
+\subsection*{Distributed queries in sensor networks}
+
+In \cite{bonnet2001towards}, the concept of sensor databases is introduced, in
+which a set of sensors is queried using an extension of SQL, enabling the user
+to extract very specific datasets from the network. The queries are executed in
+a distributed fashion, so the sensors only transmit data relevant to the query.
+For high-resolution sensors generating vast amounts of data, processing the
+data locally is cheaper than transmitting it for off-line processing, leading
+to a more efficient usage of resources for bandwidth and battery constrained
+devices.
+
+The COUGAR project\cite{COUGAR} has already done a lot of research in this
+area, and a complete system for executing declarative queries in a distributed
+fashion has already been created. However, it would be interesting to see if a
+join-calculus based language would prove useful for expressing programs that
+essentially do the same as a distributed query. \cite{bonnet2001towards}
+mentions that one of the challenges of implementing distributed queries was
+handling the asynchronicity of events, which we hope will be easier to deal
+with in a join-calculus based language.
+
+\subsection*{Example scenario}
+
+Due to the lack of data structure libraries and the general inefficiency of the
+interpreter, we only consider a scenario with one collecting node and two
+sensors statically positioned. No new sensors will arrive, but sensor hardware
+failure is simulated.
+
+Since our example only features a single collecting node, the server and client
+are merged into one machine for simplicity.
+
+The particular query program that is uploaded to the sensors simply measures
+the local temperature, simulated by a sinusoidal function, and reports the
+average every $n^{\text{th}}$ time instant.  However, if the sensor registers a
+temperature above a given threshold it will report it immediately.
+
+Every $m^\text{th}$ time instant the server outputs the received temperature
+readings along with an assessment of the age of each reading. If a reading
+isn't updated within a given time interval, the program assumes that the sensor
+is broken and prompts the operator to replace it.
+
+\subsubsection*{Details of the simulated system}
+
+We will assume a network topology with a central processing node which is
+connected to the sensors in a star pattern, using unreliable communication
+channels (i.e. some sort of radio protocol).  We do not assume that the runtime
+system ensures delivery of messages, but we do assume that any messages that
+\emph{do} get delivered are ensured not to be corrupted in any way.
+
+However, since we don't have a mature, compiled language, we will not focus on
+memory and processor constraints, since the resource usage depends a lot on the
+implementation. We may assume, however, that the actual usage of memory
+resources is in some way proportional to the number of active messages and join
+patterns on each device , and that the usage of computational resources is
+proportional to the number of reduction steps required to arrive at a result.
+
+A built-in name-exchange facility is also simulated, such that the network can
+be bootstrapped. This is implemented as a global key-value store that can be
+accessed programmatically from any device through the API messages
+\verb!register! and \verb!search!. A call to one of these messages always
+succeeds in the same time instant. In a real-world scenario, bootstrapping an
+ad-hoc network may be more involved, since we cannot rely on a global,
+centralized non-failing database.  Most likely one could be moderately
+successful in this particular setting by implementing this name-exchange API by
+performing regular broadcasts at the \fxnote*{is it called this?}{link-level}
+of the network to anyone willing to listen.
+
+The only type of communication that is assumed to be reliable is location
+migration, as there is no sensible way to reproduce a location if it is lost
+in transit.
+
+\subsection*{Implementation}
+
+Conceptually, a query program is structured in two parts: One that treats the
+sensor data inside the sensor itself, and a second part that runs on the server
+node and collects and optionally filters the data from the sensors and
+eventually aggregate these to the client.
+
+\paragraph{The sensor} runs a minimal program that acts as a shell that first
+attempts to register itself with the collecting node and exposes the
+sub-location \texttt{query}, that query programs are meant to migrate to.
+Figure \ref{fig:sensor-prog} depicts an excerpt of the sensor program that
+should reveal this pattern.
+
+During the execution of the sensor program the messages emitted to the server
+might be lost in transit because of simulated link breakdown. The effects are
+not devastating to this particular communication protocol, because it's a
+simple broadcast protocol.  Only in the handshake is it critical to the
+execution of the program that delivery is ensured, as the sensor only ever
+emits one handshake message.
+
+To address this problem we have also implemented and demonstrated a small code
+library, that implements a communication protocol with guaranteed message
+delivery above simple join message passing in the next section.
+
+\begin{figure}[!h]
+\begin{minipage}{0.97\textwidth}
+\begin{verbatim}
+def
+    [[library definitions]]
+ or mkSensor<mscId, handshake> |>
+    def
+        querysite[
+            killQuery<> |> halt<>
+         or readTempLoc() |>
+              \{return readTemp(mscId) to readTempLoc\}
+         in 0
+        ]
+     in handshake<mscId, readTempLoc, querysite>
+ or connect<> |>
+      \{ match search("server") with
+          Nothing -> { run 1:connect<> }
+        | Just handshake ->
+            { let mscId = machineId()
+            ; run mkSensor<mscId, handshake> \} \}
+ in connect<>
+\end{verbatim}
+\end{minipage}
+\caption{The sensor program, with irrelevant parts left out.}\label{fig:sensor-prog}
+\end{figure}
+
+\fixme{prepare more for presentation..}
+
+\paragraph{The server} runs a program that accepts sensor handshakes and
+constructs the query programs, that migrate to the sensors.  When measurements
+arrive from the sensors they are registered and time tagged, and every once in
+a while the server prints out the latest measurements, together with their age.
+In Figure \ref{fig:server-prog} is an excerpt of the server code without the
+parts that deal with low level bookkeeping and library routines.
+\begin{figure}[!h]
+\begin{minipage}{0.97\textwidth}
+\begin{verbatim}
+def
+    [[library definitions]]
+ or mkQuery(threshold, readTemp, callback) |>
+    { let num = 10
+    ; run def query[
+        collect<n, tAkk> |>
+          [[ If readTemp() < threshold then
+               accumulate temperatures
+             else callback(temperature)
+           ; if n > num then
+               callback(acc. temp./num) ]]
+        or migrate<locNm> |>
+           { do go(locNm)
+           ; let t = readTemp()
+           ; run collect<1,t>}
+        in 0 ] in {return migrate to mkQuery}
+    }
+    sensorHandshake<mscId, readT, qLoc> |>
+      [[ query = mkQuery(..)
+       ; do query(qLoc) ]]
+ or sensorCallback<temp>
+  & collected<[[collected data]]> |>
+      [[ run collected<[[new data]]>
+ or printCollected<>
+  & collected<data> |>
+      { [output data pretty printed]}
+      & 5:printCollected<>
+      & collected<data>
+ in collected<[initial zero-readings]>
+    & { do register("server", sensorHandshake) }
+    & 5:printCollected<>
+\end{verbatim}
+\end{minipage}
+\caption{The server program, with irrelevant parts left out. Note that code
+enclosed in $\left[ \left[\ \right] \right]$ is pseudo code that has an equal
+join encoding, which is left out for the sake of readability.}
+\label{fig:server-prog}
+\end{figure}
+
+\paragraph{The API-calls} used in the code include the \texttt{readTemp} that
+reads the current temperature from the simulated sensor hardware.
+\texttt{readTemp} is implemented outside the interpreter as a special name.
+Also worth noting is \texttt{print}, which also a special name, and the
+\texttt{mkClock} name, which is implemented as regular join patterns.
+
+\texttt{mkClock} returns a name, that can be used to query the current time
+with a precision of two instants.
+
+\fixme{Should we show the output of the program?}
+
+\subsection*{Discussion}
+
+In constructing this programming example the most noteworthy obstacle, apart
+from inexperience in programming join, was the fact that every used library
+routine (e.g. list concatenation) had to be included in every sub location in
+order to avoid communication penalties in the shape of message loss and time
+penalties.
+
+
+\emph{stuff for generalising} Initially, query programs enter the server node
+from a client node through a set of names, that the server node exports.  Then,
+as sensors register themselves with the server node, the query programs are
+uploaded from the server to the sensors.
+
+In order for this to work, a correct query program is supposed to behave in a
+certain way with regards to distribution and internal structure, because
+process migration in the join calculus only happens on the initiative of the
+process that is to migrate, and cannot be controlled or observed by the
+surrounding environment.
+----
+When a new sensor appears in the network, it enters the registration phase,
+where the sensor exports the names used for accessing the sensor hardware, and
+the filter-part of the query program migrates to the sensor.  While the sensor
+is active and registered, any exchange of sensor data happens only on the
+initiative of the filter part of the query program.
+
+Since the nature of queries vary it is up to the query program to determine what
+to do if the connection to the server is lost.
+
+\section{A reliable communication protocol}
+
+\fixme{Be more specific with regards to the circumstances of the communication,
+or at least refer to what is discussed in the use case, which also needs to be
+edited btw.} In order to deal with the imperfections of basic radio and network
+communications we have implemented a rudimentary library that enables reliable,
+ordered delivery between two communicating parties.
+
+The communication protocol works by the same basic principles as does TCP. In
+particular it gives the same guarantees about the message exchanges, namely
+those of
+
+\begin{itemize}
+
+\item Retransmission of lost messages
+
+\item Ordered message treatment % currently implemented by assuring that no
+%message can be sent before the
+
+\item Duplicate messages are discarded
+
+\end{itemize}
+
+Central to the workings of the protocol is the bookeeping that takes care of
+ordering the messages, by labeling each message to be sent with a sequence
+number. Only when the recipient acknowledges the reception of a message by
+sending an acknowledgement message that carries the same sequence number as the
+message of the sender did, the transmission of new messages can continue.  An
+overview of the protocol is given below.
+
+\paragraph{The sending side:}
+\begin{enumerate}
+
+\item \label{retrans:SYN}
+The server sends a \texttt{Syn}-message to initialise the connection
+
+\item If a \texttt{SynAck} message is received within a given time window, the
+connection is established and the channel is marked clear, otherwise repeat \ref{retrans:SYN}
+
+\item \label{retrans:Send} When the sender wants to communicate, it increments
+the sequence number and send the message along with the sequence number. Then it
+removes the clear mark of the channel, effectively blocking the channel.
+
+\item If a \texttt{DataAck} message is received within the given time window,
+and its sequence number matches the sender's, the channel is marked clear.
+Otherwise the received \texttt{ACK} is discarded, and no further state change
+occurs, or if no \texttt{ACK} was received, the message gets retransmitted.
+
+\end{enumerate} \paragraph{The receiving side:} \begin{enumerate}
+
+\item Upon reception of a \texttt{Syn}-message, send a \texttt{SynAck} and set
+the sequence number to zero.
+
+\item Upon reception \texttt{Data}-message with higher sequence number,
+increment the sequence number and send a \texttt{DataAck}-message containing the
+result of computation triggered by the reception if any. Also store the result,
+in case the \texttt{DataAck} needs to be retransmitted.
+
+If the sequence number of the \texttt{Data}-message is equal to the currently
+recorded sequence number, the last sent \texttt{DataAck} is retransmitted, and
+no further computation is triggered.
+
+\end{enumerate}
+
+\paragraph{Shortcomings.} This sketch of a communication protocol is indeed very
+basic, and we have made no attempt at refining it further.  This is because we
+believe that it is obviously possible to accomplish within the expressive power
+of the programming language, looking at TCP for inspiration on optimisations,
+and adding more integrity checks to ensure that one buggy participant doesn't
+ruin the other.
+
+\subsection{Usage of the library}
+
+Actually using the library as an underlying data communication layer is
+accomplished by \emph{proxying} the names used for communication through the
+protocol library.  To make this clearer, consider this usage example of a thin
+client using server for computation:
+
+\paragraph{Server program}
+
+\begin{verbatim}
+def
+    include(retransmit.join)
+    bigComputation(x) |> {.. return f(x) to bigComputation}
+ in
+    { let exposedCom = listen(Sync(bigComputation));
+    ; register("bigComputation", exposedCom)
+    }
+\end{verbatim}
+
+\paragraph{Client program}
+
+\begin{verbatim}
+def
+    include(retransmit.join)
+ in
+    { let bigCom = search("bigComputation")
+    ; match bigCom with
+        Just bigCom' -> { let bigComProx = initTrans(Sync, bigCom')
+                        ; do print(bigComProx(100))
+                        }
+        Nothing      -> { do print("Couldn't find bigComputation") }
+    }
+\end{verbatim}
+
+Above the technique of proxying is applied to yield a two new names,
+that each represent an end of the communication channel.
+The proxy at the server end is the name returned by the synchronous call to \texttt{listen}. This is the name that is to be published to allow for communication. Feeding this name into the \texttt{initTrans} call yields the final name that the client application interacts with.
+
+Notice that beyond the call to \texttt{initTrans} it is impossible to distinguish a proxied name from an unproxied name, and using the library involves no extra complexity, which is furthers the case that usage of the join calculus shouldn't necessarily be limited to modelling concurrent computation inside a single physical unit, but is also a decent option for a distributed system, even though the communication might be flawed.\fixme{This phrase might be wierd\ldots}
