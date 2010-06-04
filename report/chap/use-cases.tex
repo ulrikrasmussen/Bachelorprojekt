@@ -1,23 +1,12 @@
 % vim:spell:spelllang=en_gb:
-\begin{comment}
-Disposition:
-------------
-*Present usecase, inspiration.
-*Introduce scenario.
-  - Assumptions of underlying system.
-  - number of msc etc.
-*Show overview pseudo-code and describe implementation.
-  - Show program output.
-*Discuss generalisability of the program.
-  - Argue that more general server-sensor queries may be
-    constructed,
-  - And that more general ad-hoc registration is possible.
-\end{comment}
+% vim:set textwidth=80:
+
+\section{Use Cases}
 
 In this chapter we present our implementation of a simplified version of a
 distributed query system applied to a sensor net. Essentially it is just an
 instance of the \fixme{insert citation!.. I think its in join-tutorial.}{applet
-server} pattern, although a bit more involved.
+-server} pattern, although a bit more involved.
 
 The example is heavily inspired by the sensor databases of
 \cite{bonnet2001towards}, and evolves around a factory warehouse setting where
@@ -32,15 +21,14 @@ nodes and receives the output of the queries.
 
 \subsection*{Distributed queries in sensor networks}
 
-In \cite{bonnet2001towards}, the concept of sensor databases is
-introduced, in which a set of sensors is queried using an extension of
-SQL, enabling the user to extract very specific datasets from the
-network. The queries are executed in a distributed fashion, so the
-sensors only transmit data relevant to the query.  For high-resolution
-sensors generating vast amounts of data, processing the data locally
-is cheaper than transmitting it for off-line processing, leading to a
-more efficient usage of resources for bandwidth and battery
-constrained devices.
+In \cite{bonnet2001towards}, the concept of sensor databases is introduced, in
+which a set of sensors is queried using an extension of SQL, enabling the user
+to extract very specific datasets from the network. The queries are executed in
+a distributed fashion, so the sensors only transmit data relevant to the query.
+For high-resolution sensors generating vast amounts of data, processing the
+data locally is cheaper than transmitting it for off-line processing, leading
+to a more efficient usage of resources for bandwidth and battery constrained
+devices.
 
 The COUGAR project\cite{COUGAR} has already done a lot of research in this
 area, and a complete system for executing declarative queries in a distributed
@@ -90,12 +78,12 @@ A built-in name-exchange facility is also simulated, such that the network can
 be bootstrapped. This is implemented as a global key-value store that can be
 accessed programmatically from any device through the API messages
 \verb!register! and \verb!search!. A call to one of these messages always
-succeeds. In a real-world scenario, bootstrapping an ad-hoc network may be more
-involved, since we cannot rely on a global, centralized non-failing database.
-Most likely one could be moderately successful in this particular setting by
-implementing this name-exchange API by performing regular broadcasts at the
-\fxnote*{is it called this?}{link-level} of the network to anyone willing to
-listen.
+succeeds in the same time instant. In a real-world scenario, bootstrapping an
+ad-hoc network may be more involved, since we cannot rely on a global,
+centralized non-failing database.  Most likely one could be moderately
+successful in this particular setting by implementing this name-exchange API by
+performing regular broadcasts at the \fxnote*{is it called this?}{link-level}
+of the network to anyone willing to listen.
 
 The only type of communication that is assumed to be reliable is location
 migration, as there is no sensible way to reproduce a location if it is lost
@@ -113,6 +101,17 @@ attempts to register itself with the collecting node and exposes the
 sub-location \texttt{query}, that query programs are meant to migrate to.
 Figure \ref{fig:sensor-prog} depicts an excerpt of the sensor program that
 should reveal this pattern.
+
+During the execution of the sensor program the messages emitted to the server
+might be lost in transit because of simulated link breakdown. The effects are
+not devastating to this particular communication protocol, because it's a
+simple broadcast protocol.  Only in the handshake is it critical to the
+execution of the program that delivery is ensured, as the sensor only ever
+emits one handshake message.
+
+To address this problem we have also implemented and demonstrated a small code
+library, that implements a communication protocol with guaranteed message
+delivery above simple join message passing in the next section.
 
 \begin{figure}[!h]
 \begin{minipage}{0.97\textwidth}
@@ -185,8 +184,9 @@ def
 \end{verbatim}
 \end{minipage}
 \caption{The server program, with irrelevant parts left out. Note that code
-enclosed in $\left[ \left[\ \right] \right]$ is pseudo code that has an equal join encoding,
-which is left out for the sake of readability.}\label{fig:server-prog}
+enclosed in $\left[ \left[\ \right] \right]$ is pseudo code that has an equal
+join encoding, which is left out for the sake of readability.}
+\label{fig:server-prog}
 \end{figure}
 
 \paragraph{The API-calls} used in the code include the \texttt{readTemp} that
@@ -195,55 +195,37 @@ reads the current temperature from the simulated sensor hardware.
 Also worth noting is \texttt{print}, which also a special name, and the
 \texttt{mkClock} name, which is implemented as regular join patterns.
 
-\texttt{mkClock} returns a name, that can be used to query the current time with a precision of two instants.
+\texttt{mkClock} returns a name, that can be used to query the current time
+with a precision of two instants.
+
+\fixme{Should we show the output of the program?}
 
 \subsection*{Discussion}
 
-\subsubsection*{Doing I/O}
+In constructing this programming example the most noteworthy obstacle, apart
+from inexperience in programming join, was the fact that every used library
+routine (e.g. list concatenation) had to be included in every sub location in
+order to avoid communication penalties in the shape of message loss and time
+penalties.
 
-\fixme*{refer to some introduction of the way we handle external input, then delete subsection}{%
-We will begin by defining how the sensors will read data from the
-outside world. Since the join-calculus has no way of doing I/O, we
-have to define some ``magic'' messages that forms an API for reading
-temperature values.
-}
-We read the temperature via explicit probing using the name \verb+read_temperature+.
 
-\subsubsection*{A programmable sensor}
+\emph{stuff for generalising} Initially, query programs enter the server node
+from a client node through a set of names, that the server node exports.  Then,
+as sensors register themselves with the server node, the query programs are
+uploaded from the server to the sensors.
 
-\fxnote{Preserved because it has insights.}
-Note that in this use case, we exploit the ability to halt
-locations to ensure that any processes that may have migrated to
-the sensor is killed when we loose connection to the server. We
-also "wrap" our exported API calls in messages defined in the
-\verb!here! location. This ensures that the exposed interface is
-invalidated whenever the location is killed, ensuring that no
-process can continue reading from the sensor from an external
-location (which would destroy the purpose of migrating queries to
-the sensors in the first place).
-
-\subsubsection*{Programming the central nodes}
-
-\emph{stuff for generalising}
-Initially, query programs enter the server node from a client node
-through a set of names, that the server node exports.
-Then, as sensors register themselves with the server node, the query
-programs are uploaded from the server to the sensors.
-
-In order for this to work, a correct query program is supposed to
-behave in a certain way with regards to distribution and internal
-structure, because process migration in the join calculus only happens on
-the initiative of the process that is to migrate, and cannot be controlled
-or observed by the surrounding environment.
+In order for this to work, a correct query program is supposed to behave in a
+certain way with regards to distribution and internal structure, because
+process migration in the join calculus only happens on the initiative of the
+process that is to migrate, and cannot be controlled or observed by the
+surrounding environment.
 ----
-When a new sensor appears in the network, it enters the registration
-phase, where the sensor exports the names used for accessing the
-sensor hardware, and the filter-part of the query program migrates to
-the sensor.
-While the sensor is active and registered, any exchange of sensor data
-happens only on the initiative of the filter part of the query
-program.
+When a new sensor appears in the network, it enters the registration phase,
+where the sensor exports the names used for accessing the sensor hardware, and
+the filter-part of the query program migrates to the sensor.  While the sensor
+is active and registered, any exchange of sensor data happens only on the
+initiative of the filter part of the query program.
 
-Since the nature of queries vary it is up to the query program to determine
-what to do if the connection to the server is lost.
+Since the nature of queries vary it is up to the query program to determine what
+to do if the connection to the server is lost.
 
