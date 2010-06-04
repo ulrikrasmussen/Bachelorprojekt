@@ -204,7 +204,7 @@ sugar, and have equivalent encodings in the core Join language.
 \begin{align*}
 P,Q\quad::={}&             && \textbf{processes} \\
           & 0              && \quad\textrm{inert process} \\
- \alt\quad& x\langle e_1, e_2, ..., e_n \rangle
+ \alt\quad& x\langle e \rangle
                            && \quad\textrm{asynchronous message} \\
  \alt\quad& P~\&~Q         && \quad\textrm{parallel composition} \\
  \alt\quad& \textbf{def}~D~\textbf{in}~P
@@ -220,12 +220,15 @@ D\quad ::={}&              && \textbf{join definitions} \\
                            && \quad\textrm{delayed reaction} \\
 \alt\quad& D~\textbf{or}~D && \quad\textrm{disjunction} \\
 \alt\quad& a[D~\textbf{in}~P] && \quad\textrm{sublocation} \\
-J\quad ::={}&              && \textbf{join patterns}\\
-         & x\langle \pi_1, \pi_2, ..., \pi_n \rangle
+j\quad ::={}&             && \textbf{join pattern} \\
+            & x\langle y \rangle
                            && \quad\textrm{message} \\
-\alt\quad& x(\pi_1, \pi_2, ..., \pi_n)
+\alt\quad& x(y)
                            && \quad\textrm{*synchronous message} \\
-\alt\quad& J~\&~J          && \quad\textrm{synchronization} \\
+J\quad ::={}&              && \textbf{synchronised join patterns}\\
+\alt\quad& j               && \quad\textrm{single message}\\
+\alt\quad& j ~\&~ J
+                           && \quad\textrm{synchronization} \\
 \pi\quad ::={}&            && \textbf{algebraic patterns} \\
          & x               && \quad\textrm{variable} \\
 \alt\quad& \kappa(\pi_1, \pi_2, ..., \pi_n)
@@ -319,29 +322,28 @@ match a process:
 We use a similar judgement form for expressions: When checking whether a
 pattern $\pi$ matches an expression $v$, we denote it with
 \begin{equation*}
-  \boxed{\P_\Pi(\pi,v) \leadsto \hat\sigma}
+  \boxed{\P(\pi,v) \leadsto \hat\sigma}
 \end{equation*}
 The rules for these two judgement forms are given in Figure \ref{fig:rule:pat}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\P_\J(J,P) \leadsto \hat\sigma$}
-\doms{$\P_\Pi(\pi, v) \leadsto \hat\sigma$}
+\doms{$\P(\pi, v) \leadsto \hat\sigma$}
 \begin{equation*}
 \inferrule[Pat-Var]
 {~}
-{\P_\Pi(x,v) \leadsto (x \mapsto v)}
+{\P(x,v) \leadsto (x \mapsto v)}
 \end{equation*}
 \begin{equation*}
 \inferrule[Pat-Cons]
 {\pi = \kappa(\pi_1, \pi_2, ..., \pi_n)
 \\ v = \kappa(v_1, v_2, ..., v_n)
-\\ \P_\Pi(\pi_1,v_1) \leadsto \sigma_1
-\\ \P_\Pi(\pi_2,v_2) \leadsto \sigma_2
+\\ \P(\pi_1,v_1) \leadsto \sigma_1
+\\ \P(\pi_2,v_2) \leadsto \sigma_2
 \\ ...
-\\ \P_\Pi(\pi_n,v_n) \leadsto \sigma_n}
+\\ \P(\pi_n,v_n) \leadsto \sigma_n}
 {
- \P_\Pi(\pi,v) \leadsto \sigma_1 \cup \sigma_2 \cup ... \cup \sigma_n
+ \P(\pi,v) \leadsto \sigma_1 \cup \sigma_2 \cup ... \cup \sigma_n
 }
 \end{equation*}
 \begin{equation*}
@@ -351,49 +353,17 @@ The rules for these two judgement forms are given in Figure \ref{fig:rule:pat}.
 \\ \kappa \not= \kappa'
 }
 {
- \P_\Pi(\pi, v) \leadsto fail
+ \P(\pi, v) \leadsto fail
 }
 \end{equation*}
 \begin{equation*}
 \inferrule[Pat-Cons-SubFail]
 {\pi = \kappa(\pi_1, \pi_2, ..., \pi_n)
 \\ v = \kappa(v_1, v_2, ..., v_m)
-\\ \P_\Pi(\pi_i, v_i) \leadsto fail
+\\ \P(\pi_i, v_i) \leadsto fail
 }
 {
- \P_\Pi(\pi, v) \leadsto fail
-}
-\end{equation*}
-\begin{equation*}
-\inferrule[Pat-Msg]
-{J = x\langle \pi_1, \pi_2, ..., \pi_n \rangle
- \\ P = x\langle v_1, v_2, ..., v_n \rangle
- \\ \P_\Pi(\pi_1,v_1) \leadsto \sigma_1
- \\ \P_\Pi(\pi_2,v_2) \leadsto \sigma_2
- \\ ...
- \\ \P_\Pi(\pi_n,v_n) \leadsto \sigma_n}
-{
- \P_\J(J,P) \leadsto \sigma_1 \cup \sigma_2 \cup ... \cup \sigma_n
-}
-\end{equation*}
-\begin{equation*}
-\inferrule[Pat-Msg-Fail]
-{J = x(\tilde \pi)
-\\ P = y(\tilde v)
-\\ x \not= y
-}
-{
- \P_\J(J, P) \leadsto fail
-}
-\end{equation*}
-\begin{equation*}
-\inferrule[Pat-Msg-SubFail]
-{J = x(\pi_1, \pi_2, ..., \pi_n)
-\\ P = x(v_1, v_2, ..., v_m)
-\\ \P_\Pi(\pi_i, v_i) \leadsto fail
-}
-{
- \P_\J(J, P) \leadsto fail
+ \P(\pi, v) \leadsto fail
 }
 \end{equation*}
 \end{minipage}}
@@ -440,6 +410,10 @@ independent locations. We only provide one-way reduction rules for this, namely
 \inferrule[Heat-Msg]
 {P = \atm t:x<v>}
 {\H(P) \leadsto (\emptyset, \{P\})}
+\qquad
+\inferrule[Heat-Inert]
+{P = t : 0}
+{\H(P) \leadsto (\emptyset, \emptyset)}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-Par]
@@ -467,19 +441,23 @@ independent locations. We only provide one-way reduction rules for this, namely
 \begin{equation*}
 \inferrule[Heat-Match]
 {P = t:\mathbf{match}~e~\mathbf{with}~\pi \rightarrow Q~|~\Pi
-\\ \P_\Pi(\pi,e) \leadsto \sigma
+\\ \P(\pi,e) \leadsto \sigma
 }
 {\H(P) \leadsto (\emptyset, \{ t : \sigma Q \})}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-Match-Next]
-{~}
-{~}
+{P = t:\mathbf{match}~e~\mathbf{with}~\pi \rightarrow Q~|~\Pi
+\\ \P(\pi,e) \leadsto fail
+\\ P' = t:\mathbf{match}~e~\mathbf{with}~\Pi
+\\ \H(P') \leadsto (\D, \A)
+}
+{\H(P) \leadsto (\D,\A)}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-NoMatch]
-{~}
-{~}
+{P = t:\mathbf{match}~e~\mathbf{with}~\emptyset}
+{\H(P) \leadsto (\emptyset, \{ \atm t:halt<> \}) }
 \end{equation*}
 \end{minipage}}
 \caption{Heating rules}\label{fig:rule:heat}
@@ -560,64 +538,6 @@ communication has been carried out. This is ensured by the
 When all machines have fulfilled the $\Rightarrow$ relation, the time of each machine is
 incremented in one global step, as $\S_\C$ is reduced to $\S_{\C'}$, with $\S$ representing
 the entire state of the interpreter.
-
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C\Rightarrow\C'$} \doms{$\mathcal{X} \longrightarrow \mathcal{X}'$} \doms{$\quiet(\M)$}
-\begin{equation*}
-\inferrule[Quiet-Machine]
-{
-\M \equiv \D \mscJ \A \\
-\forall P \in \A~.~ \Big( P\equiv t' : a\langle \tilde u  \rangle \land
-                    a\in dv[\D]\Big)
-\\ \forall D \in \D ~.~ \Big( D \equiv J\toJ{d}Q
-                         \land \lnot\exists P' \subseteq\A~.~( \M \timeJ{t'} P'
-                         \land t'+d\leq t
-                         \land \P (P') \equiv \sigma_{dv}J)\Big)
-}
-{
-  \quiet(\M)
-}
-\end{equation*}\\
-\begin{equation*}
-\inferrule[Step-Machine]
-{
-\M \equiv \D \mscJ \A \\
-\quiet(\M) \\
-\lnot\exists (t:\Go<a,k>) \in \A \\
-}
-{
-  \M \Rightarrow \D \mscG{t+1}{\phi} \A
-}
-\end{equation*}\\
-\begin{equation*}
-\inferrule[Step-Par]
-{
-  \C \equiv \M \parallel \C' \qquad \C' \Rightarrow \C'' \qquad \M \Rightarrow \M'
-}
-{
-  \C \Rightarrow \M'
-}
-\qquad
-\inferrule[Step-Time]
-{
-  \C \Rightarrow \C'
-}
-{
-  \S_\C \longrightarrow \S_{\C'}
-}
-\qquad
-\inferrule[Step-System]
-{
-  \C \longrightarrow \C'
-}
-{
-  \S_\C \longrightarrow \S_{\C'}
-}
-\end{equation*}
-\end{minipage}}
-\caption{Inference rules for the progression of time}\label{fig:rule:time-step}
-\end{figure}
 
 \subsubsection*{Mobility}
 Special meaning is attributed to the messages $\Halt<>$ and
@@ -707,37 +627,54 @@ language, separate from normal atoms, though similar in syntax.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\widehat\P_\J(J,\A) \leadsto \T_\J$}
+\doms{$\widehat\P(J,\A) \leadsto \T_\J$}
 \doms{$\T_\J ::= (t,\sigma,\A') ~\big|~ fail$}
 \begin{equation*}
 \inferrule[Join-FailEmpty]
 {~}
-{\widehat\P_\J (J, \emptyset) \leadsto fail}
+{\widehat\P (J, \emptyset) \leadsto fail}
 \end{equation*}
 \begin{equation*}
  \inferrule[Join-Match]
 {
-   \A = \{ \atm t:y<\tilde v> \} \uplus \A'
-\\ \P_\J(\atm x<\tilde\pi>, \atm y<\tilde v>) \leadsto \sigma
+   \A = \{ \atm t:x<v> \} \uplus \A'
+\\ \P(\pi, v) \leadsto \sigma
 }
 {
-  \widehat\P_\J(\atm x<\tilde \pi>, \A) \leadsto (t, \sigma, \A')
+  \widehat\P(\atm x<\pi>, \A) \leadsto (t, \sigma, \A')
 }
 \end{equation*}
 \begin{equation*}
-\inferrule[Join-SubMatch]
-{ \A = \{t : \atm y<\tilde v> \} \uplus \A'
-\\ \P_\J(\atm x<\tilde\pi>, \atm y<\tilde v>) \leadsto fail
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A') \leadsto (t',\sigma,\A'')
+\inferrule[Join-SubMatch1]
+{ \A = \{t : \atm x<v> \} \uplus \A'
+\\ \P(\pi, v) \leadsto fail
+\\ \widehat\P(\atm x<\pi>, \A') \leadsto (t',\sigma,\A'')
 }
-{ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto (t', \sigma, \{ \atm t:y<\tilde v> \} \uplus \A'' ) }
+{ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \{ \atm t:y<v> \} \uplus \A'' ) }
+\end{equation*}
+\begin{equation*}
+\inferrule[Join-SubMatch2]
+{ \A = \{t : \atm y<v> \} \uplus \A'
+\\ x \not= y
+\\ \widehat\P(\atm x<\pi>, \A') \leadsto (t',\sigma,\A'')
+}
+{ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \{ \atm t:y<v> \} \uplus \A'' ) }
+\end{equation*}
+\begin{equation*}
+\inferrule[Join-FailName]
+{ \A = \{ \atm t:y<v> \} \uplus \A'
+\\ x \not= y
+\\ \widehat\P(\atm x<\pi>, \A') \leadsto fail
+}
+{\widehat\P(\atm x<\pi>, \A) \leadsto fail }
 \end{equation*}
 \begin{equation*}
 \inferrule[Join-FailMatch]
-{ \A = \{\atm t:y<\tilde v> \} \uplus \A'
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A') \leadsto fail
-\\ \P_\J(\atm x<\tilde\pi>, \atm y<\tilde v>) \leadsto fail }
-{\widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto fail }
+{ \A = \{\atm t:x<v> \} \uplus \A'
+\\ \P(\pi, v) \leadsto fail
+\\ \widehat\P(\atm x<\pi>, \A') \leadsto fail
+}
+{\widehat\P(\atm x<\pi>, \A) \leadsto fail }
 \end{equation*}
 \end{minipage}}
 \caption{Rules for matching single join patterns with failure detection.}
@@ -750,32 +687,32 @@ language, separate from normal atoms, though similar in syntax.
 \begin{equation*}
 \inferrule[Def-Match-Bottom]
 {
-   D = \atm x<\tilde\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto (t', \sigma, \A')
+   D = \atm x<\pi> \stackrel{d}{\triangleright} Q
+\\ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \A')
 \\ t'+d \leq t }
 { \R_r(D,~\A,~t) \leadsto (\sigma Q, \A') }
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Match]
-{ D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto(t', \sigma, \A')
+{ D = (\atm x<\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
+\\ \widehat\P(\atm x<\pi>, \A) \leadsto(t', \sigma, \A')
 \\ t' + d \leq t
 \\ \R_r(J' \stackrel{d}{\triangleright} Q, ~\A', ~t) \leadsto (Q', \A'') }
 { \R_r(D,A,t) \leadsto (\sigma Q', \A'') }
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Fail-Late-Bottom]
-{ D = \atm x<\tilde\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto (t',\sigma,\A')
+{ D = \atm x<\pi> \stackrel{d}{\triangleright} Q
+\\ \widehat\P(\atm x<\pi>, \A) \leadsto (t',\sigma,\A')
 \\ t'+d>t
 }
 {\R_r(D,~\A,~t) \leadsto fail}
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Fail-Late]
-{D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
+{D = (\atm x<\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
 \\ D' = J \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>,\A) \leadsto (t', \sigma, \A')
+\\ \widehat\P(\atm x<\pi>,\A) \leadsto (t', \sigma, \A')
 \\ t'+d>t
 }
 {
@@ -786,7 +723,7 @@ language, separate from normal atoms, though similar in syntax.
 \inferrule[Def-Fail-Sub]
 {D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
 \\ D' = J \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>,\A) \leadsto (t', \sigma, \A')
+\\ \widehat\P(\atm x<\tilde\pi>,\A) \leadsto (t', \sigma, \A')
 \\ \R_r(D',\A',t) \leadsto fail
 }
 {
@@ -796,14 +733,14 @@ language, separate from normal atoms, though similar in syntax.
 \begin{equation*}
 \inferrule[Def-Fail-NoMatch-Bottom]
 { D = \atm x<\tilde\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto fail
+\\ \widehat\P(\atm x<\tilde\pi>, \A) \leadsto fail
 }
 {\R_r(D,~\A,~t) \leadsto fail}
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Fail-NoMatch]
 {D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
-\\ \widehat\P_\J(\atm x<\tilde\pi>, \A) \leadsto fail
+\\ \widehat\P(\atm x<\tilde\pi>, \A) \leadsto fail
 }
 {
   \R_r(D,\A,t) \leadsto fail
@@ -828,10 +765,11 @@ language, separate from normal atoms, though similar in syntax.
 \inferrule[Machine-React]
 {\M = \D \vdash_t^\phi \A
  \\ \D = \D' \cup \{ J \stackrel{d}{\triangleright} Q \}
- \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto (\Q', \A')
+ \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto (Q', \A')
+ \\ \H(Q') \leadsto (\D^{new}, \A^{new})
 }
 {
- \R_m(\M) \leadsto \D \vdash_t^\phi \A' \uplus {Q'}
+ \R_m(\M) \leadsto \D \cup \D^{new} \vdash_t^\phi \A' \uplus \A^{new}
 }
 \end{equation*}
 
@@ -840,8 +778,8 @@ language, separate from normal atoms, though similar in syntax.
 {\M = \D \vdash_t^\phi \A
  \\ \D = \D' \cup \{ J \stackrel{d}{\triangleright} Q \}
  \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto fail
- \\ \R_m(\D' \vdash_t^\phi \A) \leadsto \D' \vdash_t^\phi \A'}
-{ \R_m(\M) \leadsto \D \vdash_t^\phi \A' }
+ \\ \R_m(\D' \vdash_t^\phi \A) \leadsto \D^{new} \vdash_t^\phi \A^{new}}
+{ \R_m(\M) \leadsto \D^{new} \cup \{ J \stackrel{d}{\triangleright} Q \} \vdash_t^\phi \A^{new} }
 \end{equation*}
 
 \begin{equation*}
