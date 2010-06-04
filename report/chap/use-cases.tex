@@ -208,6 +208,19 @@ routine (e.g. list concatenation) had to be included in every sub location in
 order to avoid communication penalties in the shape of message loss and time
 penalties.
 
+A potential problem with the program is revealed in the event of a query with
+devious behaviour entering the system, with the devious behaviour consisting in
+for example neglecting to migrate to the sensors after construction, resulting
+in a significant increase in data traffic between the sensors and the servers,
+thus increasing battery drain.
+
+Unfortunately there's no cure for this, because there is no way in the join
+program to detect if the definition site of a name currently resides on the same
+physical machine as the sender.
+
+---
+
+With a little more work the example could be extended to support the dynamic arrival of new sensors, and with further work the dynamic reconfiguration of sensors
 
 \emph{stuff for generalising} Initially, query programs enter the server node
 from a client node through a set of names, that the server node exports.  Then,
