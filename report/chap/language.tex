@@ -8,15 +8,27 @@ and discuss our motivation for including it, as well as the possible
 implications that it may have on the difficulty of implementing the
 language for real-world applications.
 
-At last we will document the final syntax and semantics of the Join
-language language.
+Last we will document the final syntax and semantics of the Join
+language.
 
-\section{The core calculus}
-\fixme{move some of the stuff from the introduction here, since an introduction
-should rather introduce the project and more abstract concepts than the
-programming language, in my opinion.. RFC..}
+\section{The Join calculus}
+\subsection{Core calculus}
 
-\section{Pattern matching}
+The core calculus is based on the \emph{Reflexive Chemical Abstract Machine}
+abbreviated RCHAM, which is a modification of the basic CHAM.
+
+This calculus defines only the concepts of processes $P$, join patterns $J$ and definitions $D$.
+The syntax of these constructs are given by
+
+\begin{displaymath}
+\begin{array}{rc}
+  P =& \atm x < \tilde v > \\
+ \alt& \def D \inJ P
+\end{array}
+\end{displaymath}
+
+
+\subsection{Pattern matching}
 In the core calculus it is only possible to construct join patterns, that match
 atom names, fully disregarding the data contents of the atoms. Thus, if one wishes
 to have different reactions to take place for different types of content, one
@@ -49,7 +61,7 @@ Also, it simply seems as a natural extension of the core join calculus.
 Because of this we have decided to include pattern matching on join patterns in our system.
 The precise semantics of pattern matching can be found in Figure \ref{fig:rule:pat}.
 
-\section{Distribution and mobility}
+\subsection{Distribution and mobility extension}
 The model of distribution is based on the concept of \emph{locations}, which
 are named collections of definitions and atoms, thus comprising separate
 join-calculus machines. Besides this, locations are characterised by being able
@@ -65,7 +77,7 @@ the entire branch of the location tree, of which the migrating or halting
 location is the root. Therefore, when a location migrates, the entire set of
 sublocations also migrates, and halting similarly halts every sublocation.
 
-\section{Timing}
+\subsection{Realtime extension}
 
 The core join-calculus has no notion of time, which makes it
 impossible to reason about the behaviour of programs with real-time
@@ -134,13 +146,7 @@ arrives before the $16$ time units has passed, the first reaction can
 take place immediately.
 
 
-\subsection{Operational semantics}
-
-\fixme{Is it necessary to repeat the operational semantics of the
-article, or can we just refer to them?}
-
-
-\subsection{Infinite instants}
+\subsubsection{Infinite instants}
 
 The time domain in Timed Join Calculus is \emph{abstract}, where time
 tags doesn't have any quantifiable correspondence with \emph{physical}
