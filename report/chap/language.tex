@@ -15,18 +15,37 @@ language.
 \subsection{Core calculus}
 
 The core calculus is based on the \emph{Reflexive Chemical Abstract Machine}
-abbreviated RCHAM, which is a modification of the basic CHAM.
+abbreviated RCHAM, which is a modification of the basic CHAM, defined by Berry
+and Boudol in \cite{berry1989chemical}.
 
-This calculus defines only the concepts of processes $P$, join patterns $J$ and definitions $D$.
-The syntax of these constructs are given by
+The model of computation in the CHAM revolves around the concepts of
+\emph{reaction rules} that manipulate \emph{atoms and molecules} in a
+\emph{solution}, which is a term comparable to a program. As atoms enter the
+solution they recombine until a reaction rule is matched, after which the left
+hand side of the matched rule is replaced with the right hand side.
 
+The join calculus builds on this model and defines the concepts of processes
+$P$, join patterns $J$ and definitions $D$, which make it up respectively for
+the atoms and reaction rules of the CHAM.
+
+The abstract syntax of these constructs are given below.
 \begin{displaymath}
+\begin{array}{rl}
+  P =& \atm x < \tilde v > \\
+ |& \defJ D \inJ P
+\end{array}\qquad
 \begin{array}{rc}
   P =& \atm x < \tilde v > \\
- \alt& \def D \inJ P
+ |& J \andJ J
+\end{array}\qquad
+\begin{array}{rc}
+  D =& D \orJ D \\
+ |& J \toJ{} P
 \end{array}
 \end{displaymath}
 
+A join program consists of an instance of $P$ at the top level. If we denote a
+solution by $\D \vdash \A$ where $\D$ are reaction rules and $\A$ is atoms,
 
 \subsection{Pattern matching}
 In the core calculus it is only possible to construct join patterns, that match

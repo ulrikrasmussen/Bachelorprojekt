@@ -19,6 +19,12 @@ distribute the queries, manifested as join programs, to the sensors. The term
 \emph{client} refers to the machine that distributes queries to the collecting
 nodes and receives the output of the queries.
 
+In this sensor network the sensors we imagine are small, cheap devices that are
+available in abundance. Their computational powers are very limited, as are
+their memory and battery capacities. A key assumption about the sensors is that
+radio communication consume radically larger amounts of power than basic
+arithmetic and algorithms of low complexity over small data sets.
+
 \subsection*{Distributed queries in sensor networks}
 
 In \cite{bonnet2001towards}, the concept of sensor databases is introduced, in
@@ -230,3 +236,9 @@ If one were to further build on the example it would be interesting to produce
 queries that involve sensor-to-sensor communication, such as those given in
 \cite{bonnet2001towards}, where sensors only report a measurement that is above
 a given threshold if a neighbouring sensor also registers a high value.
+
+\vspace{1em}
+
+In order to put this problem into a broader perspective, consider the
+alternatives programming languages available for programming these sensors in
+this scenario.
