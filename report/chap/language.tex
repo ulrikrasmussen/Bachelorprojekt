@@ -629,6 +629,80 @@ messages have been delivered.}\label{fig:rule:exchange}
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\K(\C) \leadsto \T_\K$}
+\begin{equation*}
+\inferrule[Halt]
+{\C = \D \vdash_t^{\phi a} \A' \uplus \{ \atm t:\textit{halt}<\unit> \}}
+{\K(\C) \leadsto halt}
+\end{equation*}
+\begin{equation*}
+\inferrule[Halt-Sub]
+{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+\\ \K(\D \vdash_t^\phi \A') \leadsto halt }
+{\K(\C) \leadsto halt}
+\end{equation*}
+\begin{equation*}
+\inferrule[Halt-NoMatch-Quiescent]
+{
+ \C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+ \\ x\not= \textit{halt}
+ \\ \K(\D \vdash_t^\phi \A') \leadsto quiescent
+}
+{ \K(\C) \leadsto quiescent }
+\end{equation*}
+\begin{equation*}
+\inferrule[Halt-Delayed-Quiescent]
+{
+ \C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+ \\ t\not= t'
+ \\ \K(\D \vdash_t^\phi \A') \leadsto quiescent
+}
+{ \K(\C) \leadsto quiescent }
+\end{equation*}
+\begin{equation*}
+\inferrule[Halt-Empty-Quiescent]
+{\C = \D \vdash_t^\phi \emptyset}
+{\K(\C) \leadsto quiescent}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Halt-Par-Quiescent]
+{\C = \C_1 ~||~ \C_2
+\\ \K(\C_1) \leadsto quiescent
+\\ \K(\C_2) \leadsto quiescent}
+{ \K(\C) \leadsto quiescent}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Halt-Left]
+{\C = \C_1 ~||~ \C_2
+\\ \K(\C_1) \leadsto halt}
+{\K(\C) \leadsto \C_2}
+\qquad
+\inferrule[Halt-Right]
+{\C = \C_1 ~||~ \C_2
+\\ \K(\C_2) \leadsto halt}
+{\K(\C) \leadsto \C_1}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Halt-Modify-Left]
+{\C = \C_1 ~||~ \C_2
+\\ \K(\C_1) \leadsto \C_1'}
+{\K(\C) \leadsto \C_1' ~||~ \C_2}
+\qquad
+\inferrule[Halt-Modify-Right]
+{\C = \C_1 ~||~ \C_2
+\\ \K(\C_2) \leadsto \C_2'}
+{\K(\C) \leadsto \C_1 ~||~ \C_2'}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for halting machines.}\label{fig:rule:halt}
+\end{figure}
+
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
 \begin{equation*}
 \inferrule[Progress]
 {\C = \D \vdash_t^\phi \A
