@@ -381,11 +381,6 @@ version provides less guarantees about the order in which messages with the
 same name is processed, and each CHAM is explicitly tagged with a natural
 number that denotes the current time. \fixme{More details about relaxations.}
 
-In the original join-calculus semantics, a two-way reduction relation called a
-``heating/cooling relation'' is defined for doing scope extrusion and new
-independent locations. We only provide one-way reduction rules for this, namely
-\textsc{Red-Def} and \textsc{Red-Loc}, defined in Figure \ref{fig:rule:red}.
-
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\mathcal{H}(P) \leadsto (\D', \A')$}
@@ -393,9 +388,9 @@ independent locations. We only provide one-way reduction rules for this, namely
 \begin{equation*}
 \inferrule[Heat-Or]
 {D = D_1~\mathbf{or}~D_2
-\\ \widehat\H(D_1) \leadsto (\D_1,\A_1)
-\\ \widehat\H(D_2) \leadsto (\D_2,\A_2)}
-{\widehat\H(D) \leadsto (\D_1 \cup \D_2, \A_1 \uplus \A_2)}
+\\ \widehat\H(D_1) \leadsto \D_1
+\\ \widehat\H(D_2) \leadsto \D_2}
+{\widehat\H(D) \leadsto \D_1 \cup \D_2}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-Reaction]
@@ -465,17 +460,55 @@ independent locations. We only provide one-way reduction rules for this, namely
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C\longrightarrow\C'$}
+\doms{$\F(\C) \leadsto \T_\F$}
 \begin{equation*}
-\inferrule[Red-Loc]
-{~}
-{
-\D' \uplus \{ a[D~\mathbf{in}~P] \} \vdash_t^\phi \A
-\longrightarrow (D \vdash_t^{\phi a} P) \parallel (\D' \vdash_t^\phi \A)
+\inferrule[Spawn-Rec-Left]
+{\C = \C_1~||~\C_2
+\\ \F(\C_1) \leadsto \C'}
+{\F(\C) \leadsto \C'~||~\C_2}
+\qquad
+\inferrule[Spawn-Rec-Right]
+{\C = \C_1~||~\C_2
+\\ \F(\C_2) \leadsto \C'}
+{\F(\C) \leadsto \C_1~||~\C'}
+\end{equation*}
+\begin{equation*}
+\inferrule[Spawn-Rec-Quiescent]
+{\C = \C_1~||~\C_2
+\\ \F(\C_1) \leadsto quiescent
+\\ \F(\C_2) \leadsto quiescent}
+{\F(\C) \leadsto quiescent}
+\end{equation*}
+\begin{equation*}
+\inferrule[Spawn]
+{\C = \D \vdash_t^\phi \A
+\\ \D = \D' \cup \{ a[D~\mathbf{in}~P] \}
+\\ \widehat\H(D) \leadsto \D_1^{new}
+\\ \H(t:P) \leadsto (\D_2^{new}, \A^{new})
 }
+{ \F(\C) \leadsto \D' \vdash_t^\phi \A ~||~ \D_1^{new} \cup \D_2^{new} \vdash_t^{\phi a} \A^{new} }
+\end{equation*}
+\begin{equation*}
+\inferrule[Spawn-Sub]
+{\C = \D \vdash_t^\phi \A
+\\ \D=\D' \cup \{ J \stackrel{d}{\triangleright} Q \}
+\\ \F(\D' \vdash_t^\phi \A) \leadsto \D'' \vdash_t^\phi \A ~||~ \C'}
+{\F(\C) \leadsto \D'' \cup \{J \stackrel{d}{\triangleright} \Q \} \vdash_t^\phi \A ~||~ \C'}
+\end{equation*}
+\begin{equation*}
+\inferrule[Spawn-Sub-Quiescent]
+{\C = \D \vdash_t^\phi \A
+\\ \D=\D' \cup \{ J \stackrel{d}{\triangleright} Q \}
+\\ \F(\D' \vdash_t^\phi \A) \leadsto quiescent}
+{ \F(\C) \leadsto quiescent }
+\end{equation*}
+\begin{equation*}
+\inferrule[Spawn-Quiescent]
+{\C = \emptyset \vdash_t^\phi \A}
+{\F(\C) \leadsto quiescent}
 \end{equation*}
 \end{minipage}}
-\caption{Reduction rules}\label{fig:rule:red}
+\caption{Sublocation spawning rules}\label{fig:rule:spawn}
 \end{figure}
 
 To model unreliable communication between locations, we introduce the
@@ -485,66 +518,6 @@ communicate at time $t$, we denote it by
 \begin{equation*}
  \boxed{a \linkUp{t} b}
 \end{equation*}
-The relation is reflexive, because internal communication of a machine is
-assumed to be reliable. Using this, we can specify how the system behaves when
-the connection between two units disappear, as declared by the rules in Figure
-\ref{fig:rule:coms}. Note that the rules also state that communication can only
-take place when the time of the two communicating machines are synchronised. In
-a real world implementation, we would have to drop this requirement.
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C \longrightarrow \C'$}
-\begin{equation*}
-\inferrule[Comm-Link]
-{
-   \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x<\tilde e > \parallel \D_2 \mscG{t}{b\psi} \A_2
-\\ a \neq \Omega
-\\ b \neq \Omega
-\\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2, \atm (t+1) : x <\tilde e>
-\\ x \in dv(\D_2)
-\\ a\linkUp{t} b
-}
-{ \C \longrightarrow \C' }
-\end{equation*}
-\begin{equation*}
-\inferrule[Comm-Lost]
-{
-   \C \equiv \D_1 \mscG{t}{a\phi} \A_1, \atm t:x< \tilde e >\parallel \D_2 \mscG{t}{b\psi} \A_2
-\\ \C' \equiv \D_1 \mscG{t}{a\phi} \A_1 \parallel \D_2 \mscG{t}{b\psi} \A_2
-\\ x \in dv(\D_2)
-\\ \neg(a \linkUp{t} b)}
-{ \C ~\longrightarrow~ \C'}
-\end{equation*}
-\end{minipage}}
-\caption{Inference rules for communication between machines.}\label{fig:rule:coms}
-\end{figure}
-
-In our system, time can only progress when no CHAM can take another step,
-effectively synchronising all machines on a global clock. In a real setting,
-this is of course not feasible, but it makes it easier to reason about
-communicating devices in a simulated setting.
-
-When a group of machines $\C$ can no longer make any further computations, they
-will be ready to increment their time synchronously, and become the group
-$\C'$. We denote this by
-
-\[\boxed{\C \Rightarrow \C'}\]
-
-To be able to detect when a machine can't do any computations, we need to
-ensure that no reductions can be applied to the machine, and that all external
-communication has been carried out. This is ensured by the
-\textsc{Step-Machine} rule in Figure \ref{fig:rule:time-step}.
-
-When all machines have fulfilled the $\Rightarrow$ relation, the time of each machine is
-incremented in one global step, as $\S_\C$ is reduced to $\S_{\C'}$, with $\S$ representing
-the entire state of the interpreter.
-
-\subsubsection*{Mobility}
-Special meaning is attributed to the messages $\Halt<>$ and
-$\Go<a, k>$, and they are regarded as primitives of the
-language, separate from normal atoms, though similar in syntax.
-\fixme{We need to explain all the rules and judgement forms in Figure
-\ref{fig:rule:mig}. Here \emph{may} be dragons.}
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
