@@ -1,7 +1,20 @@
 % vim:spell:spelllang=en_gb:
-% vim:set textwidth=80:
+% vim:set textwidth=80 fo+=tcroql:
 
 \section{General discussion}
+
+While we have been able to successfully produce sample programs without the need
+to resolve to using cumbersome encodings, and demonstrated the rather
+transparent way the proxying pattern could be applied to deal satisfactorily
+with the issues of unreliable communication, some fundamental implementation
+issues need to be solved before the use of the join calculus as a foundation for
+distributed programming can be said to be realistic.
+
+Of these are
+  * Global name routing
+  * Migration security
+  * Distributed garbage collection
+    - Mention techniques to leverage manual garbage collection.
 
 * potential use cases
   - signal processing (time?)
@@ -12,5 +25,3 @@
 * patterns
   - distribution
   - garbage collection
-
-* Unsolve(able|d) problems: name server + security

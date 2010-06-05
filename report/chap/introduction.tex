@@ -1,5 +1,5 @@
 % vim:spell:spelllang=en_gb:
-% vim:set textwidth=80:
+% vim:set textwidth=80 fo+=tcroql:
 
 We have chosen to examine the usefulness of using the join calculus for
 programming embedded, distributed devices, such as the sensors in a sensor
@@ -28,9 +28,15 @@ some proposed extensions relevant for our problem, as they introduce both the
 notion of mobility, pattern matching over algebraic datatypes, and a notion of
 time.
 
-The formal operational semantics that the interpreter implements is also
-documented in this report.
+The formal operational semantics \fxnote*{isn't it a bit bold to say?}{that the
+interpreter implements} is also documented in this report.
 
 Finally we discuss \fxnote*{do we really?}{the process of constructing the
-programs} and the benefits and detriments that we have identified of the
-programming language.
+programs and} the benefits and detriments that we have identified of the
+programming language. We will only examine the join calculus in an introspective
+way. Therefore we will only present join solutions to the problems we pose. One
+could imagine it being usefull to have dual implementations in other languages
+for comparison, but that is beyond the scope of this report, as it implies that
+we need to make certain choices of programming languages and concurrency
+libraries, and make a very thorough attempt at constructing programs that are
+representative of the expressiveness of the given languages.

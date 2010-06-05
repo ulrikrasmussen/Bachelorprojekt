@@ -1,4 +1,4 @@
-vim:set ft=rst tw=60:
+vim:set ft=rst tw=60 fo+=tcroql:
 
 Report disposition
 ==================
@@ -55,3 +55,12 @@ Use case disposition:
       constructed,
    b) And that more general ad-hoc registration is possible.
    c) Compare with an imagined C/Java implementation.??
+
+
+Metode:
+=======
+
+identificer problem -> prøv at kode -> analyser resultat ->
+konethn nohunohunohu
+nouhonehuonehuonehunoehunoehunoeuhonehuonehu onehu
+onehunohunoeh unoehu oneuh oneuhonetuhontuhonthu onehu oneu
