@@ -25,6 +25,19 @@ Report disposition
 6. Discuss unsolved problems / shortcomings of the calculus
    (global name routing, security..)
 
+Syntax and Semantics:
+=====================
+
+1. Introduce the calculus:
+   a. Introduce core join
+   b. Describe mobility extension
+   c. Describe pattern matching extension
+   d. Describe realtime extension
+
+2. Summarize syntax.
+
+3. Present semantics.
+
 Use case disposition:
 =====================
 

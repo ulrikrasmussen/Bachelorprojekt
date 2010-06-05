@@ -110,8 +110,8 @@ execution of the program that delivery is ensured, as the sensor only ever
 emits one handshake message.
 
 To address this problem we have also implemented and demonstrated a small code
-library, that implements a communication protocol with guaranteed message
-delivery above simple join message passing in the next section.
+library that implements a communication protocol with guaranteed message
+delivery on top of simple join message passing in the next section.
 
 \begin{figure}[!h]
 \begin{minipage}{0.97\textwidth}
@@ -123,16 +123,16 @@ def
         querysite[
             killQuery<> |> halt<>
          or readTempLoc() |>
-              \{return readTemp(mscId) to readTempLoc\}
+              {return readTemp(mscId) to readTempLoc}
          in 0
         ]
      in handshake<mscId, readTempLoc, querysite>
  or connect<> |>
-      \{ match search("server") with
+      { match search("server") with
           Nothing -> { run 1:connect<> }
         | Just handshake ->
             { let mscId = machineId()
-            ; run mkSensor<mscId, handshake> \} \}
+            ; run mkSensor<mscId, handshake> } }
  in connect<>
 \end{verbatim}
 \end{minipage}
@@ -208,24 +208,25 @@ routine (e.g. list concatenation) had to be included in every sub location in
 order to avoid communication penalties in the shape of message loss and time
 penalties.
 
+A potential problem with the program is revealed in the event of a query with
+devious behaviour entering the system, with the devious behaviour consisting in
+for example neglecting to migrate to the sensors after construction, resulting
+in a significant increase in data traffic between the sensors and the servers,
+thus increasing battery drain.
 
-\emph{stuff for generalising} Initially, query programs enter the server node
-from a client node through a set of names, that the server node exports.  Then,
-as sensors register themselves with the server node, the query programs are
-uploaded from the server to the sensors.
+Unfortunately there's no cure for this, because there is no way in the join
+program to detect if the definition site of a name currently resides on the same
+physical machine as the sender, or that an atom was produced locally or
+remotely.
 
-In order for this to work, a correct query program is supposed to behave in a
-certain way with regards to distribution and internal structure, because
-process migration in the join calculus only happens on the initiative of the
-process that is to migrate, and cannot be controlled or observed by the
-surrounding environment.
-----
-When a new sensor appears in the network, it enters the registration phase,
-where the sensor exports the names used for accessing the sensor hardware, and
-the filter-part of the query program migrates to the sensor.  While the sensor
-is active and registered, any exchange of sensor data happens only on the
-initiative of the filter part of the query program.
+This is more a security issue however, and one could argue that all the queries
+in a system such as this originate from a trusted source.
 
-Since the nature of queries vary it is up to the query program to determine what
-to do if the connection to the server is lost.
+In our opinion this toy version of a static sensor network is rather easily
+extendible to include more advanced features such as dynamic reconfiguration of
+the sensors and dynamic addition or removal of sensors.
 
+If one were to further build on the example it would be interesting to produce
+queries that involve sensor-to-sensor communication, such as those given in
+\cite{bonnet2001towards}, where sensors only report a measurement that is above
+a given threshold if a neighbouring sensor also registers a high value.
