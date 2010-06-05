@@ -536,6 +536,118 @@ number that denotes the current time. \fixme{More details about relaxations.}
 \caption{Sublocation spawning rules}\label{fig:rule:spawn}
 \end{figure}
 
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\E(\C) \leadsto (\C', \beta)$}
+\begin{equation*}
+\inferrule[Extract-Empty]
+{\C = \D \vdash_t^\phi \emptyset}
+{\E(\C) \leadsto (\C, \emptyset)}
+\end{equation*}
+\begin{equation*}
+\inferrule[Extract-Nonlocal\footnote{With side-condition $x \not\in dv(\D)$}]
+{\C = \D \vdash_t^{\phi a} \A' \uplus \{ \atm t:x<v> \}
+\\ \E(\D \vdash_t^{\phi a} \A') \leadsto (\C', \beta) }
+{\E(\C) \leadsto (\C', \beta \uplus \{ (a, \atm x<v>) \})}
+\end{equation*}
+\begin{equation*}
+\inferrule[Extract-Local\footnote{With side-condition $x \in dv(\D) \lor x = \mathit{go} \lor x = \mathit{halt}$}]
+{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:x<v> \}
+\\ \E(\D \vdash_t^\phi \A') \leadsto (\D \vdash_t^\phi \A'', \beta)
+}
+{\E(\C) \leadsto (\D \vdash_t^\phi \A'' \uplus \{ \atm t:x<v> \}, \beta) }
+\end{equation*}
+\begin{equation*}
+\inferrule[Extract-Rec]
+{ \C = \C_1 ~||~ \C_2
+\\ \E(\C_1) \leadsto (\C_1', \beta_1)
+\\ \E(\C_2) \leadsto (\C_2', \beta_2)
+}
+{ \E(\C) \leadsto (\C_1' ~||~ \C_2', \beta_1 \uplus \beta_2) }
+\end{equation*}
+\end{minipage}}
+\caption{Rules for extracting non-local messages from machines.}\label{fig:rule:extract}
+\end{figure}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\I(\C, \beta) \leadsto (\C', \beta')$}
+\begin{equation*}
+\inferrule[Insert-Local\footnote{With side-condition $x \in dv(\D).$}]
+{\C = \D \vdash_t^{\phi b} \A
+\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
+\\ a \linkUp{t} b}
+{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A' \uplus \{ \atm (t+1):x<v> \}, \beta'') }
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Insert-Lost\footnote{With side-condition $x \in dv(\D).$}]
+{\C = \D \vdash_t^{\phi b} \A
+\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
+\\ a \linkDown{t} b}
+{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A', \beta'') }
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Insert-Nonlocal\footnote{With side-condition $x \not\in dv(\D).$}]
+{\C = \D \vdash_t^{\phi b} \A
+\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
+}
+{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A', \beta'' \uplus (a, \{ \atm x<v> )\}) }
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Insert-Empty]
+{~}
+{\I(\C, \beta) \leadsto (\C, \emptyset)}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for inserting external messages into machines.}\label{fig:rule:insert}
+\end{figure}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\X(\C) \leadsto \T_\X$}
+\begin{equation*}
+\inferrule[Exchange-Quiescent\footnote{With side-condition $\beta = \emptyset$.}]
+{\E(\C) \leadsto (\C', \beta)}
+{\X(\C) \leadsto quiescent}
+\end{equation*}
+\begin{equation*}
+\inferrule[Exchange\footnote{With side-condition $\beta \not= \emptyset$.}]
+{\E(\C) \leadsto (\C', \beta)
+\\\I(\C', \beta) \leadsto (\C'', \beta') }
+{ \X(\C) \leadsto \C'' }
+\end{equation*}
+\end{minipage}}
+\caption{Rules for exchanging messages between machines and detecting when all
+messages have been delivered.}\label{fig:rule:exchange}
+\end{figure}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\begin{equation*}
+\inferrule[Progress]
+{\C = \D \vdash_t^\phi \A
+\\ \C' = \D \vdash_{t+1}^\phi \A}
+{\N(\C) \leadsto \C'}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Progress-Sync]
+{\C = \C_1 ~||~ \C_2
+\\ \N(\C_1) \leadsto \C_1'
+\\ \N(\C_2) \leadsto \C_2'}
+{\N(\C) \leadsto \C_1' ~||~ \C_2'}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for the progression of time.}\label{fig:rule:progress}
+\end{figure}
+
+
 To model unreliable communication between locations, we introduce the
 $\diamond$ relation, which relates pairs of location names at specific times.
 For example, when locations $a$ and $b$ can
@@ -543,85 +655,6 @@ communicate at time $t$, we denote it by
 \begin{equation*}
  \boxed{a \linkUp{t} b}
 \end{equation*}
-
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\C\migrates(\phi,\psi)\C$}
-\doms{$S_{c} \longrightarrow S_{c'}$}
-\doms{$\halted(\M)$}
-\begin{equation*}
-\inferrule[Mig-Go]
-{
-  \C\equiv\M\parallel\M_{dest} \\
-  \M\equiv\D\mscG{t}{\phi a}\A,t:\Go<b,k> \\
-  \M_{dest}\equiv\D'\mscG{t}{\psi b}\A' \\
-  \quiet(\M) \\
-  \psi \neq \phi a \beta \\
-  \lnot \halted(\M_{dest})
-}
-{
-  \C\migrates(\phi a, \psi b a)\D\mscG{t}{\psi b a} \A, \atm k<> \parallel \M_{dest}
-}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Mig-Recurse]
-{
-  \C \equiv \M\parallel\C_1 \\
-  \M \equiv \D\mscG{t}{\phi a} \A \\
-  \C_1\migrates(\phi, \psi)\C_1'
-}
-{
-  \C \migrates(\phi,\psi) \D\mscG{t}{\psi a}\A\parallel\C_1'
-}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Mig-DontCare]
-{
-  \C \equiv \M\parallel\C_1 \\
-  \M \equiv \D\mscG{t}{\phi} \A \\
-  \C_1\migrates(\theta, \psi)\C_1'
-}
-{
-  \C \migrates(\theta,\psi) \M\parallel\C_1'
-}
-\qquad
-\inferrule[Mig-Sys]
-{
-  \C\migrates(a,b)\C'
-}
-{
-  \S_{\C}\longrightarrow \S_{\C'}
-}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Mig-Halt]
-{
-  \M\equiv\D\mscG{t}{\phi a}\A,t:\Halt<> \\
-  \quiet(\M)
-}
-{
-  \M\migrates(\phi a, \Omega a)\D\mscG{t}{\Omega a} \A
-}\qquad
-\inferrule[Halted-Msc]
-{
-  \C\equiv \D\mscG{t}{\phi}\A\parallel\C' \\
-  \phi=\Omega\alpha
-}
-{
-  \halted(\D\mscG{t}{\phi}\A)
-}
-\end{equation*}
-\end{minipage}}
-\caption{Inference rules for migration and failure.\label{fig:rule:mig}}
-\end{figure}
-
-\newpage
-\newpage
-
-\subsection*{Work in progress}
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
