@@ -10,8 +10,62 @@ with the issues of unreliable communication, some fundamental implementation
 issues need to be solved before the use of the join calculus as a foundation for
 distributed programming can be said to be realistic.
 
-Of these are
+When a location migrates, every location it has ever exported a name to knows
+which physical machine to send new messages to.  Since the definition site of a
+name has no given means to know the extent that a name escapes into the network
+once it has escaped its scope, it is impossible to notify every site that is
+knowledgeable of the name that its definition site has moved to a different
+physical machine.
+
+The following code exemplifies the problem:
+\begin{verbatim}
+def
+    get_trig<k> & app_trig<t> |> k<t>
+ or server[
+       trigger<t> |> t<> & 10:trigger<t>
+    in get_trig<trigger>
+    ]
+ or applet[
+       do_work<> |> ...
+    or trigger<> |> ...
+    in { run app_trigger<trigger>
+       ; do go(client_1)
+       ; run do_work<>
+       ; do go(client_2)
+       ; ...
+       ; do go(client_n)}
+    ]
+ or site_1[...] or ... or site_n[...]
+\end{verbatim}
+
+If we assume that the locations \verb+site_1...site_n+ represent different
+physical machines, some special means is needed to route the trigger messages to
+the applet as it migrates.
+
+\vspace{1em}
+
+If one were to speculate in possible solutions to this problem one could imagine
+either a central name server or a distributed key-value store that maps names to
+machines. This seems horribly ineffective, because it seems that a consequence
+is that everybody needs to know where everybody else is, and either produce a
+single point of failure or a lot of network traffic containing administrative
+overhead whenever locations migrate.
+
+\vspace{1em}
+
+An entirely different approach would be to associate a name to the physical
+machine that hosted the escaping context, and require the migrating locations to
+implement a scheme manually that solves the problem satisfactorily in the given
+scenario. This might possibly work if the actual communication requirements in
+most applications are easier to handle than the general name routing problem.
+However, further investigation of this is beyond the scope of this thesis, but
+could be considered an interesting future work.
+
+
+\begin{verbatim}
+TODO:
   * Global name routing
+  * Globally synchronised time
   * Migration security
   * Distributed garbage collection
     - Mention techniques to leverage manual garbage collection.
@@ -25,3 +79,4 @@ Of these are
 * patterns
   - distribution
   - garbage collection
+\end{verbatim}

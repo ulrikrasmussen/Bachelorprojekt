@@ -13,17 +13,18 @@ Report disposition
 
 3. Present the syntax and semantics.
 
-4. Present and discuss the use-case and retransmission
-   protocol. Evaluate the calculus' usefulness based on the
-   use case.
+4. Present and discuss the use-case.
 
-5. Additionally, present potential use cases and possible
-   patterns used in implementation, and argue to the extent
-   possible about the elegantnes of the join expression of
-   the programs.
+5. Present and discuss retransmission protocol.
 
-6. Discuss unsolved problems / shortcomings of the calculus
-   (global name routing, security..)
+6. General discussion
+   * Summarize conclusions from case and retransmission.
+   * Present implementation problems.
+   * (Present more patterns, potential use cases).
+
+7. Discuss unsolved problems / shortcomings of the calculus
+   (global name routing, security, distributed garbage
+   collection) and other future work.
 
 Syntax and Semantics:
 =====================
@@ -54,13 +55,8 @@ Use case disposition:
    a) Argue that more general server-sensor queries may be
       constructed,
    b) And that more general ad-hoc registration is possible.
-   c) Compare with an imagined C/Java implementation.??
-
 
 Metode:
 =======
 
-identificer problem -> prøv at kode -> analyser resultat ->
-konethn nohunohunohu
-nouhonehuonehuonehunoehunoehunoeuhonehuonehu onehu
-onehunohunoeh unoehu oneuh oneuhonetuhontuhonthu onehu oneu
+identificer problem -> prøv at kode -> analyser resultat
