@@ -8,6 +8,7 @@ or at least refer to what is discussed in the use case, which also needs to be
 edited btw.} In order to deal with the imperfections of basic radio and network
 communications we have implemented a rudimentary library that enables reliable,
 ordered delivery between two communicating parties.
+\fixme{Update the retransmission library to the new time version}
 
 The communication protocol works by the same basic principles as does TCP. In
 particular it gives the same guarantees about the message exchanges, namely
@@ -24,7 +25,7 @@ those of
 
 \end{itemize}
 
-Central to the workings of the protocol is the bookeeping that takes care of
+Central to the workings of the protocol is the bookkeeping that takes care of
 ordering the messages, by labeling each message to be sent with a sequence
 number. Only when the recipient acknowledges the reception of a message by
 sending an acknowledgement message that carries the same sequence number as the

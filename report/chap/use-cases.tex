@@ -1,5 +1,5 @@
 % vim:spell:spelllang=en_gb:
-% vim:set textwidth=80:
+% vim:set textwidth=80 fo+=tcroql:
 
 \section{Use Cases}
 
@@ -214,19 +214,23 @@ routine (e.g. list concatenation) had to be included in every sub location in
 order to avoid communication penalties in the shape of message loss and time
 penalties.
 
+Apart from this, the programming felt rather straightforward, and if not
+elegant, then at least without any need for cumbersome encodings of conceptually
+simple things.
+
 A potential problem with the program is revealed in the event of a query with
 devious behaviour entering the system, with the devious behaviour consisting in
-for example neglecting to migrate to the sensors after construction, resulting
+for example neglecting to migrate to the sensors after construction, which results
 in a significant increase in data traffic between the sensors and the servers,
 thus increasing battery drain.
 
 Unfortunately there's no cure for this, because there is no way in the join
 program to detect if the definition site of a name currently resides on the same
-physical machine as the sender, or that an atom was produced locally or
+physical machine as the sender, or whether an atom was produced locally or
 remotely.
 
 This is more a security issue however, and one could argue that all the queries
-in a system such as this originate from a trusted source.
+in a system such as this originate from trusted sources.
 
 In our opinion this toy version of a static sensor network is rather easily
 extendible to include more advanced features such as dynamic reconfiguration of
@@ -236,9 +240,3 @@ If one were to further build on the example it would be interesting to produce
 queries that involve sensor-to-sensor communication, such as those given in
 \cite{bonnet2001towards}, where sensors only report a measurement that is above
 a given threshold if a neighbouring sensor also registers a high value.
-
-\vspace{1em}
-
-In order to put this problem into a broader perspective, consider the
-alternatives programming languages available for programming these sensors in
-this scenario.

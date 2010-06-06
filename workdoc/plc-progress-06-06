@@ -1,0 +1,18 @@
+Da vores problemformulering jo byder os at vurdere "the feasibility" af join i
+en distribueret og embedded sammenhæng har vi tænkt lidt nærmere over, hvordan
+vi egentlig griber det an. Vi er kommet frem en fremgangsmetode hvor vi giver en
+(strengt taget) subjektiv vurdering af egnetheden af sproget til vores use case,
+hvorfra vi jo kun direkte ville kunne slutte et negativt resultat, da vi ikke
+kan generalisere særlig godt til andre programmer ud fra et eneste eksempel.
+Udover dette har vi også identificeret nogle aspekter af sproget, der ville være
+besværlige at implementere i praksis, som vi inkluderer som en del af vores
+vurdering af sproget.
+
+
+Vi har således produceret en del på diskussionsafsnittet og indledningen, sådan
+at indledningen introducerer vores metode og indhold. Diskussionsafsnittene
+behandler vores erfaringer og betragtninger på grundlag af vores erklærede
+metode.
+
+Alt i alt er der tilføjet indhold til:
+Introduktion, Use case (diskussion primært) og General Discussion.
