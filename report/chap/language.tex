@@ -686,7 +686,10 @@ machine is \emph{stuck}, and can't execute any of its reaction rules at the
 current instant. We have not proven it, but we hypothesise that for any
 machine, concluding $\R_m(\M) \leadsto x$ and $\R_m(\M) \leadsto y$ implies
 $x=y$. The inference rules for machine internal computation is defined in
-Figure \ref{fig:rule:machine}.
+Figure \ref{fig:rule:machine}. Note that only fully heated processes are added
+to the message set, meaning that any message set $\A$ only contains processes
+of the form $\atm t:x<v>$. \fixme{Attempting to prove these hypotheses seems
+outside the scope of this project?}
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -739,9 +742,23 @@ detecting whether it is quiescent or not.\label{fig:rule:machine}}
 \end{figure}
 
 
-\subsubsection{Distribution and mobility}
+\subsubsection{Distribution}
 
+Any machine $\D \vdash_t^\phi \A$ in the system can spawn new new sublocations,
+which will have the form $\D' \vdash_t^{\phi a} \A'$, i.e. they have a unique
+name $a$ and their parent location string $\phi$ as a prefix of their own.
 
+Checking if a system $\C$ can spawn sublocations is denoted by
+\begin{equation*}
+\boxed{\F(\C) \leadsto \T_\F}
+\end{equation*}
+where the syntax $\T_\F$ can denote either quiescence or the next system state:
+\begin{align*}
+ \T_\F ::={}& \C' \\
+    |\quad{}& quiescent
+\end{align*}
+The inference rules for sublocation spawning is defined in Figure
+\ref{fig:rule:spawn}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -796,6 +813,26 @@ detecting whether it is quiescent or not.\label{fig:rule:machine}}
 \caption{Sublocation spawning rules}\label{fig:rule:spawn}
 \end{figure}
 
+If a machine contains a message with a port name defined on another machine in
+the system, the message automatically gets transferred to that other machine,
+enabling the machines to communicate.
+
+Modelling that communication in our semantics proved to be a little involved,
+and requires some auxiliary relations dividing message exchange into
+two ``stages''; extraction and insertion.
+
+Message extraction is denoted by
+\begin{equation*}
+\boxed{\E(\C) \leadsto (\C', \beta)}
+\end{equation*}
+
+If we can conclude $\E(\C) \leadsto (\C', \beta)$ for a system $\C$, then we
+can extract a set of non-local messages $\beta$ from $\C$, yielding a new
+system $\C'$ where the messages are removed from the respective machines. Every
+element in $\beta$ has the form $(a, P)$ where $a$ is the unique name of the
+machine that the message $P$ was extracted from. Inference rules for message
+extraction is defined in Figure \ref{fig:rule:extract}.
+
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\E(\C) \leadsto (\C', \beta)$}
@@ -828,6 +865,18 @@ detecting whether it is quiescent or not.\label{fig:rule:machine}}
 \end{minipage}}
 \caption{Rules for extracting non-local messages from machines.}\label{fig:rule:extract}
 \end{figure}
+
+Message insertion is denoted by
+\begin{equation*}
+\boxed{\I(\C, \beta) \leadsto (\C', \beta')}
+\end{equation*}
+
+If we can conclude $\I(\C, \beta) \leadsto (\C', \beta')$ for a system $\C$ and
+a set of incoming messages $\beta$, we can insert the messages from $\beta$
+into the respective receiver machines in $\C$, yielding a new system state
+$\C'$ and a set of messages $\beta'$ that had no receivers. Messages are
+inserted in the current instant of the machine. The rules for message insertion
+are defined in Figure \ref{fig:rule:insert}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -868,12 +917,26 @@ detecting whether it is quiescent or not.\label{fig:rule:machine}}
 \caption{Rules for inserting external messages into machines.}\label{fig:rule:insert}
 \end{figure}
 
+The combined action of sequentially extracting and inserting messages in a
+system is denoted by
+\begin{equation*}
+\boxed{\X(\C) \leadsto \T_\X}
+\end{equation*}
+where the syntax $\T_\X$ either denotes successful message exchange or
+quiescence (i.e. no machine has non-local messages):
+\begin{align*}
+ \T_\X ::={}& \C' \\
+    |\quad{}& quiescent
+\end{align*}
+
+The inference rules for message exchange is defined in Figure \ref{fig:rule:exchange}.
+
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\X(\C) \leadsto \T_\X$}
 \begin{equation*}
-\inferrule[Exchange-Quiescent\footnote{With side-condition $\beta = \emptyset$.}]
-{\E(\C) \leadsto (\C', \beta)}
+\inferrule[Exchange-Quiescent]
+{\E(\C) \leadsto (\C', \emptyset)}
 {\X(\C) \leadsto quiescent}
 \end{equation*}
 \begin{equation*}
@@ -886,6 +949,102 @@ detecting whether it is quiescent or not.\label{fig:rule:machine}}
 \caption{Rules for exchanging messages between machines and detecting when all
 messages have been delivered.}\label{fig:rule:exchange}
 \end{figure}
+
+
+\subsubsection{Mobility and failure}
+
+In order to define the rules for mobility and failure, we need an auxiliary
+definition of mappings between unique machine identifiers and their fully
+qualified location sequence. Such a map is denoted by the syntax
+\begin{align*}
+\Sigma ::={}& (a \mapsto \phi) \\
+    |\quad{}& \Sigma_1 \cup \Sigma_2
+\end{align*}
+
+Looking up the path for the name $a$ in a map $\Sigma$ is denoted by
+\begin{equation*}
+\boxed{\U(\Sigma, a) \leadsto \T_\Sigma}
+\end{equation*}
+where the syntax of $\T_\Sigma$ can denote either success or failure ($\bot$):
+\begin{align*}
+ \T_\Sigma ::={}& \phi \\
+        |\quad{}& \bot
+\end{align*}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\U(\Sigma, a) \leadsto \T_\Sigma$}
+\doms{$\T_\Sigma ::= \bot ~|~ \phi$}
+
+\begin{equation*}
+\inferrule[Map-Match]
+{\Sigma = (a \mapsto \phi)}
+{\U(\Sigma, a) \leadsto \phi}
+\qquad
+\inferrule[Map-Nomatch\footnote{With side-condition $a \not= b$.}]
+{\Sigma = (b \mapsto \phi)}
+{\U(\Sigma, a) \leadsto \bot}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Map-Match-Left]
+{\Sigma = \Sigma_1 \cup \Sigma_2
+\\ \U(\Sigma_1, a) \leadsto \phi}
+{\U(\Sigma, a) \leadsto \phi}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Map-Match-Right]
+{\Sigma = \Sigma_1 \cup \Sigma_2
+\\ \U(\Sigma_1, a) \leadsto \bot
+\\ \U(\Sigma_2, a) \leadsto \phi}
+{\U(\Sigma, a) \leadsto \phi}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Map-Nomatch-Both]
+{\Sigma = \Sigma_1 \cup \Sigma_2
+\\ \U(\Sigma_1, a) \leadsto \bot
+\\ \U(\Sigma_2, a) \leadsto \bot}
+{\U(\Sigma, a) \leadsto \bot}
+\end{equation*}
+
+\end{minipage}}
+\caption{Rules defining the semantics of a key/value map with detection of
+non-existing keys.}\label{fig:rule:sigma}
+\end{figure}
+
+In order to perform migration of a single machine in the system, we need to
+know the fully qualified path of every other machine. The $\Sigma$-map of the
+fully qualified paths in the system $\C$ is related to the system by
+\begin{equation*}
+\boxed{\L(\C) \leadsto \Sigma}
+\end{equation*}
+
+The inference rules for location path extraction is defined in Figure
+\ref{fig:rule:makemap}.
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\L(\C) \leadsto \Sigma$}
+\begin{equation*}
+\inferrule[Loc-Insert]
+{\C = \D \vdash_t^{\phi a} \A}
+{\L(\C) \leadsto (a \mapsto \phi a) }
+\end{equation*}
+\begin{equation*}
+\inferrule[Loc-Par]
+{\C = \C_1 ~||~ \C_2
+\\ \L(\C_1) \leadsto \Sigma_1
+\\ \L(\C_2) \leadsto \Sigma_2}
+{\L(\C) \leadsto \Sigma_1 \cup \Sigma_2}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for determining the full prefix of all location names in a
+system.}\label{fig:rule:makemap}
+\end{figure}
+
+
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -989,7 +1148,7 @@ messages have been delivered.}\label{fig:rule:exchange}
 \begin{equation*}
 \inferrule[Detect-Go-Halt]
 {\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:\mathit{go}<\kappa(a,c)> \}
-\\ \U(\Sigma, a) \leadsto \top
+\\ \U(\Sigma, a) \leadsto \bot
 }
 {\G(\Sigma, \C) \leadsto halt_\phi}
 \end{equation*}
@@ -1040,66 +1199,6 @@ messages have been delivered.}\label{fig:rule:exchange}
 \caption{Rules for migrating machines with the same location prefix.}\label{fig:rule:mig}
 \end{figure}
 
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\U(\Sigma, a) \leadsto \T_\Sigma$}
-\doms{$\T_\Sigma ::= (a \mapsto \phi) ~|~ \Sigma_1 \cup \Sigma_2$}
-
-\begin{equation*}
-\inferrule[Map-Match]
-{\Sigma = (a \mapsto \phi)}
-{\U(\Sigma, a) \leadsto \phi}
-\qquad
-\inferrule[Map-Nomatch\footnote{With side-condition $a \not= b$.}]
-{\Sigma = (b \mapsto \phi)}
-{\U(\Sigma, a) \leadsto \top}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Map-Match-Left]
-{\Sigma = \Sigma_1 \cup \Sigma_2
-\\ \U(\Sigma_1, a) \leadsto \phi}
-{\U(\Sigma, a) \leadsto \phi}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Map-Match-Right]
-{\Sigma = \Sigma_1 \cup \Sigma_2
-\\ \U(\Sigma_1, a) \leadsto \top
-\\ \U(\Sigma_2, a) \leadsto \phi}
-{\U(\Sigma, a) \leadsto \phi}
-\end{equation*}
-
-\begin{equation*}
-\inferrule[Map-Nomatch-Both]
-{\Sigma = \Sigma_1 \cup \Sigma_2
-\\ \U(\Sigma_1, a) \leadsto \top
-\\ \U(\Sigma_2, a) \leadsto \top}
-{\U(\Sigma, a) \leadsto \top}
-\end{equation*}
-
-\end{minipage}}
-\caption{Rules defining the semantics of a key/value map with detection of non-existing keys.}\label{fig:rule:sigma}
-\end{figure}
-
-\begin{figure}[!h]
-\fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\L(\C) \leadsto \Sigma$}
-\begin{equation*}
-\inferrule[Loc-Insert]
-{\C = \D \vdash_t^{\phi a} \A}
-{\L(\C) \leadsto (a \mapsto \phi a) }
-\end{equation*}
-\begin{equation*}
-\inferrule[Loc-Par]
-{\C = \C_1 ~||~ \C_2
-\\ \L(\C_1) \leadsto \Sigma_1
-\\ \L(\C_2) \leadsto \Sigma_2}
-{\L(\C) \leadsto \Sigma_1 \cup \Sigma_2}
-\end{equation*}
-\end{minipage}}
-\caption{Rules for determining the full prefix of all location names in a system.}\label{fig:rule:makemap}
-\end{figure}
 
 
 \begin{figure}[!h]
