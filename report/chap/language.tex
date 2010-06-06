@@ -671,7 +671,9 @@ detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 }
 \end{equation*}
 \end{minipage}}
-\caption{Rules for triggering reactions in a solution of messages, and at the same time detecting whether a reaction is able to trigger or not.\label{fig:rule:def}}
+\caption{Rules for triggering reactions in a solution of messages, and at the
+same time detecting whether a reaction is able to trigger or
+not.\label{fig:rule:def}}
 \end{figure}
 
 When checking if a machine $M$ can take an internal computational step, we
@@ -1049,8 +1051,6 @@ The inference rules for location path extraction is defined in Figure
 system.}\label{fig:rule:makemap}
 \end{figure}
 
-
-
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\K(\phi, \C) \leadsto \T_\K$}
@@ -1201,8 +1201,38 @@ system.}\label{fig:rule:makemap}
 {\V(\C, \phi \mapsto \psi) \leadsto \C_1' ~||~ \C_2'}
 \end{equation*}
 \end{minipage}}
-\caption{Rules for migrating machines with the same location prefix.}\label{fig:rule:mig}
+\caption{Rules for migrating machines with identical location prefixes.}\label{fig:rule:mig}
 \end{figure}
+
+\begin{figure}[!h]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\widehat\G(\C) \leadsto \T_{\widehat\G}$}
+\begin{equation*}
+\inferrule[MigHalt-Quiescent]
+{\L(\C) \leadsto \Sigma
+\\ \G(\Sigma, \C) \leadsto quiescent}
+{\widehat\G(\C) \leadsto quiescent}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[MigHalt-Halt]
+{\L(\C) \leadsto \Sigma
+\\ \G(\Sigma, \C) \leadsto halt_\phi
+\\ \K(\phi, \C) \leadsto \C'}
+{\widehat\G(\C) \leadsto \C'}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[MigHalt-Migrate]
+{\L(\C) \leadsto \Sigma
+\\ \G(\Sigma, \C) \leadsto (\C', \phi \mapsto \psi)
+\\ \V(\C', \phi \mapsto \psi) \leadsto \C''}
+{\widehat\G(\C) \leadsto \C''}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for migration and failure.}\label{fig:rule:mighalt}
+\end{figure}
+
 
 
 
