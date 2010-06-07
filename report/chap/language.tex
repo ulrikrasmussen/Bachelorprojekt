@@ -1075,7 +1075,7 @@ With the syntax $\T_\G^*$ defined as
 The inference rules for ``go'' and ``halt'' detection is defined in Figure
 \ref{fig:rule:detect}.
 
-\begin{figure}[!ht]
+\begin{figure}[!p]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\G(\Sigma, \M) \leadsto \T_\G$}
 \doms{$\T_\G ::= quiescent ~|~ halt_\phi ~|~ (\M', \phi \mapsto \psi)$}
@@ -1166,9 +1166,9 @@ The inference rules for ``go'' and ``halt'' detection is defined in Figure
 \caption{Rules for detecting \emph{go} and \emph{halt}
 atoms.}\label{fig:rule:detect}
 \end{figure}
-
 \newpage
-Rewriting of location prefixes is denoted by
+\noindent
+Rewriting location prefixes in a system is denoted by
 \begin{equation*}
 \boxed{\V(\C, \phi \mapsto \psi) \leadsto \C'}
 \end{equation*}
@@ -1181,6 +1181,9 @@ Halting machines based on their location prefix is denoted by
 \end{equation*}
 Concluding $\K(\phi, \C) \leadsto \C'$ means that the system $\C'$ is the system
 $\C$ where every machine with prefix $\phi$ have been removed.
+
+The inference rules for location rewriting and halting is defined in Figure
+\ref{fig:rule:mig} and \ref{fig:rule:halt} respectively.
 
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -1234,6 +1237,13 @@ $\C$ where every machine with prefix $\phi$ have been removed.
 \caption{Rules for halting machines with a specific location prefix.}\label{fig:rule:halt}
 \end{figure}
 
+\newpage
+We need to apply either the $\V$ or $\K$ relation based on the conclusion of
+$\G^*$. Applying either relation or concluding quiescence for a system $\C$, is
+denoted by
+\begin{equation*}
+\boxed{\G'(\C) \leadsto \widehat\C}
+\end{equation*}
 
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -1241,14 +1251,14 @@ $\C$ where every machine with prefix $\phi$ have been removed.
 \begin{equation*}
 \inferrule[MigHalt-Quiescent]
 {\L(\C) \leadsto \Sigma
-\\ \G(\Sigma, \C) \leadsto quiescent}
+\\ \G^*(\Sigma, \C) \leadsto quiescent}
 {\G'(\C) \leadsto quiescent}
 \end{equation*}
 
 \begin{equation*}
 \inferrule[MigHalt-Halt]
 {\L(\C) \leadsto \Sigma
-\\ \G(\Sigma, \C) \leadsto halt_\phi
+\\ \G^*(\Sigma, \C) \leadsto halt_\phi
 \\ \K(\phi, \C) \leadsto \C'}
 {\G'(\C) \leadsto \C'}
 \end{equation*}
@@ -1256,7 +1266,7 @@ $\C$ where every machine with prefix $\phi$ have been removed.
 \begin{equation*}
 \inferrule[MigHalt-Migrate]
 {\L(\C) \leadsto \Sigma
-\\ \G(\Sigma, \C) \leadsto (\C', \phi \mapsto \psi)
+\\ \G^*(\Sigma, \C) \leadsto (\C', \phi \mapsto \psi)
 \\ \V(\C', \phi \mapsto \psi) \leadsto \C''}
 {\G'(\C) \leadsto \C''}
 \end{equation*}
