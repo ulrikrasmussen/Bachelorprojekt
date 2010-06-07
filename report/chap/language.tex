@@ -1021,7 +1021,7 @@ fully qualified paths in the system $\C$ is related to the system by
 The inference rules for location path extraction is defined in Figure
 \ref{fig:rule:makemap}.
 
-\begin{figure}[!ht]
+\begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\L(\C) \leadsto \Sigma$}
 \begin{equation*}
@@ -1044,9 +1044,9 @@ system.}\label{fig:rule:makemap}
 Given a $\Sigma$-map for a given system, we can detect ``go'' messages and
 determine what to do. Determining whether a machine needs to be halted or
 migrated is denoted by
-\begin{equation}
+\begin{equation*}
 \boxed{\G(\Sigma, \M) \leadsto \T_\G}
-\end{equation}
+\end{equation*}
 Where the syntax $\T_\G$ denotes either quiescence, location halting or
 migration:
 \begin{align*}
@@ -1072,6 +1072,8 @@ With the syntax $\T_\G^*$ defined as
          |\quad& halt_\phi \\
          |\quad& (\C', \phi \mapsto \psi)
 \end{align*}
+The inference rules for ``go'' and ``halt'' detection is defined in Figure
+\ref{fig:rule:detect}.
 
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -1161,8 +1163,24 @@ With the syntax $\T_\G^*$ defined as
 \end{equation*}
 
 \end{minipage}}
-\caption{Rules for detecting \emph{go} and \emph{halt} atoms.}\label{fig:rule:go-halt}
+\caption{Rules for detecting \emph{go} and \emph{halt}
+atoms.}\label{fig:rule:detect}
 \end{figure}
+
+\newpage
+Rewriting of location prefixes is denoted by
+\begin{equation*}
+\boxed{\V(\C, \phi \mapsto \psi) \leadsto \C'}
+\end{equation*}
+Concluding $\V(\C, \phi \mapsto \psi) \leadsto \C'$ means that the system $\C'$
+is the system $\C$ where every machine with prefix $\phi$ has prefix $\psi$.
+
+Halting machines based on their location prefix is denoted by
+\begin{equation*}
+\boxed{\K(\phi, \C) \leadsto \C'}
+\end{equation*}
+Concluding $\K(\phi, \C) \leadsto \C'$ means that the system $\C'$ is the system
+$\C$ where every machine with prefix $\phi$ have been removed.
 
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
