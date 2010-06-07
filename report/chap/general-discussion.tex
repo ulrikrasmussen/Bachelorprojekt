@@ -113,15 +113,20 @@ def
 This is admittedly speculation however, but could be considered an interesting
 future work.
 
-\begin{verbatim}
-TODO:
- OK Global name routing
- OK Globally synchronised time
-  * Migration security
+\section{Conclusion}
+% Join is nice, but work remains.
 
-* potential use cases
+We set out to investigate the usefulness of the join calculus as a
+formalism for expressing programs that execute in a distributed environment with
+limited resources and unreliable communication.
 
-* patterns
-  - distribution
-  - garbage collection
-\end{verbatim}
+While we have realised that it isn't possible to constructively assert such an
+abstract notion as \emph{usefulness} based on the small body of code that we have
+produced, we have at least been able to report that we haven't met any
+significant obstacles that obviously limit the elegance of the language.
+
+Combining this with our reflections on the implementation impeding aspects of
+the language, most notably the ones that involve global awareness, we believe
+that a modified version without these problems would stand a decent chance at
+becoming a programming language suitable for expressing programs in the
+target domain of distributed embedded devices.
