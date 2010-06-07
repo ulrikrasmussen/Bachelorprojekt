@@ -15,7 +15,7 @@ concrete syntax into abstract syntax, and by defining appropriate monads and
 type classes we feel that we have at an implementation, that doesn't contain too
 much clutter and plumbing.\fixme{Should we actually include this?}
 
-\section*{Features and usage}
+\section{Features and usage}
 The simulator is capable of simulating a network of physical machines, each
 executing a join program and providing a set of built in join patterns that make
 it up for hardware functions.
@@ -38,7 +38,7 @@ The mechanism that enables the indication of link status is called the
 \emph{EventLog}, and it also provides a means to introduce special unary join
 patterns that produce a given result as a function of the current time.
 
-\section*{Structure}
+\section{Structure}
 
 The simulator is structured in basically the same overall components as the
 semantics that it strives to implement. However, as the implementation is in
@@ -92,7 +92,7 @@ and the purpose of providing us with an intuition of the workings of the
 calculus, there are some differences between the semantics and the actual
 implementation.
 
-\subsection*{Constructing an experiment}
+\section{Constructing an experiment}
 Invoking the simulator is done by creating a haskell module featuring
 \begin{itemize}
 
