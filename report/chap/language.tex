@@ -17,6 +17,8 @@ language.
 core calculus.. We can't possibly do any better than fournet.. how much should
 be included? Can we get away with just referring to the articles? Should we
 include sections like this at all?}
+
+
 \subsection{Core calculus}
 
 The core calculus is based on the \emph{Reflexive Chemical Abstract Machine}
@@ -36,11 +38,11 @@ the atoms and reaction rules of the CHAM.
 The abstract syntax of these constructs are given below.
 \begin{displaymath}
 \begin{array}{rl}
-  P =& \atm x < \tilde v > \\
+  P ::=& \atm x < \tilde v > \\
  |& \defJ D \inJ P
 \end{array}\qquad
 \begin{array}{rc}
-  P =& \atm x < \tilde v > \\
+  J ::=& \atm x < \tilde v > \\
  |& J \andJ J
 \end{array}\qquad
 \begin{array}{rc}
@@ -62,16 +64,16 @@ Consider for example these two similar implementations of a stack, drawn from \c
 \begin{displaymath}
 \begin{array}{rcll}
 \defJ
-\\ & &  \atm some<x> \andJ \atm push<y>&\toJ0 \atm some<y:x>
-\\ &\orJ&\atm empty<> \andJ \atm push<y> &\toJ0 \atm some<y>
-\\ &\orJ&\atm some<x> \andJ \atm pop<k> &\toJ0  \match x \with
+\\ & &  \atm some<x> \andJ \atm push<y>&\toJ{} \atm some<y:x>
+\\ &\orJ&\atm empty<> \andJ \atm push<y> &\toJ{} \atm some<y>
+\\ &\orJ&\atm some<x> \andJ \atm pop<k> &\toJ{}  \match x \with
 \\ &&& \qquad         x':[] \to \atm k<x> \andJ \atm empty<>
 \\ &&& \qquad    | x':xs \to \atm k<x> \andJ \atm some<xs>
 \\&\inJ& \atm empty<> \andJ \ldots
 \\
 \\\defJ &&&
-\\ & &   \atm stack<x> \andJ \atm push<y> &\toJ0 \atm stack<y:x>
-\\&\orJ&  \atm stack<x:xs> \andJ \atm pop<k>& \toJ0 \atm stack<xs> \andJ \atm k<x>
+\\ & &   \atm stack<x> \andJ \atm push<y> &\toJ{} \atm stack<y:x>
+\\&\orJ&  \atm stack<x:xs> \andJ \atm pop<k>& \toJ{} \atm stack<xs> \andJ \atm k<x>
 \\&\inJ& \atm stack<[]> \andJ \ldots
 \end{array}
 \end{displaymath}
@@ -101,6 +103,7 @@ the entire branch of the location tree, of which the migrating or halting
 location is the root. Therefore, when a location migrates, the entire set of
 sublocations also migrates, and halting similarly halts every sublocation.
 
+
 \subsection{Realtime extension}
 
 The core join-calculus has no notion of time, which makes it
@@ -113,10 +116,10 @@ constraint like that in the core join calculus would require that we
 rely on a specific implementation being able to generate a message on
 a given time interval:
 \begin{align*}
-  \textbf{def}\quad & \S k<x> ~|~ \S incall<> \triangleright P_{ok} \\
-  \land\quad & \S timeout<> ~|~ \S incall<> \triangleright P_{error} \\
-  \textbf{in}\quad & \S remotecall<k> ~|~ \S starttimer<timeout, 10>
-                                      ~|~ \S incall<>
+  \textbf{def}\quad & \atm k<x> ~|~ \atm incall<> \triangleright P_{ok} \\
+  \land\quad & \atm timeout<> ~|~ \atm incall<> \triangleright P_{error} \\
+  \textbf{in}\quad & \atm remotecall<k> ~|~ \atm starttimer<timeout, 10>
+                                      ~|~ \atm incall<>
 \end{align*}
 In the example above, \emph{remotecall} is given $10$ time units to
 return a result on the name \emph{k}. If \emph{k} makes it before the
@@ -154,9 +157,9 @@ and all reactions are tagged with a
 We can now model the example above without depending on special
 messages that get captured by the environment:
 \begin{align*}
-  \textbf{def}\quad & \S k<x> ~|~ \S incall<> \triangleright P_{ok} \\
-  \land\quad & \S incall<> \stackrel{16}{\triangleright} P_{error} \\
-  \textbf{in}\quad & \S 0:remotecall<k> ~|~ \S 0:incall<>
+  \textbf{def}\quad & \atm k<x> ~|~ \atm incall<> \triangleright P_{ok} \\
+  \land\quad & \atm incall<> \stackrel{16}{\triangleright} P_{error} \\
+  \textbf{in}\quad & \atm 0:remotecall<k> ~|~ \atm 0:incall<>
 \end{align*}
 Here, we assume that the response message \emph{k} gets transferred
 from an external location and gets time tagged as soon as it enters
@@ -240,11 +243,14 @@ P,Q\quad::={}&             && \textbf{processes} \\
  \alt\quad& \textbf{def}~D~\textbf{in}~P
                            && \quad\textrm{local definition} \\
  \alt\quad& t : P          && \quad\textrm{timed process} \\
- \alt\quad& \textbf{match}~e~\textbf{with}~\pi_1
-               \rightarrow P_1 ~|~ ... ~|~ \pi_n \rightarrow P_n
+ \alt\quad& \textbf{match}~e~\textbf{with}~\Pi
                            && \quad\textrm{pattern matching} \\
  \alt\quad& \{ I_1; I_2; ...; I_n \}
                            && \quad\textrm{*instruction sequence} \\
+\Pi\quad ::={}&            && \textbf{prioritised match alternatives} \\
+ \alt\quad& \top           && \quad\textrm{empty alternative} \\
+ \alt\quad& \pi \rightarrow P ~|~ \Pi
+                           && \quad\textrm{match alternative} \\
 D\quad ::={}&              && \textbf{join definitions} \\
          & J \stackrel{d}{\triangleright} P
                            && \quad\textrm{delayed reaction} \\
@@ -253,10 +259,12 @@ D\quad ::={}&              && \textbf{join definitions} \\
 j\quad ::={}&             && \textbf{join pattern} \\
             & x\langle y \rangle
                            && \quad\textrm{message} \\
-\alt\quad& x(y)
-                           && \quad\textrm{*synchronous message} \\
+            & x\langle y_1, y_2, ..., y_n \rangle
+                           && \quad\textrm{*$n$-nary message} \\
+\alt\quad& x(y_1, y_2, ..., y_n)
+                           && \quad\textrm{*synchronous $n$-ary message} \\
 J\quad ::={}&              && \textbf{synchronised join patterns}\\
-\alt\quad& j               && \quad\textrm{single message}\\
+\alt\quad& \top               && \quad\textrm{empty pattern}\\
 \alt\quad& j ~\&~ J
                            && \quad\textrm{synchronization} \\
 \pi\quad ::={}&            && \textbf{algebraic patterns} \\
@@ -293,22 +301,28 @@ I\quad ::={}&              && \textbf{*instructions} \\
 
 
 \subsection{Semantics}
-
 We model the state of our system as a series of CHAMs composed in parallel. A
 single CHAM is a four tuple $\M = (\D, \A, \phi, t)$ denoted by
 \begin{equation*}
  \M ::= \D \mscJ \A
 \end{equation*}
 where $\D$ is a set of active definitions, $\A$ is a multiset
-of present atoms, $\phi$ is an ordered sequence of location names, and $t$ is
-a natural number denoting the current time. Multiple CHAMs are composed in
-parallel using the operator $\parallel$. We denote one or more CHAMs composed
-in parallel by the syntax
-\begin{align*}
- \C, \C_1, \C_2 ::={}& \M \\
-             |\quad{}& \C_1 \parallel \C_2
-\end{align*}
+of messages, $\phi$ is an ordered sequence of location names, and $t$ is a
+natural number denoting the current time. In our semantics, we maintain the
+invariants that every definition in $\D$ and every message in $\A$ is
+always represented in their most heated forms. Every $P$ in $\A$ will therefore
+always have the form $\atm t : x<v>$, and every $D$ in $\D$ will have one of the
+two forms $J \stackrel{d}{\triangleright} Q$ or $a[D ~\mathbf{in}~ P]$.
 
+Multiple CHAMs are composed in parallel using the operator $\parallel$. We
+denote zero or more CHAMs composed in parallel by the syntax
+\begin{align*}
+ \C ::={}& stop \\
+ |\quad{}& \M \parallel \C
+\end{align*}
+where $stop$ is a completely inactive system which can't take any steps.
+
+\subsubsection{Pattern matching}
 We say that a join pattern $\pi$ \emph{matches} a value $v$, when there exists
 a $\sigma$ such that $\sigma \pi = v$, where $\sigma$ is a substitution
 function that substitutes closed expressions for variable names.
@@ -326,7 +340,7 @@ match a process:
 
 The inference rules for pattern matching are given in Figure \ref{fig:rule:pat}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\P(\pi, v) \leadsto \hat\sigma$}
 \begin{equation*}
@@ -423,7 +437,7 @@ reverse relations, so cooling will never occur.
 Heating of a definition construct $D$ into a set of single reaction rules and
 sublocation definitions $\D'$ are denoted by the judgement form
 \begin{equation*}
-  \boxed{\widehat\H(D) \leadsto \D'}
+  \boxed{\H^*(D) \leadsto \D'}
 \end{equation*}
 
 Heating of a processes $P$ into a definition set $\D'$ and a set of messages
@@ -433,30 +447,30 @@ $\A'$ is denoted by the judgement form
 \end{equation*}
 The inference rules for heating is defined in Figure \ref{fig:rule:heat}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\mathcal{H}(P) \leadsto (\D', \A')$}
-\doms{$\widehat\H(D) \leadsto \D'$}
+\doms{$\H^*(D) \leadsto \D'$}
 \begin{equation*}
 \inferrule[Heat-Or]
 {D = D_1~\mathbf{or}~D_2
-\\ \widehat\H(D_1) \leadsto \D_1
-\\ \widehat\H(D_2) \leadsto \D_2}
-{\widehat\H(D) \leadsto \D_1 \cup \D_2}
+\\ \H^*(D_1) \leadsto \D_1
+\\ \H^*(D_2) \leadsto \D_2}
+{\H^*(D) \leadsto \D_1 \cup \D_2}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-Reaction]
 {D = J \stackrel{d}{\triangleright} Q}
-{\widehat\H(D) \leadsto \{ D \}}
+{\H^*(D) \leadsto \{ D \}}
 \qquad
 \inferrule[Heat-Location]
 {D = a[D~\mathbf{in}~P]}
-{\widehat\H(D) \leadsto \{ D \}}
+{\H^*(D) \leadsto \{ D \}}
 \end{equation*}
+\doms{$\mathcal{H}(P) \leadsto (\D', \A')$}
 \begin{equation*}
 \inferrule[Heat-Msg]
 {P = \atm t:x<v>}
-{\H(P) \leadsto (\emptyset, \{P\})}
+{\H(P) \leadsto (\emptyset, \Lbag P \Rbag)}
 \qquad
 \inferrule[Heat-Inert]
 {P = t : 0}
@@ -480,7 +494,7 @@ The inference rules for heating is defined in Figure \ref{fig:rule:heat}.
 \begin{equation*}
 \inferrule[Heat-Def\footnote{Where $\sigma_{dv}$ replaces fresh names for defined variables.}]
 {P = t:\mathbf{def}~D~\mathbf{in}~P
-\\ \widehat\H(\sigma_{dv} D) \leadsto \D_1
+\\ \H^*(\sigma_{dv} D) \leadsto \D_1
 \\ \H(t: \sigma_{dv} P) \leadsto (\D_2, \A)
 }
 {\H(P) \leadsto (\D_1 \cup \D_2, \A)}
@@ -490,7 +504,7 @@ The inference rules for heating is defined in Figure \ref{fig:rule:heat}.
 {P = t:\mathbf{match}~e~\mathbf{with}~\pi \rightarrow Q~|~\Pi
 \\ \P(\pi,e) \leadsto \sigma
 }
-{\H(P) \leadsto (\emptyset, \{ t : \sigma Q \})}
+{\H(P) \leadsto (\emptyset, \Lbag t : \sigma Q \Rbag)}
 \end{equation*}
 \begin{equation*}
 \inferrule[Heat-Match-Next]
@@ -504,7 +518,7 @@ The inference rules for heating is defined in Figure \ref{fig:rule:heat}.
 \begin{equation*}
 \inferrule[Heat-NoMatch]
 {P = t:\mathbf{match}~e~\mathbf{with}~\emptyset}
-{\H(P) \leadsto (\emptyset, \{ \atm t:halt<> \}) }
+{\H(P) \leadsto (\emptyset, \Lbag \atm t:halt<> \Rbag) }
 \end{equation*}
 \end{minipage}}
 \caption{Heating rules}\label{fig:rule:heat}
@@ -518,7 +532,7 @@ all the required messages are present in the solution. Checking whether a
 single join pattern (that is, a join pattern with no synchronisation) is
 satisfied, is denoted by
 \begin{equation*}
- \boxed{\widehat\P(J,\A) \leadsto \T_\J}
+ \boxed{\P^*(j,\A) \leadsto \T_\J}
 \end{equation*}
 where the syntax of $\T_\J$ can denote either success or failure:
 \begin{align*}
@@ -526,69 +540,49 @@ where the syntax of $\T_\J$ can denote either success or failure:
        |\quad& fail
 \end{align*}
 
-This means that if we can conclude $\widehat\P(J, \A) \leadsto (t,\sigma,\A')$,
+This means that if we can conclude $\P^*(j, \A) \leadsto (t,\sigma,\A')$,
 then the join pattern $J$ can be matched at time $t$ using messages from
 solution $\A$, yielding a smaller set of atoms $\A'$ and a substitution
 function $\sigma$ which replaces closed expressions for the free variables in
 $J$. The inference rules for single join pattern matching is defined in Figure
 \ref{fig:rule:join}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
-\doms{$\widehat\P(J,\A) \leadsto \T_\J$}
+\doms{$\P^*(j,\A) \leadsto \T_\J$}
 \begin{equation*}
 \inferrule[Join-FailEmpty]
 {~}
-{\widehat\P (J, \emptyset) \leadsto fail}
-\end{equation*}
-\begin{equation*}
+{\P^* (j, \emptyset) \leadsto fail}
+\qquad
  \inferrule[Join-Match]
 {
-   \A = \{ \atm t:x<v> \} \uplus \A'
-\\ \P(\pi, v) \leadsto \sigma
+   \A = \Lbag \atm t:x<v> \Rbag \uplus \A'
 }
 {
-  \widehat\P(\atm x<\pi>, \A) \leadsto (t, \sigma, \A')
+  \P^*(\atm x<y>, \A) \leadsto (t, (y \mapsto v), \A')
 }
 \end{equation*}
 \begin{equation*}
-\inferrule[Join-SubMatch1]
-{ \A = \{t : \atm x<v> \} \uplus \A'
-\\ \P(\pi, v) \leadsto fail
-\\ \widehat\P(\atm x<\pi>, \A') \leadsto (t',\sigma,\A'')
+\inferrule[Join-SubMatch\footnote{With side-condition $x\not=y$.}]
+{ \A = \Lbag t : \atm y<v> \Rbag \uplus \A'
+\\ \P^*(\atm x<y>, \A') \leadsto (t',\sigma,\A'')
 }
-{ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \{ \atm t:y<v> \} \uplus \A'' ) }
+{ \P^*(\atm x<y>, \A) \leadsto (t', \sigma, \Lbag \atm t:y<v> \Rbag \uplus \A'' ) }
 \end{equation*}
 \begin{equation*}
-\inferrule[Join-SubMatch2]
-{ \A = \{t : \atm y<v> \} \uplus \A'
-\\ x \not= y
-\\ \widehat\P(\atm x<\pi>, \A') \leadsto (t',\sigma,\A'')
+\inferrule[Join-FailName\footnote{With side-condition $x\not=y$.}]
+{ \A = \Lbag \atm t:y<v> \Rbag \uplus \A'
+\\ \P^*(\atm x<y>, \A') \leadsto fail
 }
-{ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \{ \atm t:y<v> \} \uplus \A'' ) }
-\end{equation*}
-\begin{equation*}
-\inferrule[Join-FailName]
-{ \A = \{ \atm t:y<v> \} \uplus \A'
-\\ x \not= y
-\\ \widehat\P(\atm x<\pi>, \A') \leadsto fail
-}
-{\widehat\P(\atm x<\pi>, \A) \leadsto fail }
-\end{equation*}
-\begin{equation*}
-\inferrule[Join-FailMatch]
-{ \A = \{\atm t:x<v> \} \uplus \A'
-\\ \P(\pi, v) \leadsto fail
-\\ \widehat\P(\atm x<\pi>, \A') \leadsto fail
-}
-{\widehat\P(\atm x<\pi>, \A) \leadsto fail }
+{\P^*(\atm x<y>, \A) \leadsto fail }
 \end{equation*}
 \end{minipage}}
 \caption{Rules for matching single join patterns with failure detection.\label{fig:rule:join}}
 \end{figure}
 
 A rule $D = J_1~\&~J_2~\&~...~\&~J_n \stackrel{d}{\triangleright}Q$ is
-executed when we can successively conclude $\widehat\P(J,\A) \leadsto (t,
+executed when we can successively conclude $\P^*(J,\A) \leadsto (t,
 \sigma, \A')$ for all join patterns in $D$. When a rule $D$ can execute at time
 $t$ in a solution of messages $\A$, we denote it by
 \begin{equation*}
@@ -605,21 +599,21 @@ rule $D$ can be executed in the message solution $\A$ at time $t$, yielding a
 smaller set of messages $\A'$ and a new process $P$. The inference rules for
 detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\R_r(D,\A,t) \leadsto \T_r$}
 \begin{equation*}
 \inferrule[Def-Match-Bottom]
 {
    D = \atm x<\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\pi>, \A) \leadsto (t', \sigma, \A')
+\\ \P^*(\atm x<\pi>, \A) \leadsto (t', \sigma, \A')
 \\ t'+d \leq t }
 { \R_r(D,~\A,~t) \leadsto (\sigma Q, \A') }
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Match]
 { D = (\atm x<\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\pi>, \A) \leadsto(t', \sigma, \A')
+\\ \P^*(\atm x<\pi>, \A) \leadsto(t', \sigma, \A')
 \\ t' + d \leq t
 \\ \R_r(J' \stackrel{d}{\triangleright} Q, ~\A', ~t) \leadsto (Q', \A'') }
 { \R_r(D,A,t) \leadsto (\sigma Q', \A'') }
@@ -627,7 +621,7 @@ detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 \begin{equation*}
 \inferrule[Def-Fail-Late-Bottom]
 { D = \atm x<\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\pi>, \A) \leadsto (t',\sigma,\A')
+\\ \P^*(\atm x<\pi>, \A) \leadsto (t',\sigma,\A')
 \\ t'+d>t
 }
 {\R_r(D,~\A,~t) \leadsto fail}
@@ -636,7 +630,7 @@ detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 \inferrule[Def-Fail-Late]
 {D = (\atm x<\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
 \\ D' = J \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\pi>,\A) \leadsto (t', \sigma, \A')
+\\ \P^*(\atm x<\pi>,\A) \leadsto (t', \sigma, \A')
 \\ t'+d>t
 }
 {
@@ -647,7 +641,7 @@ detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 \inferrule[Def-Fail-Sub]
 {D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
 \\ D' = J \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\tilde\pi>,\A) \leadsto (t', \sigma, \A')
+\\ \P^*(\atm x<\tilde\pi>,\A) \leadsto (t', \sigma, \A')
 \\ \R_r(D',\A',t) \leadsto fail
 }
 {
@@ -657,14 +651,14 @@ detecting reactions in a machine is defined in Figure \ref{fig:rule:def}.
 \begin{equation*}
 \inferrule[Def-Fail-NoMatch-Bottom]
 { D = \atm x<\tilde\pi> \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\tilde\pi>, \A) \leadsto fail
+\\ \P^*(\atm x<\tilde\pi>, \A) \leadsto fail
 }
 {\R_r(D,~\A,~t) \leadsto fail}
 \end{equation*}
 \begin{equation*}
 \inferrule[Def-Fail-NoMatch]
 {D = (\atm x<\tilde\pi> ~\&~ J') \stackrel{d}{\triangleright} Q
-\\ \widehat\P(\atm x<\tilde\pi>, \A) \leadsto fail
+\\ \P^*(\atm x<\tilde\pi>, \A) \leadsto fail
 }
 {
   \R_r(D,\A,t) \leadsto fail
@@ -698,7 +692,7 @@ to the message set, meaning that any message set $\A$ only contains processes
 of the form $\atm t:x<v>$. \fixme{Attempting to prove these hypotheses seems
 outside the scope of this project?}
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\R_m(\M) \leadsto \T_m$}
 
@@ -716,7 +710,7 @@ outside the scope of this project?}
  \\ \H(Q') \leadsto (\D^{new}, \A^{new})
 }
 {
- \R_m(\M) \leadsto \D \cup \D^{new} \vdash_t^\phi \A' \uplus \A^{new}
+ \R_m(\M) \leadsto (\D \cup \D^{new}) \vdash_t^\phi (\A' \uplus \A^{new})
 }
 \end{equation*}
 
@@ -726,7 +720,7 @@ outside the scope of this project?}
  \\ \D = \D' \cup \{ J \stackrel{d}{\triangleright} Q \}
  \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto fail
  \\ \R_m(\D' \vdash_t^\phi \A) \leadsto \D^{new} \vdash_t^\phi \A^{new}}
-{ \R_m(\M) \leadsto \D^{new} \cup \{ J \stackrel{d}{\triangleright} Q \} \vdash_t^\phi \A^{new} }
+{ \R_m(\M) \leadsto (\D^{new} \cup \{ J \stackrel{d}{\triangleright} Q \}) \vdash_t^\phi \A^{new} }
 \end{equation*}
 
 \begin{equation*}
@@ -767,7 +761,7 @@ where the syntax $\T_\F$ can denote either quiescence or the next system state:
 The inference rules for sublocation spawning is defined in Figure
 \ref{fig:rule:spawn}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\F(\C) \leadsto \T_\F$}
 \begin{equation*}
@@ -792,17 +786,17 @@ The inference rules for sublocation spawning is defined in Figure
 \inferrule[Spawn]
 {\C = \D \vdash_t^\phi \A
 \\ \D = \D' \cup \{ a[D~\mathbf{in}~P] \}
-\\ \widehat\H(D) \leadsto \D_1^{new}
+\\ \H^*(D) \leadsto \D_1^{new}
 \\ \H(t:P) \leadsto (\D_2^{new}, \A^{new})
 }
-{ \F(\C) \leadsto \D' \vdash_t^\phi \A ~||~ \D_1^{new} \cup \D_2^{new} \vdash_t^{\phi a} \A^{new} }
+{ \F(\C) \leadsto (\D' \vdash_t^\phi \A) ~||~ (\D_1^{new} \cup \D_2^{new} \vdash_t^{\phi a} \A^{new}) }
 \end{equation*}
 \begin{equation*}
 \inferrule[Spawn-Sub]
 {\C = \D \vdash_t^\phi \A
 \\ \D=\D' \cup \{ J \stackrel{d}{\triangleright} Q \}
 \\ \F(\D' \vdash_t^\phi \A) \leadsto \D'' \vdash_t^\phi \A ~||~ \C'}
-{\F(\C) \leadsto \D'' \cup \{J \stackrel{d}{\triangleright} \Q \} \vdash_t^\phi \A ~||~ \C'}
+{\F(\C) \leadsto ((\D'' \cup \{J \stackrel{d}{\triangleright} \Q \}) \vdash_t^\phi \A) ~||~ \C'}
 \end{equation*}
 \begin{equation*}
 \inferrule[Spawn-Sub-Quiescent]
@@ -840,7 +834,7 @@ element in $\beta$ has the form $(a, P)$ where $a$ is the unique name of the
 machine that the message $P$ was extracted from. Inference rules for message
 extraction is defined in Figure \ref{fig:rule:extract}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\E(\C) \leadsto (\C', \beta)$}
 \begin{equation*}
@@ -850,16 +844,16 @@ extraction is defined in Figure \ref{fig:rule:extract}.
 \end{equation*}
 \begin{equation*}
 \inferrule[Extract-Nonlocal\footnote{With side-condition $x \not\in dv(\D)$}]
-{\C = \D \vdash_t^{\phi a} \A' \uplus \{ \atm t:x<v> \}
+{\C = \D \vdash_t^{\phi a} \A' \uplus \Lbag \atm t:x<v> \Rbag
 \\ \E(\D \vdash_t^{\phi a} \A') \leadsto (\C', \beta) }
-{\E(\C) \leadsto (\C', \beta \uplus \{ (a, \atm x<v>) \})}
+{\E(\C) \leadsto (\C', \beta \uplus \Lbag (a, \atm x<v>) \Rbag)}
 \end{equation*}
 \begin{equation*}
 \inferrule[Extract-Local\footnote{With side-condition $x \in dv(\D) \lor x = \mathit{go} \lor x = \mathit{halt}$}]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:x<v> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t:x<v> \Rbag
 \\ \E(\D \vdash_t^\phi \A') \leadsto (\D \vdash_t^\phi \A'', \beta)
 }
-{\E(\C) \leadsto (\D \vdash_t^\phi \A'' \uplus \{ \atm t:x<v> \}, \beta) }
+{\E(\C) \leadsto (\D \vdash_t^\phi (\A'' \uplus \Lbag \atm t:x<v> \Rbag), \beta) }
 \end{equation*}
 \begin{equation*}
 \inferrule[Extract-Rec]
@@ -885,22 +879,22 @@ $\C'$ and a set of messages $\beta'$ that had no receivers. Messages are
 inserted in the current instant of the machine. The rules for message insertion
 are defined in Figure \ref{fig:rule:insert}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\I(\C, \beta) \leadsto (\C', \beta')$}
 \begin{equation*}
 \inferrule[Insert-Local\footnote{With side-condition $x \in dv(\D).$}]
 {\C = \D \vdash_t^{\phi b} \A
-\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \beta = \beta' \uplus \Lbag (a, \atm x<v>) \Rbag
 \\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
 \\ a \linkUp{t} b}
-{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A' \uplus \{ \atm (t+1):x<v> \}, \beta'') }
+{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} (\A' \uplus \Lbag \atm (t+1):x<v> \Rbag), \beta'') }
 \end{equation*}
 
 \begin{equation*}
 \inferrule[Insert-Lost\footnote{With side-condition $x \in dv(\D).$}]
 {\C = \D \vdash_t^{\phi b} \A
-\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \beta = \beta' \uplus \Lbag (a, \atm x<v>) \Rbag
 \\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
 \\ a \linkDown{t} b}
 {\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A', \beta'') }
@@ -909,10 +903,10 @@ are defined in Figure \ref{fig:rule:insert}.
 \begin{equation*}
 \inferrule[Insert-Nonlocal\footnote{With side-condition $x \not\in dv(\D).$}]
 {\C = \D \vdash_t^{\phi b} \A
-\\ \beta = \beta' \uplus \{ (a, \atm x<v>) \}
+\\ \beta = \beta' \uplus \Lbag (a, \atm x<v>) \Rbag
 \\ \I(\C, \beta') \leadsto (\D \vdash_t^{\phi b} \A', \beta'')
 }
-{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A', \beta'' \uplus (a, \{ \atm x<v> )\}) }
+{\I(\C, \beta) \leadsto (\D \vdash_t^{\phi b} \A', \beta'' \uplus \Lbag (a, \atm x<v>) \Rbag) }
 \end{equation*}
 
 \begin{equation*}
@@ -938,7 +932,7 @@ quiescence (i.e. no machine has non-local messages):
 
 The inference rules for message exchange is defined in Figure \ref{fig:rule:exchange}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\X(\C) \leadsto \T_\X$}
 \begin{equation*}
@@ -978,7 +972,7 @@ where the syntax of $\T_\Sigma$ can denote either success or failure ($\bot$):
         |\quad{}& \bot
 \end{align*}
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\U(\Sigma, a) \leadsto \T_\Sigma$}
 \doms{$\T_\Sigma ::= \bot ~|~ \phi$}
@@ -1031,7 +1025,7 @@ fully qualified paths in the system $\C$ is related to the system by
 The inference rules for location path extraction is defined in Figure
 \ref{fig:rule:makemap}.
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\L(\C) \leadsto \Sigma$}
 \begin{equation*}
@@ -1051,7 +1045,7 @@ The inference rules for location path extraction is defined in Figure
 system.}\label{fig:rule:makemap}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\K(\phi, \C) \leadsto \T_\K$}
 \doms{$\T_\K ::= \C' ~|~ halt $}
@@ -1104,7 +1098,7 @@ system.}\label{fig:rule:makemap}
 \end{figure}
 
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\G(\Sigma, \C) \leadsto \T_\G$}
 \doms{$\T_\G ::= quiescent ~|~ halt_\phi ~|~ (\C', \phi \mapsto \psi)$}
@@ -1118,7 +1112,7 @@ system.}\label{fig:rule:makemap}
 
 \begin{equation*}
 \inferrule[Detect-Late-Quiescent]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t':x<v> \Rbag
 \\ t' \not= t
 \\ \G(\Sigma, \D \vdash_t^\phi \A') \leadsto quiescent
 }
@@ -1127,7 +1121,7 @@ system.}\label{fig:rule:makemap}
 
 \begin{equation*}
 \inferrule[Detect-Nomatch-Quiescent]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t':x<v> \Rbag
 \\ x \not= \textit{go}
 \\ x \not= \textit{halt}
 \\ \G(\Sigma, \D \vdash_t^\phi \A') \leadsto quiescent
@@ -1137,14 +1131,14 @@ system.}\label{fig:rule:makemap}
 
 \begin{equation*}
 \inferrule[Detect-Halt]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:\mathit{halt}<\unit> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t:\mathit{halt}<\unit> \Rbag
 }
 {\G(\Sigma, \C) \leadsto halt_\phi}
 \end{equation*}
 
 \begin{equation*}
 \inferrule[Detect-Sub-Halt]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t':x<v> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t':x<v> \Rbag
 \\ \G(\Sigma, \D \vdash_t^\phi \A') \leadsto halt_\phi
 }
 {\G(\Sigma, \C) \leadsto halt_\phi}
@@ -1152,7 +1146,7 @@ system.}\label{fig:rule:makemap}
 
 \begin{equation*}
 \inferrule[Detect-Go-Halt]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:\mathit{go}<\kappa(a,c)> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t:\mathit{go}<\kappa(a,c)> \Rbag
 \\ \U(\Sigma, a) \leadsto \bot
 }
 {\G(\Sigma, \C) \leadsto halt_\phi}
@@ -1160,18 +1154,18 @@ system.}\label{fig:rule:makemap}
 
 \begin{equation*}
 \inferrule[Detect-Migrate]
-{\C = \D \vdash_t^\phi \A' \uplus \{ \atm t:\mathit{go}<\kappa(a,c)> \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag \atm t:\mathit{go}<\kappa(a,c)> \Rbag
 \\ \U(\Sigma, a) \leadsto \psi
-\\ \C' = \D \vdash_t^{\phi b} \A' \uplus \{ \atm t:c<\unit> \}
+\\ \C' = \D \vdash_t^{\phi b} (\A' \uplus \Lbag \atm t:c<\unit> \Rbag)
 }
 {\G(\Sigma, \C) \leadsto (\C', \phi b \mapsto \psi b)}
 \end{equation*}
 
 \begin{equation*}
 \inferrule[Detect-Sub-Migrate]
-{\C = \D \vdash_t^\phi \A' \uplus \{ P \}
+{\C = \D \vdash_t^\phi \A' \uplus \Lbag P \Rbag
 \\ \G(\Sigma, \D \vdash_t^\phi \A') \leadsto (\D \vdash_t^\phi \A'', \phi \mapsto \psi)
-\\ \C' = \D \vdash_t^\phi \A'' \uplus \{ P \}
+\\ \C' = \D \vdash_t^\phi \A'' \uplus \Lbag P \Rbag
 }
 {\G(\Sigma, \C) \leadsto (\C', \phi \mapsto \psi)}
 \end{equation*}
@@ -1180,7 +1174,7 @@ system.}\label{fig:rule:makemap}
 \caption{Rules for detecting \emph{go} and \emph{halt} atoms.}\label{fig:rule:go-halt}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\V(\C, \phi \mapsto \psi) \leadsto \C'$}
 \begin{equation*}
@@ -1204,7 +1198,7 @@ system.}\label{fig:rule:makemap}
 \caption{Rules for migrating machines with identical location prefixes.}\label{fig:rule:mig}
 \end{figure}
 
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\widehat\G(\C) \leadsto \T_{\widehat\G}$}
 \begin{equation*}
@@ -1233,10 +1227,7 @@ system.}\label{fig:rule:makemap}
 \caption{Rules for migration and failure.}\label{fig:rule:mighalt}
 \end{figure}
 
-
-
-
-\begin{figure}[!h]
+\begin{figure}[H!]
 \fbox{\begin{minipage}{0.97\textwidth}
 \begin{equation*}
 \inferrule[Progress]
