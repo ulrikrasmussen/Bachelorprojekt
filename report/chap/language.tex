@@ -709,6 +709,19 @@ $\R_m(\M) \leadsto quiescent \implies \forall \M'.~ \R_m(\M) \not\leadsto \M'$
 \begin{theorem}
 $\R_m(\M) \leadsto \M' \implies \R_m(\M) \not\leadsto quiescent$
 \end{theorem}
+
+The inference rules for machine internal computation is also generalised for
+sets of machines, denoted by
+\begin{equation*}
+ \boxed{\R_m^*(\C) \leadsto \widehat\C}
+\end{equation*}
+where the syntax $\widehat\C$ can denote either quiescence or the next system
+state:
+\begin{align*}
+ \widehat\C ::={}& \C' \\
+    |\quad{}& quiescent
+\end{align*}
+
 The inference rules for machine internal computation is defined in
 Figure \ref{fig:rule:machine}.
 
@@ -728,14 +741,16 @@ Figure \ref{fig:rule:machine}.
 }
 \end{equation*}
 
-\begin{equation*}
-\inferrule[Machine-React-Next]
-{\M = \D \vdash_t^\phi \A
- \\ \D = \D' \cup \{ J \stackrel{d}{\triangleright} Q \}
- \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto fail
- \\ \R_m(\D' \vdash_t^\phi \A) \leadsto \D^{new} \vdash_t^\phi \A^{new}}
-{ \R_m(\M) \leadsto (\D^{new} \cup \{ J \stackrel{d}{\triangleright} Q \}) \vdash_t^\phi \A^{new} }
-\end{equation*}
+% Redundant rule?
+
+%\begin{equation*}
+%\inferrule[Machine-React-Next]
+%{\M = \D \vdash_t^\phi \A
+% \\ \D = \D' \cup \{ J \stackrel{d}{\triangleright} Q \}
+% \\ \R_r(J \stackrel{d}{\triangleright} Q, \A, t) \leadsto fail
+% \\ \R_m(\D' \vdash_t^\phi \A) \leadsto \D^{new} \vdash_t^\phi \A^{new}}
+%{ \R_m(\M) \leadsto (\D^{new} \cup \{ J \stackrel{d}{\triangleright} Q \}) \vdash_t^\phi \A^{new} }
+%\end{equation*}
 
 \begin{equation*}
 \inferrule[Machine-Quiescent]
@@ -747,15 +762,41 @@ Figure \ref{fig:rule:machine}.
 { \R_m(\M) \leadsto quiescent }
 \end{equation*}
 \begin{equation*}
-\inferrule[Machine-Quiescent-Bottom]
+\inferrule[Machine-Empty-Quiescent]
 {~}
 {\R_m(\emptyset \vdash_t^\phi \A) \leadsto quiescent}
 \end{equation*}
+
+\doms{$\R_m^*(\C) \leadsto \widehat\C$}
+
+\begin{equation*}
+\inferrule[Machine-Rec-React]
+{\C = \{\M\} \cup \C'
+\\ \R_m(\M) \leadsto \M'
+}
+{\R_m^*(\C) \leadsto \{\M'\} \cup \C'}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Machine-Rec-Quiescent]
+{\C = \{\M'\} \cup \C'
+\\ \R_m(\M) \leadsto quiescent
+\\ \R_m^*(\C') \leadsto quiescent}
+{\R_m^*(\C) \leadsto quiescent}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Machine-Rec-Empty-Quiescent]
+{~}
+{\R_m^*(\emptyset) \leadsto quiescent}
+\end{equation*}
+
 \end{minipage}}
-\caption{Rules for doing reactions in a single machine, and at the same time
-detecting whether it is quiescent or not.\label{fig:rule:machine}}
+\caption{Rules for doing reactions in sets of machines, and at the same time
+detecting whether they are quiescent or not.\label{fig:rule:machine}}
 \end{figure}
 
+\newpage
 
 \subsubsection{Distribution}
 
@@ -768,11 +809,6 @@ Checking if a system $\C$ can spawn sublocations is denoted by
 \begin{equation*}
 \boxed{\F^*(\C) \leadsto \widehat\C}
 \end{equation*}
-where the syntax $\widehat\C$ can denote either quiescence or the next system state:
-\begin{align*}
- \widehat\C ::={}& \C' \\
-    |\quad{}& quiescent
-\end{align*}
 The inference rules for sublocation spawning is defined in Figure
 \ref{fig:rule:spawn}.
 
@@ -1244,6 +1280,8 @@ denoted by
 \begin{equation*}
 \boxed{\G'(\C) \leadsto \widehat\C}
 \end{equation*}
+The inference rules for the above relation is defined in Figure
+\ref{fig:rule:mighalt}.
 
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -1274,6 +1312,16 @@ denoted by
 \caption{Rules for migration and failure.}\label{fig:rule:mighalt}
 \end{figure}
 
+Progression of time occurs when every other phase of the system is quiescent.
+Progression is denoted by
+\begin{equation*}
+\boxed{\N(\C) \leadsto \C'}
+\end{equation*}
+Where $\N(\C) \leadsto \C'$ means that $\C'$ is the system $\C$ where the time
+tag of every machine is incremented by $1$. The inference rules for time
+progression is defined in Figure \ref{fig:rule:progress}.
+
+
 \begin{figure}[!ht]
 \fbox{\begin{minipage}{0.97\textwidth}
 \doms{$\N(\C) \leadsto \C'$}
@@ -1294,3 +1342,90 @@ denoted by
 \caption{Rules for the progression of time.}\label{fig:rule:progress}
 \end{figure}
 
+\fixme{This subsection could just as well be moved to the introduction of the
+semantics section.}
+\subsubsection{Evaluation steps}
+
+Relations defined up until now does not model how actual evaluation steps in the
+system are executed. Taking an evaluation step in a system of machines composed
+in parallel is denoted by
+\begin{equation*}
+\boxed{\C \longrightarrow \C'}
+\end{equation*}
+The inference rules for the evaluation relation is defined in Figure
+\ref{fig:rule:eval}.
+
+We have defined five different ``phases'' of evaluation as judgement forms in
+the semantics. For every phase except \textbf{Progress}, we can either conclude
+quiescence or construct a new state of the system. If an evaluation phase yields
+a new system state $\C'$, another evaluation phase that was quiescent for $\C$
+may not necessarily also be quiescent for $\C'$. We define the five phases as
+follows:
+
+\fixme{Look into changing Halt/Go to maintain quiescence, by delaying
+computations in all affected machines. Same goes for Spawn.}
+\begin{description}
+ \item[React] Execution of reactions local to each machine in the system. The
+ phase is quiescent when no rule in any machine can be satisfied by the set of
+ messages on the machine at the given time instant. Evaluation in this state
+ does not maintain quiescence for \textbf{Spawn}, \textbf{Halt/Go} or
+ \textbf{Comm}. The phase is defined in terms of the relations in Figure
+ \ref{fig:rule:machine}.
+
+ \item[Spawn] Spawning of sublocations. The phase is quiescent when no machine
+ has definitions of the form $a[D~\mathbf{in}~P]$. Evaluation in this state does
+ not maintain quiescence for \textbf{Halt/Go}, \textbf{Comm} or \textbf{React}.
+ Defined in terms of the relations in Figure \ref{fig:rule:spawn}.
+
+ \item[Comm] Exchanges messages between machines in the system. Evaluation in
+ this phase maintains quiescence for all other phases. Defined in terms of the
+ relations in Figure \ref{fig:rule:exchange}.
+
+ \item[Halt/Go] Handles migration and halting of machines. Evaluation in this
+ phase does not maintain quiescence for \textbf{React} and \textbf{Halt/Go}.
+ Defined in terms of the relations in Figure \ref{fig:rule:mighalt}.
+
+ \item[Progress] Increments all time tags with one. Does not maintain quiescence
+ for \textbf{React} and \textbf{Halt/Go}. Defined in terms of the relations
+ Figure \ref{fig:rule:progress}.
+\end{description}
+
+The order in which we evaluate the different phases does not really matter, as
+long as \textbf{Progress} is only applied when all other phases are quiescent.
+However, an efficient implementation may be able to exploit knowledge about
+which phases that maintain quiescence for other phases, to minimise the amount
+of overhead involved with checking whether a given rule can be applied.
+
+\begin{figure}[!ht]
+\fbox{\begin{minipage}{0.97\textwidth}
+\doms{$\C \longrightarrow \C'$}
+\begin{equation*}
+\inferrule[Eval-Spawn]
+{\F^*(\C) \leadsto \C'}
+{\C \longrightarrow \C'}
+\qquad
+\inferrule[Eval-HaltGo]
+{\G'(\C) \leadsto \C'}
+{\C \longrightarrow \C'}
+\qquad
+\inferrule[Eval-Comm]
+{\X(\C) \leadsto \C'}
+{\C \longrightarrow \C'}
+\qquad
+\inferrule[Eval-React]
+{\R_m^*(\C) \leadsto \C'}
+{\C \longrightarrow \C'}
+\end{equation*}
+
+\begin{equation*}
+\inferrule[Eval-Progress]
+{\F^*(\C) \leadsto quiescent
+\\ \G'(\C) \leadsto quiescent
+\\ \R_m^*(\C) \leadsto quiescent
+\\ \X(\C) \leadsto quiescent
+\\ \N(\C) \leadsto \C'}
+{\C \longrightarrow \C'}
+\end{equation*}
+\end{minipage}}
+\caption{Rules for taking evaluation steps.}\label{fig:rule:eval}
+\end{figure}
