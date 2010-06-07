@@ -26,6 +26,8 @@
 % For including bitmap graphics
 \usepackage{graphicx}
 
+\usepackage{stmaryrd}
+
 % Pedantic typesetting - we like it!
 \usepackage[final]{microtype}
 
@@ -33,13 +35,15 @@
 \usepackage{url}
 
 \usepackage[final]{listings}
-\usepackage{extpfeil}
+%\usepackage{extpfeil}
 \input{macros.tex}
 
 \title{Programming distributed embedded devices using join-calculus}
 \author{Philip Carlsen \& Ulrik Rasmussen}
 
 \begin{document}
+
+\newtheorem{theorem}{Theorem}
 
 \lstdefinelanguage{join}{
   morekeywords={def, in},
@@ -53,7 +57,6 @@
 \frontmatter
 
 \maketitle
-\iffalse
 \begin{abstract}
 \input{abstract.tex}
 \end{abstract}
@@ -66,7 +69,6 @@
 
 \tableofcontents*
 
-\fi
 \mainmatter
 
 \chapter{Introduction}
