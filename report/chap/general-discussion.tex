@@ -10,6 +10,7 @@ with the issues of unreliable communication, some fundamental implementation
 issues need to be solved before the use of the join calculus as a foundation for
 distributed programming can be said to be realistic.
 
+\subsection*{Migration problems}
 When a location migrates, every location it has ever exported a name to knows
 which physical machine to send new messages to.  Since the definition site of a
 name has no given means to know the extent that a name escapes into the network
@@ -61,20 +62,64 @@ most applications are easier to handle than the general name routing problem.
 However, further investigation of this is beyond the scope of this thesis, but
 could be considered an interesting future work.
 
+\subsection*{Synchronised time}
+
+Another unrealistic aspect of the language is the model of time that it
+exhibits. In the current model time progresses only when every machine has
+finished its time instant, such that it is in a quiescent phase.
+
+In reality, this would hardly be acceptable, as it would imply that a location
+executing a long running algorithm would halt the remainder of the network until
+it has finished, not to mention the scenario where a location time-locks and thus
+halts the entire network of machines.
+
+It would be much more realistic to have time progress in each location
+independent of the others. This would isolate the bad effects of time-locks and
+introduce more concurrency into the system.
+
+While this would surely have a substantial impact on the semantics, that
+currently revolves around the fact that time progresses synchronously, at least
+it seems to be a lighter manipulation of the language than solving the name
+routing problem.
+
+\vspace{1em}
+
+Another shortcoming of the time model is that it doesn't allow a program to
+inspect whether time constraints are satisfied during execution.
+This is a problem for programs that need to terminate within a given time
+window, as for example signal processing applications often do.
+
+While including the duration of join reactions directly in the time model has
+been argued as being a dead end, perhaps a different approach might prove both
+sufficient for enabling action on unsatisfied realtime constraints as well as
+formally sound.
+
+A potential solution would be to adopt a model of time where the duration of
+time instants are considered an external influence on the execution to the
+program, and where delayed atoms enter the solution in the time instant that
+most closely matches their specified delay.
+
+Consider the following code sketch:
+\begin{verbatim}
+def
+    start<> |> [ series of actions that produce an x<>]
+ or x<> & intime<> |> [[ further reductions on x<>, which is still relevant
+                      to the problem ]]
+ or timeout<> & intime <> |> [[ actions to handle the timeout ]]
+
+ in start<> & intime<> & 10s:timeout<>
+\end{verbatim}
+
+This is admittedly speculation however, but could be considered an interesting
+future work.
 
 \begin{verbatim}
 TODO:
-  * Global name routing
-  * Globally synchronised time
+ OK Global name routing
+ OK Globally synchronised time
   * Migration security
-  * Distributed garbage collection
-    - Mention techniques to leverage manual garbage collection.
 
 * potential use cases
-  - signal processing (time?)
-  - computation servers / grid
-  - RPC
-  - ...
 
 * patterns
   - distribution

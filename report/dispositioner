@@ -8,23 +8,42 @@ Report disposition
    addresses?).
 
 2. Introduce the specific problem that we investigate and
-   present our method (i.e. use-case and discussion), and
-   grossly sketch up the implementation.
+   present our method (i.e. use-case and discussion)
 
-3. Present the syntax and semantics.
+3. Present the implementation.
 
-4. Present and discuss the use-case.
+4. Present the syntax and semantics.
 
-5. Present and discuss retransmission protocol.
+5. Present and discuss the use-case.
 
-6. General discussion
+6. Present and discuss retransmission protocol.
+
+7. General discussion
    * Summarize conclusions from case and retransmission.
    * Present implementation problems.
    * (Present more patterns, potential use cases).
 
-7. Discuss unsolved problems / shortcomings of the calculus
+8. Discuss unsolved problems / shortcomings of the calculus
    (global name routing, security, distributed garbage
    collection) and other future work.
+
+Implementation:
+===============
+
+1. Features & Usage
+   Simulates machines and communication graph
+   Simulates hardware calls
+   Demonstrate startup sequence (stdJoinMain)
+
+2. Sketch up structure.
+   Structured in globalinterp > interp
+   Structured in phases
+   Garbage collection
+
+   a. Point out differences between semantics and
+      implementation, and either attempt to argue
+      correctness or apologise.
+
 
 Syntax and Semantics:
 =====================

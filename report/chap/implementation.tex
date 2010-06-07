@@ -1,0 +1,116 @@
+% vim:spell:spelllang=en_gb:
+% vim:set textwidth=80 fo+=tcroql:
+
+%Introduction
+
+In order to be able to empirically test the constructed sample programs we have
+constructed a proof-of-concept implementation of an interpreter/simulator that
+is capable of executing programs written in Join and simulate external events
+such as link downtimes and hardware functions.
+
+The simulator is implemented in Haskell because it provided a nice foundation in
+the shape of a combinatoric parser library and a very expansive type system. The
+parser library, \texttt{Parsec}, facilitated a rather concise mapping of the
+concrete syntax into abstract syntax, and by defining appropriate monads and
+type classes we feel that we have at an implementation, that doesn't contain too
+much clutter and plumbing.\fixme{Should we actually include this?}
+
+\section*{Features and usage}
+The simulator is capable of simulating a network of physical machines, each
+executing a join program and providing a set of built in join patterns that make
+it up for hardware functions.
+
+It is possible to indicate that a link between two machines in the network
+toggles its state between being up and down as a function of the time, thereby providing a means for reasoning about the delivery of messages.
+
+However, the simulator interprets the truth of the $a \linkUp{t} b$ relation to be
+given by reachability between $a$ and $b$ in the graph consisting of all
+machines which have established links between each other, thereby simulating
+that nodes will actively route messages between otherwise disconnected senders
+and receivers.
+
+In a real implementation the exact behaviour in this aspect would probably be
+more or less determined by the targeted domain of the implementation. For
+programs running across machines connected to the internet either total absence
+or presence of communication would likely be assumed.
+
+The mechanism that enables the indication of link status is called the
+\emph{EventLog}, and it also provides a means to introduce special unary join
+patterns that produce a given result as a function of the current time.
+
+\section*{Structure}
+
+The simulator is structured in basically the same overall components as the
+semantics that it strives to implement. However, as the implementation is in
+practise subject to the limitations of computer hardware it also includes a
+garbage collector.
+
+The simulator consists of three major parts:
+\begin{itemize}
+\item A Library of auxiliary functions for starting the simulator.
+\item An outer interpreter that
+      \begin{itemize}
+      \item invokes the inner interpreters in sequence,
+      \item contains a subsystem for handling communication and
+      \item contains a subsystem for migration and halting.
+      \end{itemize}
+\item An inner interpreter that
+      \begin{itemize}
+      \item transform atoms to their normal form (i.e. heats defs etc.),
+      \item match join patterns and perform reactions and
+      \item collect garbage.
+      \end{itemize}
+\end{itemize}
+
+The garbage collection scheme applied closely resembles the well known
+\emph{Mark-Sweep} algorithm, and works as follows, initially disregarding the
+distribution extension:
+\begin{enumerate}
+\item Mark all atoms in the solution as live.
+\item Mark all matchable defs as live, add their producible atoms live,
+recursing into nested defs.\label{gc:markdef}
+\item If the live set was expanded, go to \ref{gc:markdef}.
+\item Replace the sets of defs and atoms with the subsets marked live.
+\end{enumerate}
+
+However, introducing distribution one needs to maintain a list of names that
+escape their defining machine marking them live, as it is impossible to
+conclude on a local basis, that the name is unproducible in the global context.
+
+While this might initially seem to be a big drawback, in most of the practically
+observed situations it could be handled quite easily by either isolating
+dynamically created functionality with escaping names in a location, which could
+be halted when the communication protocols would deem them irrelevant.
+Alternatively one could add an extra atom to the join patterns defining the
+escaping name, which could be consumed when the name became irrelevant,
+resulting in the inability to mark the implicated defs live.
+
+\subsection*{Deviations from the semantics}
+Since the interpreter was devised prior to the operational semantics as a
+playground or sandbox, that served both the purpose of executing sample programs
+and the purpose of providing us with an intuition of the workings of the
+calculus, there are some differences between the semantics and the actual
+implementation.
+
+\subsection*{Constructing an experiment}
+Invoking the simulator is done by creating a haskell module featuring
+\begin{itemize}
+
+\item A specification of what kinds of machines should be present in the
+network, along with the files that contains their initial programs. This is
+termed \emph{Machine Classes} in the code.
+
+\item A complete list of the physical machines that are present, given as list
+of pairs of machine class and machine name.
+
+\item An infinite list of external events, usually constructed by helper
+functions.
+
+\item A data record containing parameters to the interpreter, such as
+termination conditions.
+
+\item A map that maps atoms to built in function. This is usually used to make
+low level arithmetic operations available to join programs. In the code this is
+termed the \emph{ApiMap}.
+
+\end{itemize}
