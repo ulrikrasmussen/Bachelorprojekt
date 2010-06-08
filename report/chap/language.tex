@@ -229,9 +229,58 @@ to prove the soundness of it.
 \subsection{Syntax}
 
 The syntax of our prototype language is defined in Figure \ref{fig:syntax}. In
-this definition, $x,a$ ranges over names, $s$ range over strings of characters,
-and $i,d,t \in \mathbb{N}_0$. All constructions marked with ``*'' are syntactic
-sugar, and have equivalent encodings in the core Join language.
+this definition, $x,y,a$ range over names, $s$ range over strings of characters,
+and $i,d,t \in \mathbb{N}_0$.
+
+\subsubsection{Syntactic sugar}
+All constructions marked with ``*'' are syntactic sugar, and have equivalent
+encodings in the core Join language. For instance, integers can be encoded as
+Peano numbers using two data constructors, and strings are just lists of
+integers.
+
+The syntax of the language only supports messages and join patterns with one
+value and variable name respectively. By using a convention for encoding tuples
+as data constructors, we can provide syntactic sugar that supports sending more
+than one value on a port name, like in the original join-calculus. For instance,
+the message $\atm x<1, 12, 42>$ can be encoded as $\atm x<Tuple3(1, 12, 42>$. In
+join patterns, the sugared construction
+\begin{equation*}
+ \mathbf{def}~\atm x<i,j,k> \stackrel{d}{\triangleright} Q
+\end{equation*}
+can be trivially desugared to
+\begin{equation*}
+ \mathbf{def}~\atm x<y> \stackrel{d}{\triangleright} ~\mathbf{match}~ y
+ ~\mathbf{with}~ Tuple3(i,j,k) \rightarrow Q
+\end{equation*}
+
+The language includes a sequential subset, where processes of the form $\{ I_1;
+I_2;...;I_n\}$ consists of a series of instructions that gets executed
+sequentially. This sequential subset of the language is desugared using a CPS to
+enforce sequential evaluation, in the same way as it is done in
+\cite{fournet1996reflexive}. We won't go into much detail as to how this sub
+language is translated into the core Join language as the translation is pretty
+straightforward.
+\fixme{If we have more time, go into more detail.}
+
+\subsubsection{Limitations of pattern matching}
+We do not allow full structural pattern matching in join patterns, as this
+complicates pattern matching on the same port names. Consider for instance the
+following example:
+\begin{equation*}
+ \mathbf{def}~ \atm x<y>~\&~ \atm x<2> \triangleright Q~
+ \mathbf{in}~\atm 0:x<2>~\&~\atm 0:x<3>
+\end{equation*}
+The first join pattern is more general than the second one, and can match both
+messages in the solution. The second join pattern can only match one of the
+messages. If the more general pattern matches the message $\atm x<2>$, the
+second pattern won't be able to find a matching message in the solution. In
+order to determine whether the reaction can trigger, we would have to define an
+ordering on structural patterns, and try to match the most general patterns
+first. To simplify the semantics, we have therefore chosen to only allow
+structural pattern matching in $\mathbf{match}$-expressions, where it is always
+well-defined what to do.
+
+
 
 \begin{figure}
 \begin{align*}
@@ -317,11 +366,30 @@ single CHAM is a four tuple $\M = (\D, \A, \phi, t)$ denoted by
 \begin{equation*}
  \M ::= \D \mscJ \A
 \end{equation*}
-where $\D$ is a set of active definitions, $\A$ is a multiset
-of messages, $\phi$ is an ordered sequence of location names, and $t$ is a
-natural number denoting the current time. In our semantics, we maintain the
-invariants that every definition in $\D$ and every message in $\A$ is
-always represented in their most heated forms. Every $P$ in $\A$ will therefore
+where $\D$ is a set of active definitions, $\A$ is a multiset of messages,
+$\phi$ is an ordered sequence of location names, and $t$ is a natural number
+denoting the current time. Zero or more CHAMs can be composed in parallel, which
+is modelled using a set:
+\begin{align*}
+ \C ::={}& \{ \M_1, \M_2, ..., \M_n \}
+\end{align*}
+The empty set $\emptyset$ is the totally inactive system.
+
+In our semantics, we maintain the invariants that for any machine, every
+definition in $\D$ and every message in $\A$ is always represented in their most
+heated forms. That is, for every system $\C$ the following holds:
+\begin{theorem}
+Definitions in a solution are never composed:
+
+$\forall (\D \vdash_t^\phi \A) \in \C.~ \forall D \in \D.~ \neg\exists D_1, D_2.~ D = D_1~\mathbf{or}~D_2$
+\end{theorem}
+\begin{theorem}
+Processes in a solution are always fully heated
+
+ $\forall (\D \vdash_t^\phi \A) \in \C.~ \forall P \in \A.~ \exists t',x,v.~ P =
+ \atm t':x<v>$
+\end{theorem}
+Every $P$ in $\A$ will therefore
 always have the form $\atm t : x<v>$, and every $D$ in $\D$ will have one of the
 two forms $J \stackrel{d}{\triangleright} Q$ or $a[D ~\mathbf{in}~ P]$. Any
 location string $\phi$ has at least one element and follows the syntax
@@ -330,18 +398,17 @@ location string $\phi$ has at least one element and follows the syntax
 \end{equation*}
 Where $l$ is a physical location name representing the physical machine on
 which a given abstract machine is running. The path $a_1a_2...a_n$ consists of
-zero or more location names denoting the sublocation path. If any two machines
-$\M_1, \M_2$ in the same system has location paths $\phi a$ and $\psi b$
-respectively, this implies $\phi = \psi$ and $\M_1 = \M_2$. In other words, the
-last name in any location string uniquely identifies the abstract machine that
-the location string is associated with.
+zero or more location names denoting the sublocation path. For every system
+$\C$, the following holds:
+\begin{theorem}
+ \label{thm:unique-loc}
+ The last location name in a location string uniquely identifies an abstract
+ machine:
 
-Zero or more CHAMs can be composed in parallel, which is modelled using a set:
-\begin{align*}
- \C ::={}& \{ \M_1, \M_2, ..., \M_n \}
-\end{align*}
+ $\forall (\D_1 \vdash_{t_1}^{\phi_1 a} \A_1), (\D_2 \vdash_{t_2}^{\phi_2 b}
+ \A_2) \in \C.~ a = b \implies \phi_1 = \phi_2$
+\end{theorem}
 
-The empty set $\emptyset$ is the totally inactive system.
 
 \subsubsection{Pattern matching}
 We say that a join pattern $\pi$ \emph{matches} a value $v$, when there exists
@@ -800,15 +867,23 @@ detecting whether they are quiescent or not.\label{fig:rule:machine}}
 
 \subsubsection{Distribution}
 
-Any machine $\D \vdash_t^\phi \A$ in the system can spawn new new sublocations,
+Any machine $\D \vdash_t^\phi \A$ in the system can spawn new sublocations,
 which will have the form $\D' \vdash_t^{\phi a} \A'$, i.e. they have a globally
 unique name $a$ and their parent location string $\phi$ as a prefix of their
-own.
+own. Every message in the new message solution $\A'$ will be delayed one time
+unit relative to the current $t$.
 
 Checking if a system $\C$ can spawn sublocations is denoted by
 \begin{equation*}
 \boxed{\F^*(\C) \leadsto \widehat\C}
 \end{equation*}
+We hypothesise that the following two theorems hold for any system $\C$:
+\begin{theorem}
+$\F^*(\C) \leadsto quiescent \implies \forall \C'.~ \F^*(\C) \not\leadsto \C'$
+\end{theorem}
+\begin{theorem}
+$\F^*(\C) \leadsto \C' \implies \F^*(\C) \not\leadsto quiescent$
+\end{theorem}
 The inference rules for sublocation spawning is defined in Figure
 \ref{fig:rule:spawn}.
 
@@ -821,7 +896,7 @@ The inference rules for sublocation spawning is defined in Figure
 {\M = \D \vdash_t^\phi \A
 \\ \D = \D' \cup \{ a[D~\mathbf{in}~P] \}
 \\ \H^*(D) \leadsto \D_1^{new}
-\\ \H(t:P) \leadsto (\D_2^{new}, \A^{new})
+\\ \H((t+1):P) \leadsto (\D_2^{new}, \A^{new})
 }
 { \F^*(\M) \leadsto \{ (\D' \vdash_t^\phi \A),~ (\D_1^{new} \cup \D_2^{new} \vdash_t^{\phi a} \A^{new}) \} }
 \end{equation*}
@@ -992,11 +1067,17 @@ are defined in Figure \ref{fig:rule:insert}.
 \newpage
 
 The combined action of sequentially extracting and inserting messages in a
-system is denoted by
+system while also detecting quiescence is denoted by
 \begin{equation*}
 \boxed{\X(\C) \leadsto \widehat\C}
 \end{equation*}
-
+We hypothesise that the following is always true for any system $\C$:
+\begin{theorem}
+$\X(\C) \leadsto quiescent \implies \forall \C'.~ \X(\C) \not\leadsto \C'$
+\end{theorem}
+\begin{theorem}
+$\X(\C) \leadsto \C' \implies \X(\C) \not\leadsto quiescent$
+\end{theorem}
 The inference rules for message exchange is defined in Figure \ref{fig:rule:exchange}.
 
 \begin{figure}[!ht]
@@ -1041,8 +1122,8 @@ If $\Sigma$ is not defined for some $a$, we denote it by
 \end{equation*}
 
 Two partial functions $\Sigma_1$ and $\Sigma_2$ can be merged, given that
-$dom(\Sigma_1) \cap dom(\Sigma_2) = \emptyset$. We denote the union of two
-partial functions by
+$\forall a.~ \Sigma_1(a) = \phi_1 \land \Sigma_2(a) = \phi_2 \implies \phi_1 =
+\phi_2$. We denote the union of two partial functions by
 \begin{equation*}
  \Sigma' = \Sigma_1 \cup \Sigma_2
 \end{equation*}
@@ -1055,7 +1136,8 @@ fully qualified paths in the system $\C$ is related to the system by
 \end{equation*}
 
 The inference rules for location path extraction is defined in Figure
-\ref{fig:rule:makemap}.
+\ref{fig:rule:makemap}. In these rules, the union operation is always
+well-defined due to theorem \ref{thm:unique-loc}.
 
 \begin{figure}[!h]
 \fbox{\begin{minipage}{0.97\textwidth}
@@ -1280,6 +1362,13 @@ denoted by
 \begin{equation*}
 \boxed{\G'(\C) \leadsto \widehat\C}
 \end{equation*}
+We hypothesise that the following is always true for any system $\C$:
+\begin{theorem}
+$\G'(\C) \leadsto quiescent \implies \forall \C'.~ \G'(\C) \not\leadsto \C'$
+\end{theorem}
+\begin{theorem}
+$\G'(\C) \leadsto \C' \implies \G'(\C) \not\leadsto quiescent$
+\end{theorem}
 The inference rules for the above relation is defined in Figure
 \ref{fig:rule:mighalt}.
 
@@ -1362,32 +1451,32 @@ a new system state $\C'$, another evaluation phase that was quiescent for $\C$
 may not necessarily also be quiescent for $\C'$. We define the five phases as
 follows:
 
-\fixme{Look into changing Halt/Go to maintain quiescence, by delaying
-computations in all affected machines. Same goes for Spawn.}
 \begin{description}
  \item[React] Execution of reactions local to each machine in the system. The
  phase is quiescent when no rule in any machine can be satisfied by the set of
- messages on the machine at the given time instant. Evaluation in this state
- does not maintain quiescence for \textbf{Spawn}, \textbf{Halt/Go} or
- \textbf{Comm}. The phase is defined in terms of the relations in Figure
+ messages on the machine at the given time instant. Evaluation in this phase
+ does not maintain quiescence for any other phases. The phase is defined in
+ terms of the $\R_m^*(\C) \leadsto \widehat\C$ relation in Figure
  \ref{fig:rule:machine}.
 
  \item[Spawn] Spawning of sublocations. The phase is quiescent when no machine
- has definitions of the form $a[D~\mathbf{in}~P]$. Evaluation in this state does
- not maintain quiescence for \textbf{Halt/Go}, \textbf{Comm} or \textbf{React}.
- Defined in terms of the relations in Figure \ref{fig:rule:spawn}.
+ has definitions of the form $a[D~\mathbf{in}~P]$. Evaluation in this phase
+ maintains quiescence for \textbf{React}, \textbf{Comm} and \textbf{Halt/Go}.
+ The phase is defined in terms of the $\F(\C) \leadsto \widehat\C$ relation in
+ Figure \ref{fig:rule:spawn}.
 
  \item[Comm] Exchanges messages between machines in the system. Evaluation in
- this phase maintains quiescence for all other phases. Defined in terms of the
- relations in Figure \ref{fig:rule:exchange}.
+ this phase maintains quiescence for \textbf{React}, \textbf{Spawn} and
+ \textbf{Halt/Go}. The phase is defined in terms of the $\X(\C) \leadsto
+ \widehat\C$ relation in Figure \ref{fig:rule:exchange}.
 
  \item[Halt/Go] Handles migration and halting of machines. Evaluation in this
- phase does not maintain quiescence for \textbf{React} and \textbf{Halt/Go}.
- Defined in terms of the relations in Figure \ref{fig:rule:mighalt}.
+ phase maintains quiescence for \textbf{Spawn}. The phase is defined in terms of
+ the $\G'(\C) \leadsto \widehat\C$ relation in Figure \ref{fig:rule:mighalt}.
 
- \item[Progress] Increments all time tags with one. Does not maintain quiescence
- for \textbf{React} and \textbf{Halt/Go}. Defined in terms of the relations
- Figure \ref{fig:rule:progress}.
+ \item[Progress] Increments all time tags. Evaluation in this phase maintains
+ quiescence for \textbf{Spawn}. The phase is defined in terms of the $\N(\C)
+ \leadsto \C'$ relation Figure \ref{fig:rule:progress}.
 \end{description}
 
 The order in which we evaluate the different phases does not really matter, as
