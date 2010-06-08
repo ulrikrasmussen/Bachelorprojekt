@@ -1,24 +1,21 @@
 def
-   listen<nm, ret> |> {let timeout = 500000; run
-     def
-         receive<Syn(ack), 0> |> ackNm<ack> & ack<SynAck, 0>
+   listen<nm, ret> |> def
+         receive<Syn(ack), 0> |> {do print("got Syn")} & ackNm<ack> & ack<SynAck, 0>
 
       or receive<Data(data), next>
        & pNum<cur> & ackNm<ack>
-       & lastResult<lr> |> { match leq(next, cur) with
-                               True  -> {  run pNum<cur>  & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
-                             | False -> { run pNum<next> & ackNm<ack>
+       & lastResult<lr> |> { do print("received");match leq(next, cur) with
+                               True  -> {  run pNum<cur> & ack<DataAck(lr), next> & lastResult<lr>}
+                             | False -> { run pNum<next>
                                       & match nm with
                                           Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<Just(ret)> }
                                         | Async(nm') -> { run nm'<data> & ack<DataAck(Nothing), next> & lastResult<Nothing> }
                                         }
-                           }
+                           } & ackNm<ack>
       in ret<receive> & lastResult<Nothing> & pNum<0>
-     }
  or servPrint<txt> |> {do print("servPrint: "); do print(txt) }
  or servMult(Cons(a, Cons(b, Nil))) |> {return mult(a,b) to servMult}
  in { let expoPrint = listen(Async(servPrint))
-    ; let expoMult  = listen(Sync(servMult))
     ; do register("serverTest", Pair(expoPrint, expoMult))
     }
 

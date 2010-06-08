@@ -1,8 +1,7 @@
 def
-    initTrans<nmType, dest, ret> |> { let timeout = 500000; run
-        def
+    initTrans<nmType, dest, ret> |> def
             ack<SynAck, 0>
-          & waitSynAck<>   |>{ run match nmType with
+          & waitSynAck<>   |> { do print("got synack"); match nmType with
                                 Sync  -> { run ret<sendSync> }
                               | Async -> { run ret<sendAsync>}
                             } & lineClear<>
@@ -27,34 +26,29 @@ def
                                                  | False -> { run 0}
                                                } & pNum<cur> & waitAck<>
 
-         or send<payload> & pNum<n> |> { run pNum<n> & dest<Data(payload), n>
-                                       ; do sleep(timeout)
-                                       ; run retransmit<payload, n>
-                                       }
+         or send<payload> & pNum<n> |> pNum<n> & dest<Data(payload), n> & 10:retransmit<payload, n>
 
-         or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & pNum<n'>}
+         or sendAsync<payload>      & pNum<n> & lineClear<> |> {do print("sendasync");let n' = add(1,n); run waitAck<> & send<payload> & pNum<n'>}
          or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & recvCont<cont> & pNum<n'>}
 
-         or sendSyn<> |> { run dest<Syn(ack), 0>
-                         ; run sleep<timeout, retrSyn> & waitSynAck<>}
+         or sendSyn<> |> {do print("sending syn")} & dest<Syn(ack), 0> & 10:retrSyn<> & waitSynAck<>
          or retrSyn<> & waitSynAck<> |> sendSyn<>
 
-         in pNum<0> & sendSyn<>}
+         in pNum<0> & sendSyn<>
  in
     def
       connect<ret> |> { let serverTest = search("serverTest")
                       ; match serverTest with
                           Just sTest -> { run ret<sTest>}
-                        | Nothing      -> { do sleep(1000); run connect<ret> }
+                        | Nothing      -> { run 1:connect<ret> }
                       }
 
      in
         { let Pair(sPrint, sMult) = connect()
         ; let proxPrint = initTrans(Async, sPrint)
-        ; let proxMult  = initTrans(Sync,  sMult)
-        ; run proxPrint<"1 - Test\n">
-            & proxPrint<"2 - Test\n">
-            & proxPrint<"3 - Test\n">
-            & proxPrint<"4 - Test\n">
-
+        ; run 1:proxPrint<"1 - Test\n">
+            & 20:proxPrint<"2 - Test\n">
+            & 20:proxPrint<"3 - Test\n">
+            & 20:proxPrint<"4 - Test\n">
+            & 20:proxPrint<"5 - Test\n">
         }

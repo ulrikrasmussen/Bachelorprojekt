@@ -194,54 +194,46 @@ scrambleContext = do
             map snd $ sortBy (comparing fst) $ zip (R.randoms stdGen :: [Int]) xs
 
 applyReaction :: Def -> JoinM ()
-applyReaction d@(ReactionD js delay p) =
-  --trace "applyReaction.\n"
-  matchJoins js >>=
-  maybe ({-trace "no match" $-} return ())
-        (\(sigma, atoms) -> do
-                   --trace ("matched: " ++ show atoms) return()
-                   t <- getTime
-                   let reactionTime = max t $ delay + foldl max 0 (map getDelay atoms)
-                   if reactionTime <= t then do mapM_ rmAtom atoms
-                                                putAtom $ DelayA reactionTime (sigma `subst` p)
-                                        else do mapM_ putAtom atoms)
-  where
-    getDelay (DelayA d _) = d
-    getDelay _ = 0
-
-applyReaction (LocationD _ _ _) = return ()
-
-{- Check whether a join pattern is matched by the atoms in the context -}
-matchJoins js = do
-  atms <- getCand [] js
-  --trace ("Candidates: " ++ (show atms)) $ return ()
-  maybe (mapM putAtom atms >> return Nothing)
+applyReaction d@(ReactionD js delay (Proc p)) = do
+  t <- getTime
+  t' <- return $ t - delay
+  atms <- getCand t [] js
+  --trace ("candidate atoms : " ++ show atms ++ " for join " ++ show js ++ "\n") (return ())
+  maybe (mapM putAtom atms >> return ())
         (\(sigma,atms,rest) -> do
-          mapM putAtom rest
-          return $ Just (sigma,atms))
-        (foldr matchJoin (Just(M.empty, [], atms)) js)
+          mapM_ putAtom rest
+          mapM_ rmAtom atms
+          natms <- return $ (map (subst sigma) $ concat $ map (floatTime t) p)
+          mapM_ putAtom natms--)
+          trace("new atms:" ++ show natms) return ())
+        (foldr (matchJoin $ t') (Just(M.empty, [], atms)) js)
   where
-    getCand :: [Atom] -> [Join] -> JoinM [Atom]
-    getCand akk (j:js) = do
-      atms <- takeAtoms (chanIs (getJNm j))
-      getCand (atms ++ akk) js
-    getCand akk []   = return akk
+    getCand :: Integer -> [Atom] -> [Join] -> JoinM [Atom]
+    getCand t akk (j:js) = do
+      atms <- takeAtoms (chanIs t (getJNm j))
+      getCand t (atms ++ akk) js
+    getCand _ akk []   = return akk
 
-    chanIs v (MsgA v' _)                   = v == v'
-    chanIs v (DelayA d (Proc [MsgA v' _])) = v == v'
-    chanIs v _                             = False
+    floatTime t d@(DelayA d' (Proc as)) = concat $ map (floatTime $ t+d') as
+    floatTime t InertA                  = []
+    floatTime t (DefA d (Proc p))       = [DefA d (Proc $ concat $ map (floatTime t) p)]
+    floatTime t a                       = [DelayA t (Proc [a])]
+
+    chanIs _ v (MsgA v' _)                   = error "No atoms without time tags allowed x_x"
+    chanIs t v (DelayA d (Proc [MsgA v' _])) = (v == v') && ( d <= t)
+    chanIs _ v _                             = False
 
     getJNm (VarJ var _ ) = var
-    matchJoin :: Join
+    matchJoin :: Integer -> Join
               -> Maybe(M.Map String Expr, [Atom], [Atom])
               -> Maybe(M.Map String Expr, [Atom], [Atom])
-    matchJoin j (Just (subst, atms, rest)) =
-      let (candidates,rest') = partition (chanIs $ getJNm j) rest
+    matchJoin t j (Just (subst, atms, rest)) =
+      let (candidates,rest') = partition (chanIs t $ getJNm j) rest
        in maybe Nothing (\(subst', atm, rest'') -> Just (M.union subst subst',atm:atms, rest''++rest' ))
             (matchPattern j candidates [])
-    matchJoin _ Nothing = Nothing
+    matchJoin t _ Nothing = Nothing
 
-    matchPattern _          []     rest = Nothing
+    matchPattern _                           [] rest = Nothing
     matchPattern j (a@(DelayA d (Proc msg)):as) rest =
       maybe (matchPattern j as (a:rest))
             (\(subst, _, []) -> Just(subst, a, as++rest ))

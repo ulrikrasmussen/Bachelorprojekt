@@ -1,8 +1,10 @@
 module Main() where
 
-import Aux( stdJoinMain, defaultConfig )
+import Aux
+import Language
+import Interpreter
 
-machineClasses = [ ("Server", "UseCases/RetransmitServer.join")
+mClasses = [ ("Server", "UseCases/RetransmitServer.join")
                  , ("Client", "UseCases/RetransmitClient.join")
                  ]
 
@@ -10,15 +12,11 @@ machines = [ ("Server", "Server")
            , ("Client", "Client")
            ]
 
-comEdges = [ ("Server", "Client", 0.5)
-           ]
+api = []
 
-api = ([], [])
+jPrint t (MsgA _ [jStr, VarE k]) = ([OutMessage t (fromJoin jStr)],[MsgA k []])
 
-main = stdJoinMain api machines machineClasses comEdges defaultConfig
-      {--
-        ; let res = proxMult(Cons(7,Cons(17),Nil))
-        ; do print("Server says 7*17=")
-        ; do printInt(res)
-        ; do print("\n")
-        -}
+events = (mkSpecial 1 "print" jPrint)
+         +&+ (atTime 0 $ linkUpProb 604 "Server" "Client" 1)
+
+main = stdJoinMain api machines mClasses defaultConfig{breakAtTime = Just 100} events
