@@ -47,20 +47,25 @@ garbage collector.
 
 The simulator consists of three major parts:
 \begin{itemize}
-\item A Library of auxiliary functions for starting the simulator.
-\item An outer interpreter that
+\item A Library of auxiliary functions for starting the simulator,
+      \texttt{Aux.hs}
+\item An outer interpreter, \texttt{GlobalInterpreter.hs}, that
       \begin{itemize}
       \item invokes the inner interpreters in sequence,
       \item contains a subsystem for handling communication and
       \item contains a subsystem for migration and halting.
       \end{itemize}
-\item An inner interpreter that
+\item An inner interpreter, \texttt{Interpreter.hs} that
       \begin{itemize}
       \item transform atoms to their normal form (i.e. heats defs etc.),
       \item match join patterns and perform reactions and
       \item collect garbage.
       \end{itemize}
 \end{itemize}
+
+Apart from these components is the definition of the abstract syntax and all the
+basic substitution and variable analysis functions that are routinely applied
+during interpretation, residing in the file \texttt{Language.hs}.
 
 The garbage collection scheme applied closely resembles the well known
 \emph{Mark-Sweep} algorithm, and works as follows, initially disregarding the
@@ -116,3 +121,38 @@ low level arithmetic operations available to join programs. In the code this is
 termed the \emph{ApiMap}.
 
 \end{itemize}
+
+As an example, consider the code below that starts up a simple network of two
+machines:
+\begin{verbatim}
+module Main(main) where
+
+import Aux
+import Language
+import Interpreter
+
+-- Currently, this file test a time lock.
+
+mClasses = [ ("Simple1", "Simple1.join")
+           , ("Simple2", "Simple2.join")]
+
+machines = [ ("Machine_1", "Simple1")
+           , ("Machine_2", "Simple2")]
+
+api = []
+
+jPrint t (MsgA _ [jStr, VarE k]) =
+  ([OutMessage t (fromJoin jStr)],[MsgA k []])
+
+events = (mkSpecial 1 "print" jPrint)
+         +&+ ([EvLinkUp "Machine_1" "Machine_2"]:(cycle [[]]))
+
+main = stdJoinMain api machines mClasses
+         defaultConfig{breakAtTime = Just 100} events
+\end{verbatim}
+
+The featured machines are \texttt{Machine\_1} and \texttt{Machine\_2}, which are
+seeded with the Join programs residing in the files \texttt{Simple1.join} and
+\texttt{Simple2.join}. Initially they are able to communicate, and the
+simulation terminates when it has reached time $100$.
+
