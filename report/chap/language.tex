@@ -472,7 +472,7 @@ The inference rules for pattern matching are given in Figure \ref{fig:rule:pat}.
 \caption{Inference rules for pattern matching.} \label{fig:rule:pat}
 \end{figure}
 
-\newpage
+\clearpage
 
 \subsubsection{Time}
 We include a relaxed version of the time semantics from \cite{timed-join}. Our
@@ -607,7 +607,7 @@ The inference rules for heating is defined in Figure \ref{fig:rule:heat}.
 \caption{Heating rules}\label{fig:rule:heat}
 \end{figure}
 
-\newpage
+\clearpage
 
 \subsubsection{Reactions}
 
@@ -754,6 +754,8 @@ same time detecting whether a reaction is able to trigger or
 not.\label{fig:rule:def}}
 \end{figure}
 
+\clearpage
+
 When checking if a machine $M$ can take an internal computational step, we
 denote it by
 \begin{equation*}
@@ -863,7 +865,7 @@ Figure \ref{fig:rule:machine}.
 detecting whether they are quiescent or not.\label{fig:rule:machine}}
 \end{figure}
 
-\newpage
+\clearpage
 
 \subsubsection{Distribution}
 
@@ -996,7 +998,7 @@ extraction is defined in Figure \ref{fig:rule:extract}.
 \caption{Rules for extracting non-local messages from machines.}\label{fig:rule:extract}
 \end{figure}
 
-\newpage
+\clearpage
 
 Message insertion is denoted by
 \begin{equation*}
@@ -1064,7 +1066,7 @@ are defined in Figure \ref{fig:rule:insert}.
 \caption{Rules for inserting external messages into machines.}\label{fig:rule:insert}
 \end{figure}
 
-\newpage
+\clearpage
 
 The combined action of sequentially extracting and inserting messages in a
 system while also detecting quiescence is denoted by
@@ -1099,7 +1101,7 @@ The inference rules for message exchange is defined in Figure \ref{fig:rule:exch
 messages have been delivered.}\label{fig:rule:exchange}
 \end{figure}
 
-\newpage
+\clearpage
 
 \subsubsection{Mobility and failure}
 
@@ -1157,7 +1159,7 @@ well-defined due to theorem \ref{thm:unique-loc}.
 system.}\label{fig:rule:makemap}
 \end{figure}
 
-\newpage
+\clearpage
 
 Given a $\Sigma$-map for a given system, we can detect ``go'' messages and
 determine what to do. Determining whether a machine needs to be halted or
@@ -1284,7 +1286,7 @@ The inference rules for ``go'' and ``halt'' detection is defined in Figure
 \caption{Rules for detecting \emph{go} and \emph{halt}
 atoms.}\label{fig:rule:detect}
 \end{figure}
-\newpage
+\clearpage
 \noindent
 Rewriting location prefixes in a system is denoted by
 \begin{equation*}
@@ -1355,7 +1357,7 @@ The inference rules for location rewriting and halting is defined in Figure
 \caption{Rules for halting machines with a specific location prefix.}\label{fig:rule:halt}
 \end{figure}
 
-\newpage
+\clearpage
 We need to apply either the $\V$ or $\K$ relation based on the conclusion of
 $\G^*$. Applying either relation or concluding quiescence for a system $\C$, is
 denoted by

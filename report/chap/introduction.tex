@@ -1,49 +1,41 @@
 % vim:spell:spelllang=en_gb:
 % vim:set textwidth=80 fo+=tcroql:
 
-We have chosen to examine the usefulness of using the join calculus for
-programming embedded, distributed devices, such as the sensors in a sensor
-network, or even the robots in the emerging fields of self reconfiguring
-robotics and swarm robotics in the long run.
+Programmable embedded devices present many possibilities, for instance in the
+fields of sensor networks, self-reconfiguring modular robotics and swarm
+robotics. In applications like these, a number of independent devices have to
+communicate with each other and organise themselves to accomplish their tasks.
+Communication between such devices is inherently asynchronous, and may take
+place over unreliable channels such as radios.
 
-The join calculus is a process calculus that seeks to bridge the gap between the
-$\pi$-calculus and the actual programming languages that contain elements of
-distributed execution. The defining article, \cite{fournet1996reflexive}
-especially refers to the languages Actor and Obliq.
+Using a process calculus as the basic framework for programming devices like
+this seems like a logical choice. However, many existing process calculi like
+CSP\cite{hoare-csp} and $\pi$-calculus\cite{milner-pi} are based on atomic
+interaction between non-local processes, which is difficult to implement in
+practice in a distributed setting.
 
-The intended goal of this calculus is to define a way of expression that is more
-formally defined than the existing programming languages and that does not rely
-on synchronous rendez-vous communication, as this is often difficult to
-implement in a distributed setting.
-
-Because of this, message exchange in the join calculus is asynchronous and
-provides means for both communication and synchronisation.
+The join-calculus\cite{fournet1996reflexive} is a process calculus which aims to
+provide an alternative elementary model of concurrency which does not depend on
+synchronous \emph{rendez-vous} communication between processes. We have chosen
+to examine the usefulness and feasibility of using the join-calculus as a
+basic programming model for programming embedded, distributed devices, such as
+the sensors in a sensor network.
 
 The measurement of a programs \emph{feasibility} for a particular purpose is
 definitely a debatable subject. In this report however we have chosen to
-investigate by constructing sample programs from the problem domain and discuss
-the patterns used and how well the \fixme{Wierd sentence x\_x}{language lends
-itself to practical implementation}.
+investigate it by constructing sample programs from a chosen problem domain,
+discussing the used patterns and how well a join-calculus based language lends
+itself to practical implementation.
 
-In order to evaluate to be able to evaluate the programs we create we have put
-together our own tailored programming language and implemented an interpreter
-capable of executing it. The programming language is based on the join calculus,
-and apart from including the core of the formalism we have also deemed some
-proposed extensions relevant for our problem, as they introduce both the notion
-of mobility, pattern matching over algebraic datatypes, and a notion of time.
-In order to gracefully include concepts from these different sources we have had
-to alter their semantics to some degree to make them coexist without interfering
-with each other.
+In order to be able to evaluate the programs we create, we have put together our
+own prototype programming language and implemented an interpreter capable of
+executing it. The programming language is based on the join-calculus, and apart
+from including the core of the formalism we have also deemed some proposed
+extensions relevant for our problem, as they introduce both the notion of
+mobility, pattern matching over algebraic datatypes, and a notion of time. We
+call the resulting prototype language Join, and provide both an operational
+semantics and a prototype implementation in Haskell.
 
-The formal operational semantics \fixme{isn't it a bit bold to say?}{that the
-interpreter implements} is also documented in this report.
-
-Finally we discuss \fixme{do we really?}{the process of constructing the
-programs and} the benefits and detriments that we have identified of the
-programming language. We will only examine the join calculus in an introspective
-way. Therefore we will only present join solutions to the problems we pose. One
-could imagine it being useful to have dual implementations in other languages
-for comparison, but that is beyond the scope of this report, as it implies that
-we need to make certain choices of programming languages and concurrency
-libraries, and make a very thorough attempt at constructing programs that are
-representative of the expressiveness of the given languages.
+Finally we discuss the process of constructing programs for a proposed use case,
+and point out the benefits and detriments that we have identified in the
+programming language.
