@@ -21,8 +21,9 @@ language, Join.
 In this section, we will briefly describe the core join-calculus. We will
 primarily rely on describing the semantics by example to give an overview.
 Since our own language, Join, builds on a heavily modified version of the core
-join-calculus, we will direct most of our attention on documenting the semantics
-of that.
+join-calculus, we will direct most of our attention towards documenting the
+semantics of that. A more detailed definition of the join-calculus can be found
+in \cite{fournet1996reflexive}.
 
 The core calculus is based on the \emph{Reflexive Chemical Abstract Machine}
 abbreviated RCHAM, which is a modification of the basic CHAM, defined by Berry
@@ -70,46 +71,110 @@ constructs are given below:
 A reaction $J \triangleright P$ consumes molecules that match the pattern $J$,
 and emits copies of the process $P$, where free names in $P$ has been
 substituted for received names in $J$. Consider for instance the following
-example, showing a reduction step:
+example, modelling a printing server that manages exclusive access to a printer.
+The reaction rule $D$ is defined as $D = \atm ready<printer> ~\&~ \atm job<file>
+\triangleright \atm printer<file>$:
+\begin{align*}
+  & D \vdash \atm ready<laser>, \atm job<1>, \atm job<2> \\
+\rightleftharpoons{}& D \vdash \atm ready<laser> ~\&~ \atm job<2>, \atm job<1> \\
+\longrightarrow{}& D \vdash \atm laser<2>, \atm job<1>
+\end{align*}
+
+Notice that in the above, non-determinism comes from $\rightleftharpoons$.
+
+The RCHAM model is \emph{reflexive}, which means that a reaction can extend the
+solution with new rules, making the model computationally complete. The molecule
+$\mathbf{def}~D~\mathbf{in}~P$ can be split in two parts: A new set of
+definitions $D$, and a set of new molecules $P$. The defining molecule can be
+activated under the $\rightleftharpoons$ relation:
+\begin{align*}
+ & \emptyset \vdash \mathbf{def}~D~\mathbf{in}~P, \atm x<> \\
+\rightleftharpoons{}& D \vdash P, \atm x<>
+\end{align*}
+
+For a defining molecule $\mathbf{def}~D~\mathbf{in}~P$, every port name that
+occurs in the join patterns of $D$ is \emph{locally} bound in $P$. This means
+that we can never extend or change the rule set for an existing port name, we
+can only define new rules for new port names.
+
+\subsection{Encodings}
+
+As mentioned, the only values in the core join-calculus is names. However, the
+calculus has been shown to encode the $\lambda$-calculus using a
+CPS\cite{fournet1996reflexive}. It is therefore possible (although not very
+practical) to represent values using church encodings or some similar scheme.
+
+In the next section, we will discuss various extensions to the join-calculus,
+one of which adds first-class values to the language.
+
 
 \section{Extensions}
 
 \subsection{Pattern matching}
-In the core calculus it is only possible to construct join patterns, that match
-atom names, fully disregarding the data contents of the atoms. Thus, if one wishes
-to have different reactions to take place for different types of content, one
-has to use different atom names to signify this.
+As mentioned in the last section, the only values in the core join-calculus are
+names. In \cite{MaMa2008AlgPat}, an extension of the syntax and semantics is
+presented, which adds first-class algebraic data types with pattern matching to
+the language.
 
-Consider for example these two similar implementations of a stack, drawn from \cite{MaMa2008AlgPat} :
+Instead of being limited to only being able to transmit names in messages, the
+join-calculus is extended to allow transmitting values of a small expression
+language defined by the syntax
+\begin{align*}
+ e ::={}& x \\
+  |\quad{}& \kappa(e_1, e_2, ..., e_n)
+\end{align*}
+where $x$ range over names, and $\kappa$ range over data type constructors. A
+pattern language with syntax identical to the above can be used to specify
+structural patterns inside join patterns. For example, a simple process
+modelling a stack can be encoded as follows:
+\begin{displaymath}
+\begin{array}{rcll}
+\defJ &&&
+\\ & &   \atm stack<x> \andJ \atm push<y> &\toJ{} \atm stack<Cons(y,x)>
+\\&\orJ&  \atm stack<Cons(x, xs)> \andJ \atm pop<k>& \toJ{} \atm stack<xs> \andJ \atm k<x>
+\\&\inJ& \atm stack<Nil> \andJ \ldots
+\end{array}
+\end{displaymath}
+In the above, $Cons$ and $Nil$ are constructors with $1$ and $0$ arguments,
+respectively.
+
+Apart from structural patterns in join patterns, a pattern matching process is
+also added to the syntax, allowing the above to be expressed in the following
+alternative way:
 \begin{displaymath}
 \begin{array}{rcll}
 \defJ
-\\ & &  \atm some<x> \andJ \atm push<y>&\toJ{} \atm some<y:x>
+\\ & &  \atm some<x> \andJ \atm push<y>&\toJ{} \atm some<Cons(y,x)>
 \\ &\orJ&\atm empty<> \andJ \atm push<y> &\toJ{} \atm some<y>
 \\ &\orJ&\atm some<x> \andJ \atm pop<k> &\toJ{}  \match x \with
-\\ &&& \qquad         x':[] \to \atm k<x> \andJ \atm empty<>
-\\ &&& \qquad    | x':xs \to \atm k<x> \andJ \atm some<xs>
+\\ &&& \qquad         Cons(x',Nil) \to \atm k<x> \andJ \atm empty<>
+\\ &&& \qquad    |~ Cons(x',xs) \to \atm k<x> \andJ \atm some<xs>
 \\&\inJ& \atm empty<> \andJ \ldots
-\\
-\\\defJ &&&
-\\ & &   \atm stack<x> \andJ \atm push<y> &\toJ{} \atm stack<y:x>
-\\&\orJ&  \atm stack<x:xs> \andJ \atm pop<k>& \toJ{} \atm stack<xs> \andJ \atm k<x>
-\\&\inJ& \atm stack<[]> \andJ \ldots
 \end{array}
 \end{displaymath}
 
-Even superficial inspection reveals the latter to be preferable, as it is both
-more compact, more readable and more intuitive to someone who has tried
-programming with pattern matching like that of ML or Haskell.
+\subsubsection{Limitations of pattern matching}
+We have chosen not to allow full structural pattern matching in join patterns,
+as this complicates pattern matching on the same port names. Consider for
+instance the following example:
+\begin{equation*}
+ \mathbf{def}~ \atm x<y>~\&~ \atm x<Two> \triangleright Q~
+ \mathbf{in}~\atm x<Two>~\&~\atm x<Three>
+\end{equation*}
+The first join pattern is more general than the second one, and can match both
+messages in the solution. The second join pattern can only match one of the
+messages. If the more general pattern matches the message $\atm x<Two>$, the
+second pattern won't be able to find a matching message in the solution. In
+order to determine whether the reaction can trigger, we would have to define an
+ordering on structural patterns, and try to match the most general patterns
+first. To simplify the semantics, we have therefore chosen to only allow
+structural pattern matching in $\mathbf{match}$-expressions, where it is always
+well-defined what to do.
 
-Also, it simply seems as a natural extension of the core join-calculus.
-
-Because of this we have decided to include pattern matching on join patterns in our system.
-The precise semantics of pattern matching can be found in Figure \ref{fig:rule:pat}.
-
-\subsection{Distribution and mobility extension}
+\fixme{add citations}
+\subsection{Distribution and mobility}
 The model of distribution is based on the concept of \emph{locations}, which
-are named collections of definitions and atoms, thus comprising separate
+are named solutions of definitions and atoms, thus comprising separate
 join-calculus machines. Besides this, locations are characterised by being able
 to migrate from site to site by producing a special atom, $\Go<a,k>$, where $a$
 is the name of the destination location and $\atm k <>$ is a continuation to be
@@ -124,7 +189,7 @@ location is the root. Therefore, when a location migrates, the entire set of
 sublocations also migrates, and halting similarly halts every sublocation.
 
 
-\subsection{Realtime extension}
+\subsection{Time}
 
 The core join-calculus has no notion of time, which makes it
 impossible to reason about the behaviour of programs with real-time
@@ -199,11 +264,11 @@ The time domain in Timed Join Calculus is \emph{abstract}, where time
 tags doesn't have any quantifiable correspondence with \emph{physical}
 time. It is assumed that any computation takes zero time unless
 delayed with a non-zero time tag, which is of course not a realistic
-assumption, but as assumption that simplifies the model.
+assumption, but an assumption that simplifies the model.
 Alternatively, one could assume that any atomic computation took some
 minimum amount of time, yielding a model that is closer to reality.
 However, as argued in \cite{nicollin-overview}, this destroys the
-generality of the model, as we will then tie the behaviour of programs
+generality of the model, as we would then tie the behaviour of programs
 to an arbitrary assumption about execution speed.
 
 Even if we did make very conservative choices for the minimum duration
@@ -246,9 +311,9 @@ to prove the soundness of it.
 
 \section{Syntax}
 
-The syntax of our prototype language is defined in Figure \ref{fig:syntax}. In
-this definition, $x,y,a$ range over names, $s$ range over strings of characters,
-and $i,d,t \in \mathbb{N}_0$.
+The syntax of our prototype language is defined in Figure \ref{fig:syntax} and
+\ref{fig:syntax2}. In this definition, $x,y,a$ range over names, $s$ range over
+strings of characters, and $i,d,t \in \mathbb{N}_0$.
 
 \subsection{Syntactic sugar}
 All constructions marked with ``*'' are syntactic sugar, and have equivalent
@@ -279,25 +344,6 @@ enforce sequential evaluation, in the same way as it is done in
 language is translated into the core Join language as the translation is pretty
 straightforward.
 \fixme{If we have more time, go into more detail.}
-
-\subsection{Limitations of pattern matching}
-We do not allow full structural pattern matching in join patterns, as this
-complicates pattern matching on the same port names. Consider for instance the
-following example:
-\begin{equation*}
- \mathbf{def}~ \atm x<y>~\&~ \atm x<2> \triangleright Q~
- \mathbf{in}~\atm 0:x<2>~\&~\atm 0:x<3>
-\end{equation*}
-The first join pattern is more general than the second one, and can match both
-messages in the solution. The second join pattern can only match one of the
-messages. If the more general pattern matches the message $\atm x<2>$, the
-second pattern won't be able to find a matching message in the solution. In
-order to determine whether the reaction can trigger, we would have to define an
-ordering on structural patterns, and try to match the most general patterns
-first. To simplify the semantics, we have therefore chosen to only allow
-structural pattern matching in $\mathbf{match}$-expressions, where it is always
-well-defined what to do.
-
 
 
 \begin{figure}
@@ -344,6 +390,13 @@ e\quad ::={}&              && \textbf{expressions} \\
 \alt\quad& x               && \quad\textrm{variable} \\
 \alt\quad& \kappa(e_1, e_2, ..., e_n)
                            && \quad\textrm{constructor expression} \\
+\end{align*}
+\caption{Syntax of the Join language (continued in Figure
+\ref{fig:syntax2}).\label{fig:syntax}}
+\end{figure}
+
+\begin{figure}
+\begin{align*}
 e^\star\quad ::={}&         && \textbf{*sugared expressions} \\
          & i               && \quad\textrm{*integer} \\
 \alt\quad& " s "         && \quad\textrm{*string} \\
@@ -363,8 +416,9 @@ I\quad ::={}&              && \textbf{*instructions} \\
 \alt\quad& \textbf{return}~e^\star~\textbf{to}~x
                            && \quad\textrm{*implicit continuation}
 \end{align*}
-\caption{Syntax of the Join language.\label{fig:syntax}}
+\caption{Syntax of the Join language, continued.\label{fig:syntax2}}
 \end{figure}
+
 
 
 \section{Semantics}
