@@ -1,14 +1,15 @@
 def
     initTrans<nmType, dest, ret> |> def
-            ack<SynAck, 0>
-          & waitSynAck<>   |> { do print("got synack"); match nmType with
-                                Sync  -> { run ret<sendSync> }
-                              | Async -> { run ret<sendAsync>}
+            ack<dat, n>
+          & waitSynAck<> |> { do print("got synack"); match nmType with
+                              Sync  -> { run ret<sendSync> }
+                            | Async -> { run ret<sendAsync>}
                             } & lineClear<>
 
-         or ack<DataAck(dat), ackN>
+         or ack<data, ackN>
           & waitAck<>
-          & pNum<cur> |> {match eq(ackN, cur) with
+          & pNum<cur> |> { let DataAck(dat) = data
+                         ; match eq(ackN, cur) with
                             True -> { match nmType with
                                             Sync  -> { run runRecvCont<dat> }
                                           | Async -> { run 0 }
@@ -46,9 +47,11 @@ def
      in
         { let Pair(sPrint, sMult) = connect()
         ; let proxPrint = initTrans(Async, sPrint)
+        ; let proxMult = initTrans(Sync, sMult)
         ; run 1:proxPrint<"1 - Test\n">
             & 20:proxPrint<"2 - Test\n">
             & 20:proxPrint<"3 - Test\n">
             & 20:proxPrint<"4 - Test\n">
             & 20:proxPrint<"5 - Test\n">
+            & {do proxMult(Cons(7,Cons(17,Nil)))}
         }
