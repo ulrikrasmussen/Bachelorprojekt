@@ -482,6 +482,39 @@ $\C$, the following holds:
 \end{theorem}
 
 
+\subsection{Time}
+We include a relaxed version of the time semantics from \cite{timed-join}. Our
+version of the semantics provides less guarantees about the order in which
+messages are processed, but they still force all computations at a given instant
+$t$ to complete before computations involving messages with a delay tag larger
+than $t$ can happen. Each CHAM is also explicitly tagged with a natural number
+that denotes the current time. This explicit tagging does not occur in
+\cite{timed-join}, but is added to these semantics because:
+\begin{enumerate}
+ \item It enables us to synchronise every machine in the system on a global
+ clock. This is necessary to make progress of time deterministic, which makes
+ it easier to reason about prototype programs written in Join.
+ \item By having the current time available in all reduction rules, we can
+ avoid having to generate all possible transitions from a given state and then
+ choose the ``earliest''. It is not clear how an actual implementation should
+ do this in a feasible manner.
+\end{enumerate}
+
+\subsection{Unreliable channels}
+We make unreliable communication between locations an explicit part of the
+semantics. This is done to make the model of unreliable communication
+deterministic, making it easier to evaluate how well different revisions of a
+program handles lost messages.
+
+We introduce the $\diamond$ and $\times$ relations, which relates pairs of
+location names at specific times. For example, when locations $a$ and $b$ can
+communicate at time $t$, we denote it by
+\begin{equation*}
+ a \linkUp{t} b
+\end{equation*}
+The relation is reflexive, but not necessarily symmetric.
+
+
 \subsection{Pattern matching}
 We say that a join pattern $\pi$ \emph{matches} a value $v$, when there exists
 a $\sigma$ such that $\sigma \pi = v$, where $\sigma$ is a substitution
@@ -544,40 +577,6 @@ The inference rules for pattern matching are given in Figure \ref{fig:rule:pat}.
 \caption{Inference rules for pattern matching.} \label{fig:rule:pat}
 \end{figure}
 
-\clearpage
-
-\subsection{Time}
-We include a relaxed version of the time semantics from \cite{timed-join}. Our
-version of the semantics provides less guarantees about the order in which
-messages are processed, but they still force all computations at a given instant
-$t$ to complete before computations involving messages with a delay tag larger
-than $t$ can happen. Each CHAM is also explicitly tagged with a natural number
-that denotes the current time. This explicit tagging does not occur in
-\cite{timed-join}, but is added to these semantics because:
-\begin{enumerate}
- \item It enables us to synchronise every machine in the system on a global
- clock. This is necessary to make progress of time deterministic, which makes
- it easier to reason about prototype programs written in Join.
- \item By having the current time available in all reduction rules, we can
- avoid having to generate all possible transitions from a given state and then
- choose the ``earliest''. It is not clear how an actual implementation should
- do this in a feasible manner.
-\end{enumerate}
-
-\subsection{Unreliable channels}
-We make unreliable communication between locations an explicit part of the
-semantics. This is done to make the model of unreliable communication
-deterministic, making it easier to evaluate how well different revisions of a
-program handles lost messages.
-
-We introduce the $\diamond$ and $\times$ relations, which relates pairs of
-location names at specific times. For example, when locations $a$ and $b$ can
-communicate at time $t$, we denote it by
-\begin{equation*}
- a \linkUp{t} b
-\end{equation*}
-The relation is reflexive, but not necessarily symmetric.
-
 \subsection{Heating}
 In the original join-calculus definition, a set of reversible heating/cooling
 rules is given. These rules are then implicitly applied to satisfy the
@@ -585,9 +584,9 @@ side-conditions of each reduction rule. This results in a system which is very
 concisely described, but it doesn't give any direct hints as to when an actual
 implementation should apply heating or cooling rules.
 
-Our semantics are a lot more verbose, but provides a directed set of rules
-which explicitly specifies when to heat atoms. We have also excluded the
-reverse relations, so cooling will never occur.
+Our semantics are more verbose, but provides a directed set of rules which
+explicitly specifies when to heat atoms. We have also excluded the reverse
+relations, so cooling will never occur.
 
 Heating of a definition construct $D$ into a set of single reaction rules and
 sublocation definitions $\D'$ are denoted by the judgement form
@@ -1173,8 +1172,6 @@ The inference rules for message exchange is defined in Figure \ref{fig:rule:exch
 messages have been delivered.}\label{fig:rule:exchange}
 \end{figure}
 
-\clearpage
-
 \subsection{Mobility and failure}
 
 In order to define the rules for mobility and failure, we need a mapping between
@@ -1231,7 +1228,6 @@ well-defined due to theorem \ref{thm:unique-loc}.
 system.}\label{fig:rule:makemap}
 \end{figure}
 
-\clearpage
 
 Given a $\Sigma$-map for a given system, we can detect ``go'' messages and
 determine what to do. Determining whether a machine needs to be halted or
