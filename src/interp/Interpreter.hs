@@ -195,17 +195,19 @@ scrambleContext = do
 
 applyReaction :: Def -> JoinM ()
 applyReaction d@(ReactionD js delay (Proc p)) = do
-  t <- getTime
-  t' <- return $ t - delay
+  t    <- getTime
+  t'   <- return $ t - delay
   atms <- getCand t [] js
   --trace ("candidate atoms : " ++ show atms ++ " for join " ++ show js ++ "\n") (return ())
   maybe (mapM putAtom atms >> return ())
         (\(sigma,atms,rest) -> do
           mapM_ putAtom rest
           mapM_ rmAtom atms
-          natms <- return $ (map (subst sigma) $ concat $ map (floatTime t) p)
-          mapM_ putAtom natms--)
-          trace("new atms:" ++ show natms) return ())
+          natms <- return $ map (subst sigma) $ concat $ map (floatTime t) p
+          (defs, natms') <- unzip <$> mapM heatAtom natms
+          mapM_ putDef $ concat defs
+          mapM_ putAtom $ concat natms')
+          --trace("new atms:" ++ show natms) return ())
         (foldr (matchJoin $ t') (Just(M.empty, [], atms)) js)
   where
     getCand :: Integer -> [Atom] -> [Join] -> JoinM [Atom]
@@ -213,13 +215,7 @@ applyReaction d@(ReactionD js delay (Proc p)) = do
       atms <- takeAtoms (chanIs t (getJNm j))
       getCand t (atms ++ akk) js
     getCand _ akk []   = return akk
-
-    floatTime t d@(DelayA d' (Proc as)) = concat $ map (floatTime $ t+d') as
-    floatTime t InertA                  = []
-    floatTime t (DefA d (Proc p))       = [DefA d (Proc $ concat $ map (floatTime t) p)]
-    floatTime t a                       = [DelayA t (Proc [a])]
-
-    chanIs _ v (MsgA v' _)                   = error "No atoms without time tags allowed x_x"
+    chanIs _ v (MsgA v' _)                   = v == v' -- error $ "No atoms without time tags allowed: " ++ show v'
     chanIs t v (DelayA d (Proc [MsgA v' _])) = (v == v') && ( d <= t)
     chanIs _ v _                             = False
 
@@ -242,7 +238,12 @@ applyReaction d@(ReactionD js delay (Proc p)) = do
       case sequence $ map (\(p,e) -> matchPat p e) (zip ps es) of
         Just subst -> Just(M.unions subst, a, as++rest)
         Nothing    -> matchPattern j as (a:rest)
+applyReaction x = error $ "Pattern match failure: " ++ show x
 
+floatTime t d@(DelayA d' (Proc as)) = concat $ map (floatTime $ t+d') as
+floatTime t InertA                  = []
+floatTime t (DefA d (Proc p))       = [DefA d (Proc $ concat $ map (floatTime t) p)]
+floatTime t a                       = [DelayA t (Proc [a])]
 
 -- | Match a pattern against an expression. Returns Nothing if the pattern
 -- doesn't match, otherwise returns `Just m` where m maps variable names to
@@ -288,7 +289,7 @@ heatAtom m@(MatchA e ps) =
                        (flip matchPat e <$> pats)
       firstProc = getFirst . mconcat $ First <$> procs'
   in case firstProc of
-       Nothing -> error $ "Pattern match is not exhaustive"
+       Nothing -> error $ "Pattern match is not exhaustive: " ++ show m
        Just proc -> return ([], proc)
 
 {-

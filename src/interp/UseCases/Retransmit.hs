@@ -17,6 +17,6 @@ api = []
 jPrint t (MsgA _ [jStr, VarE k]) = ([OutMessage t (fromJoin jStr)],[MsgA k []])
 
 events = (mkSpecial 1 "print" jPrint)
-         +&+ (atTime 0 $ linkUpProb 604 "Server" "Client" 1)
+         +&+ (atTime 0 $ linkUpProb 604 "Server" "Client" 0.5)
 
 main = stdJoinMain api machines mClasses defaultConfig{breakAtTime = Just 100} events
