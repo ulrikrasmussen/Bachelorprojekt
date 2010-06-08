@@ -182,13 +182,14 @@ runInterpreter conf st = do
            -- Exchange messages between locations
            let cExchanged = exchangeMessages comP gp cFailed
            let cStepped   = map (execInterp conf) cExchanged
-           let (cProgressed, tpassed) = if map cAtoms cStepped == map cAtoms contexts
+           let (cProgressed, tpassed) = if (S.fromList $ concat $ map cAtoms cStepped)
+                                           == (S.fromList $ concat $ map cAtoms contexts)
                                 then (map (\x -> x {cTime = succ $ cTime x}) cStepped, True)
-                                else {-trace (
+                                else trace (
                                   let cSt = S.fromList $ map cAtoms cStepped
                                       cCtx = S.fromList $ map cAtoms contexts
                                   in
-                                  "atoms diff:" ++ (show $ (cSt `S.union` cCtx) `S.difference` (cSt `S.intersection` cCtx)))-} (cStepped, False)
+                                  "atoms old:" ++ (show $ cCtx ) ++ "\n-------\n" ++ "atoms step:" ++ (show $ cSt ) {- ++ (show $ (cSt `S.union` cCtx) `S.difference` (cSt `S.intersection` cCtx))-} ++"\n\n")  (cStepped, False)
            --putStrLn $ "Current ctxs: " ++ (show $ map cLocation cProgressed)
            if (maybe True (n<=) (breakAtIter conf)) && (maybe True (time'<=) (breakAtTime conf))
                 then runInterpreter' comP' (n+1) st' (output ++ out) tpassed time' cProgressed
@@ -392,7 +393,7 @@ putMessages comP gp ms (context:cs) =
      context' = context { cAtoms = cAtoms context ++ succCom }
   in {-seq (if succCom /= [] then trace ("Successfull com: " ++ show succCom) "" else "")-} context':putMessages comP gp ms' cs
   where
-    setDelay = DelayA ({-succ $ -}cTime context) . Proc . (:[])
+    setDelay = DelayA (succ $ cTime context) . Proc . (:[])
 
     tryCom           [] = []
     tryCom ((loc,a):ls) =

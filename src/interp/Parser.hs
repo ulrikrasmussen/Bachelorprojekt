@@ -136,7 +136,7 @@ proc =  (Proc . concat <$> atoms)
                        <*  (lexeme $ char ':')
                        <*> (Proc . (:[]) <$> msga)
             <?> "atom"
-        msga = (MsgA <$> identifier
+        msga = ((DelayA 0) . Proc . (:[])) <$> (MsgA <$> identifier
                           <*> (angles $ lexeme expr `sepBy` (lexeme $ char ',')))
         -- A 'def' parser. We use lookahead on the 'def' keyword to allow identifiers to be
         -- prefixed by 'def'.
@@ -183,4 +183,4 @@ instr =  LetI <$ (lexeme1 $ string "let")
 
 -- |Parses a complete program, which consists of one or more atoms
 program :: Parser Proc
-program = many space *> (lexeme proc <* eof)
+program =  ( Proc . (:[]) . (DelayA 0)) <$> (many space *> (lexeme proc <* eof))

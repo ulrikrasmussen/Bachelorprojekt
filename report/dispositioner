@@ -35,10 +35,10 @@ Implementation:
    Simulates hardware calls
    Demonstrate startup sequence (stdJoinMain)
 
-2. Sketch up structure.
-   Structured in globalinterp > interp
-   Structured in phases
-   Garbage collection
+2. Sketch up structure. (OK)
+   Structured in globalinterp > interp (OK)
+   Structured in phases (OK)
+   Garbage collection (OK)
 
    a. Point out differences between semantics and
       implementation, and either attempt to argue

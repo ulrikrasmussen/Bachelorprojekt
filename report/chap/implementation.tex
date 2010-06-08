@@ -23,7 +23,7 @@ it up for hardware functions.
 It is possible to indicate that a link between two machines in the network
 toggles its state between being up and down as a function of the time, thereby providing a means for reasoning about the delivery of messages.
 
-However, the simulator interprets the truth of the $a \linkUp{t} b$ relation to be
+However, the simulator interprets the truth of the $\diamond$-relation to be
 given by reachability between $a$ and $b$ in the graph consisting of all
 machines which have established links between each other, thereby simulating
 that nodes will actively route messages between otherwise disconnected senders
@@ -79,13 +79,15 @@ conclude on a local basis, that the name is unproducible in the global context.
 
 While this might initially seem to be a big drawback, in most of the practically
 observed situations it could be handled quite easily by either isolating
-dynamically created functionality with escaping names in a location, which could
-be halted when the communication protocols would deem them irrelevant.
-Alternatively one could add an extra atom to the join patterns defining the
-escaping name, which could be consumed when the name became irrelevant,
-resulting in the inability to mark the implicated defs live.
+dynamically created functionality, with escaping names, in a location which
+could be halted when the communication protocols employed by the program would
+deem them irrelevant.  Alternatively one could add an extra atom to the join
+patterns defining the escaping name, which could be consumed when the name
+became irrelevant, resulting in the inability to mark the implicated defs live.
 
 \subsection*{Deviations from the semantics}
+\fixme{Find out what to actually change in the interpreter and where the code
+deviates}
 Since the interpreter was devised prior to the operational semantics as a
 playground or sandbox, that served both the purpose of executing sample programs
 and the purpose of providing us with an intuition of the workings of the
@@ -93,7 +95,7 @@ calculus, there are some differences between the semantics and the actual
 implementation.
 
 \section{Constructing an experiment}
-Invoking the simulator is done by creating a haskell module featuring
+Invoking the simulator is typically done by creating a haskell module featuring
 \begin{itemize}
 
 \item A specification of what kinds of machines should be present in the
