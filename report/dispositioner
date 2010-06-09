@@ -1,44 +1,61 @@
 vim:set ft=rst tw=60 fo+=tcroql:
 
+TODO:
+=====
+
+1. Tighten everything up
+2. More patterns and use cases
+3. Show program output
+4. Abstract
+5. Deviations from semantics
+6. Revise
+
 Report disposition
 ==================
 
-1. Introduce the join calculus informally -- talk about the
+(* means almost done)
+
+1* Introduce the join calculus informally -- talk about the
    calculus, its place among calculi(and the problems it
    addresses?).
 
-2. Introduce the specific problem that we investigate and
+2* Introduce the specific problem that we investigate and
    present our method (i.e. use-case and discussion)
 
-3. Present the implementation.
+3* Present the implementation.
 
-4. Present the syntax and semantics.
+4* Present the syntax and semantics.
 
-5. Present and discuss the use-case.
+5* Present and discuss the use-case.
 
-6. Present and discuss retransmission protocol.
+6* Present and discuss retransmission protocol.
 
-7. General discussion
+7* General discussion
    * Summarize conclusions from case and retransmission.
    * Present implementation problems.
-   * (Present more patterns, potential use cases).
+   . (Present more patterns, potential use cases).
 
-8. Discuss unsolved problems / shortcomings of the calculus
+8* Discuss unsolved problems / shortcomings of the calculus
    (global name routing, security, distributed garbage
    collection) and other future work.
+
+9* Conclusion
 
 Implementation:
 ===============
 
-1. Features & Usage
+1* Features & Usage
    Simulates machines and communication graph
    Simulates hardware calls
    Demonstrate startup sequence (stdJoinMain)
 
-2. Sketch up structure. (OK)
-   Structured in globalinterp > interp (OK)
-   Structured in phases (OK)
-   Garbage collection (OK)
+2. Structure
+   - Files/Modules
+   - Selected elaborations
+       - Garbage Collection
+       - Eventlog
+   - Usage example
+
 
    a. Point out differences between semantics and
       implementation, and either attempt to argue
@@ -48,32 +65,32 @@ Implementation:
 Syntax and Semantics:
 =====================
 
-1. Introduce the calculus:
-   a. Introduce core join
+1* Introduce the calculus:
+   a* Introduce core join
    b. Describe mobility extension
-   c. Describe pattern matching extension
-   d. Describe realtime extension
+   c* Describe pattern matching extension
+   d* Describe realtime extension (Revise)
 
-2. Summarize syntax.
+2* Summarize syntax.
 
-3. Present semantics.
+3* Present semantics.
 
 Use case disposition:
 =====================
 
-1. Present usecase, inspiration.
+1* Present usecase, inspiration.
 
-2. Introduce scenario.
-   a) Assumptions of underlying system.
-   b) number of msc etc.
+2* Introduce scenario.
+   a* Assumptions of underlying system.
+   b* number of msc etc.
 
-3. Show overview pseudo-code and describe implementation.
+3* Show overview pseudo-code and describe implementation.
    a) Show program output.
 
-4. Discuss generalisability of the program.
-   a) Argue that more general server-sensor queries may be
+4* Discuss generalisability of the program.
+   a* Argue that more general server-sensor queries may be
       constructed,
-   b) And that more general ad-hoc registration is possible.
+   b* And that more general ad-hoc registration is possible.
 
 Metode:
 =======
