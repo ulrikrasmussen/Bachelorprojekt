@@ -97,6 +97,31 @@ occurs in the join patterns of $D$ is \emph{locally} bound in $P$. This means
 that we can never extend or change the rule set for an existing port name, we
 can only define new rules for new port names.
 
+\subsection{Name binding}
+
+The calculus defines a set of structurally defined function that determines
+which variables are free, defined or received, as denoted by the table below.
+
+\[
+\begin{array}{lcl}
+rv(\atm x <\tilde v >) & \defEq & \{ u \in \tilde v \} \\
+rv(J \andJ J') & \defEq & rv(J) \uplus rv(J') \\
+\\
+dv(\atm x < \tilde v>) & \defEq & \{ x \} \\
+dv(J \andJ J') & \defEq & dv(J) \uplus rv(J') \\
+\\
+dv(J \triangleright P) & \defEq & dv(J) \\
+dv(D \andJ D') & \defEq & dv(D) \cup rv(D') \\
+\\
+fv(J \triangleright P) & \defEq & dv(J) \cup(fv(P)\setminus rv(J)) \\
+fv(D \andJ D') & \defEq & fv(D) \cup fv(D') \\
+\\
+fv(\atm x < \tilde v>) & \defEq & \{x\}\cup\{u\in\tilde v\} \\
+fv(\mathbf{def}~ D \inJ P) & \defEq & (fv(P) \cup fv(D))\setminus dv(D) \\
+fv(P \andJ P') & \defEq & fv(P) \cup fv(P') \\
+\end{array}
+\]
+
 \subsection{Encodings}
 
 As mentioned, the only values in the core join-calculus is names. However, the
@@ -172,6 +197,20 @@ structural pattern matching in $\mathbf{match}$-expressions, where it is always
 well-defined what to do.
 
 \fixme{add citations}
+\subsubsection{Name binding}
+Since the pattern matching introduces new constructs that bind variables,
+corresponding additions need to be made to $rv$ and $fv$:
+
+\[
+\begin{array}{lcl}
+rv(x) &\defEq& \{x\} \\
+rv(\kappa(\pi_1, \pi_2, \cdots,\pi_n)) &\defEq& rv(\pi_1)\uplus \cdots\uplus rv(\pi_n)\\
+fv(\kappa(e_1, e_2, \cdots,e_n)) &\defEq& fv(\pi_1)\cup \cdots\cup fv(e_n)\\
+fv(\match e \with |^{i\in I} \pi_i \rightarrow P_i) &\defEq& fv(e) \cup
+(\bigcup_{i\in I} fv(P_i) \setminus rv(\pi_i))
+\end{array}
+\]
+
 \subsection{Distribution and mobility}
 The model of distribution is based on the concept of \emph{locations}, which
 are named solutions of definitions and atoms, thus comprising separate
