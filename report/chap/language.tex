@@ -99,6 +99,31 @@ occurs in the join patterns of $D$ is \emph{locally} bound in $P$. This means
 that we can never extend or change the rule set for an existing port name, we
 can only define new rules for new port names.
 
+\subsection{Name binding}
+
+The calculus defines a set of structurally defined function that determines
+which variables are free, defined or received, as denoted by the table below.
+
+\[
+\begin{array}{lcl}
+rv(\atm x <\tilde v >) & \defEq & \{ u \in \tilde v \} \\
+rv(J \andJ J') & \defEq & rv(J) \uplus rv(J') \\
+\\
+dv(\atm x < \tilde v>) & \defEq & \{ x \} \\
+dv(J \andJ J') & \defEq & dv(J) \uplus rv(J') \\
+\\
+dv(J \triangleright P) & \defEq & dv(J) \\
+dv(D \andJ D') & \defEq & dv(D) \cup rv(D') \\
+\\
+fv(J \triangleright P) & \defEq & dv(J) \cup(fv(P)\setminus rv(J)) \\
+fv(D \andJ D') & \defEq & fv(D) \cup fv(D') \\
+\\
+fv(\atm x < \tilde v>) & \defEq & \{x\}\cup\{u\in\tilde v\} \\
+fv(\mathbf{def}~ D \inJ P) & \defEq & (fv(P) \cup fv(D))\setminus dv(D) \\
+fv(P \andJ P') & \defEq & fv(P) \cup fv(P') \\
+\end{array}
+\]
+
 \subsection{Encodings}
 
 As mentioned, the only values in the core join-calculus are names. However, the
