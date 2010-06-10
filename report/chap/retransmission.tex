@@ -39,7 +39,7 @@ The server sends a \texttt{Syn}-message to initialise the connection
 connection is established and the channel is marked clear, otherwise repeat \ref{retrans:SYN}
 
 \item \label{retrans:Send} When the sender wants to communicate, it increments
-the sequence number and send the message along with the sequence number. Then it
+the sequence number and sends the message along with the sequence number. Then it
 removes the clear mark of the channel, effectively blocking the channel.
 
 \item If a \texttt{DataAck} message is received within the given time window,
@@ -104,9 +104,18 @@ def
     }
 \end{verbatim}
 
-Above the technique of proxying is applied to yield a two new names,
+Above the technique of proxying is applied to yield two new names,
 that each represent an end of the communication channel.
-The proxy at the server end is the name returned by the synchronous call to \texttt{listen}. This is the name that is to be published to allow for communication. Feeding this name into the \texttt{initTrans} call yields the final name that the client application interacts with.
 
-Notice that beyond the call to \texttt{initTrans} it is impossible to distinguish a proxied name from an unproxied name, and using the library involves no extra complexity, which is furthers the case that usage of the join calculus shouldn't necessarily be limited to modelling concurrent computation inside a single physical unit, but is also a decent option for a distributed system, even though the communication might be flawed.
+The proxy at the server end is the name returned by the synchronous call to
+\texttt{listen}. This is the name that is to be published to allow for
+communication. Feeding this name into the \texttt{initTrans} call yields the
+final name that the client application interacts with.
+
+Notice that beyond the call to \texttt{initTrans} it is impossible to
+distinguish a proxied name from an unproxied name, and using the library
+involves no extra complexity, which furthers the case that usage of the join
+calculus shouldn't necessarily be limited to modelling concurrent computation
+inside a single physical unit, but is also a decent option for a distributed
+system, even though the communication might be flawed.
 
