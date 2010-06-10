@@ -177,6 +177,7 @@ runInterpreter conf st = do
            let gp = grandestParents cMoved
 
            -- Handle fail handler registration and halting
+           -- (This is outdated code from an earlier revision)
            let cFailed =
                 (registerFail >>> map halt >>> killFailed comP gp) cMoved
 

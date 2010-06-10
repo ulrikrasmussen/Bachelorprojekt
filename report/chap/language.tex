@@ -31,7 +31,7 @@ and Boudol in \cite{berry1989chemical}.
 
 The model of computation in the RCHAM revolves around the concepts of
 \emph{reaction rules} that manipulate \emph{atoms and molecules} in a
-\emph{solution}. Solutions comprise two multisets $\D$ and $\A$, containing
+\emph{solution}. Solutions comprise a set $\D$ and a multiset $\A$, containing
 reaction rules and processes, respectively. Solutions are denoted by $\D \vdash
 \A$·
 
@@ -82,11 +82,11 @@ The reaction rule $D$ is defined as $D = \atm ready<printer> ~\&~ \atm job<file>
 \longrightarrow{}& D \vdash \atm laser<2>, \atm job<1>
 \end{align*}
 
-Notice that in the above, non-determinism comes from $\rightleftharpoons$.
+Notice that in the above, non-determinism comes from the use of $\rightleftharpoons$.
 
 The RCHAM model is \emph{reflexive}, which means that a reaction can extend the
 solution with new rules, making the model computationally complete. The molecule
-$\mathbf{def}~D~\mathbf{in}~P$ can be split in two parts: A new set of
+$\ \mathbf{def}~D~\mathbf{in}~P \ $ can be split in two parts: A new set of
 definitions $D$, and a set of new molecules $P$. The defining molecule can be
 activated under the $\rightleftharpoons$ relation:
 \begin{align*}
@@ -145,7 +145,7 @@ presented, which adds first-class algebraic data types with pattern matching to
 the language.
 
 Instead of being limited to only being able to transmit names in messages, the
-join-calculus is extended to allow transmitting values of a small expression
+join-calculus is extended to allow transmission of values of a small expression
 language defined by the syntax
 \begin{align*}
  e ::={}& x \\
@@ -166,7 +166,7 @@ modelling a stack can be encoded as follows:
 \\&\inJ& \atm stack<Nil> \andJ \ldots
 \end{array}
 \end{displaymath}
-In the above, $Cons$ and $Nil$ are constructors with $1$ and $0$ arguments,
+In the above, $Cons$ and $Nil$ are constructors with one and zero arguments
 respectively.
 
 Apart from structural patterns in join patterns, a pattern matching process is
@@ -197,7 +197,7 @@ The first join pattern is more general than the second one, and can match both
 messages in the solution. The second join pattern can only match one of the
 messages. If the more general pattern matches the message $\atm x<Two>$, the
 second pattern won't be able to find a matching message in the solution. In
-order to determine whether the reaction can trigger, we would have to try all
+order to determine whether the reaction can trigger, one would have to try all
 possible orderings of messages. To simplify the semantics (and implementation!),
 we have therefore chosen to only allow structural pattern matching in
 $\mathbf{match}$-expressions, where it is always well-defined what to do,
@@ -256,7 +256,7 @@ sublocations for a given solution:
 The $\rightleftharpoons$ defines how a defined sublocation can become a solution
 in the DRCHAM (and vice-versa). Example:
 \begin{align*}
- a[D : P] \vdash^\phi \rightleftharpoons \vdash^\phi ~||~ D \vdash^{\phi a} P
+ a[D : P] \vdash^\phi\ \  \rightleftharpoons \ \  \vdash^\phi ~||~ D \vdash^{\phi a} P
 \end{align*}
 When all sublocations for a given location has been reduced to definition form,
 we say that the location is \emph{frozen}. A location can only transcend to
@@ -290,8 +290,8 @@ sublocations). Example:
 \end{align*}
 If a solution has a location string which contains $\Omega$, it is not allowed
 to make any reactions. Other locations can still migrate to a failed location,
-but will also get marked as failed in the same atomic action, preventing to
-perform any further actions.
+but will also get marked as failed in the same atomic action, preventing them
+from perform any further actions.
 
 If a solution emits a message of the form $\atm fail<a,k>$, it can observe
 when the location $a$ fails, by emitting a continuation on port $k$. Example:
@@ -305,8 +305,8 @@ where $\psi$ contains $\Omega$.
 
 In our language, we have chosen to include most of the extensions presented in
 \cite{fournet1996calculus}. We have not chosen to include support for failure
-detection. It is easy to implement failure detection in a simulated setting.
-However, in a real-world distributed setting, it is unclear what behaviour the
+detection. While It is easy to implement failure detection in a simulated setting,
+in a real-world distributed setting However, it is unclear what behaviour the
 programmer actually can expect.
 
 As an example, consider a scenario where several observing locations have
@@ -386,7 +386,7 @@ A timed extension also exists for join-calculus, called Timed Join
 Calculus \cite{timed-join}. The calculus is extended with a model of
 time using a \emph{discrete time domain}, where every process bears a
 time tag denoting when it will be able to participate in a reaction.
-The syntax is extended with a new tagging construction for processes,
+The syntax is extended with a new construct for tagging processes,
 and all reactions are tagged with a
 \emph{delay} tag:
 \begin{align*}

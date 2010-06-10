@@ -9,7 +9,7 @@ instance of the \fixme{insert citation!.. I think its in join-tutorial.}{applet
 -server} pattern, although a bit more involved.
 
 The example is heavily inspired by the sensor databases of
-\cite{bonnet2001towards}, and evolves around a factory warehouse setting where
+\cite{bonnet2001towards}, and revolves around a factory warehouse setting where
 each item has a stick-on sensor that measures the temperature. There are also
 sensors on the walls and ceilings. All sensors have a unique id available to
 them.
@@ -62,7 +62,7 @@ temperature above a given threshold it will report it immediately.
 
 Every $m^\text{th}$ time instant the server outputs the received temperature
 readings along with an assessment of the age of each reading. If a reading
-isn't updated within a given time interval, the program assumes that the sensor
+isn't updated for a number of instants, the program assumes that the sensor
 is broken and prompts the operator to replace it.
 
 \subsubsection*{Details of the simulated system}
@@ -71,7 +71,8 @@ We will assume a network topology with a central processing node which is
 connected to the sensors in a star pattern, using unreliable communication
 channels (i.e. some sort of radio protocol).  We do not assume that the runtime
 system ensures delivery of messages, but we do assume that any messages that
-\emph{do} get delivered are ensured not to be corrupted in any way.
+\emph{do} get delivered are ensured not to be corrupted in any way, duplicated
+or subjected to transmission delays.
 
 However, since we don't have a mature, compiled language, we will not focus on
 memory and processor constraints, since the resource usage depends a lot on the
@@ -88,7 +89,7 @@ succeeds in the same time instant. In a real-world scenario, bootstrapping an
 ad-hoc network may be more involved, since we cannot rely on a global,
 centralized non-failing database.  Most likely one could be moderately
 successful in this particular setting by implementing this name-exchange API by
-performing regular broadcasts at the \fixme{is it called this?}{link-level}
+performing regular broadcasts at the link-level
 of the network to anyone willing to listen.
 
 The only type of communication that is assumed to be reliable is location
@@ -204,8 +205,6 @@ Also worth noting is \texttt{print}, which also a special name, and the
 \texttt{mkClock} returns a name, that can be used to query the current time
 with a precision of two instants.
 
-\fixme{Should we show the output of the program?}
-
 \subsection*{Discussion}
 
 In constructing this programming example the most noteworthy obstacle, apart
@@ -219,7 +218,7 @@ elegant, then at least without any need for cumbersome encodings of conceptually
 simple things.
 
 A potential problem with the program is revealed in the event of a query with
-devious behaviour entering the system, with the devious behaviour consisting in
+deviant behaviour entering the system, with the deviant behaviour consisting of
 for example neglecting to migrate to the sensors after construction, which results
 in a significant increase in data traffic between the sensors and the servers,
 thus increasing battery drain.

@@ -3,18 +3,50 @@
 
 %Introduction
 
-In order to be able to empirically test the constructed sample programs we have
-devised, we have constructed a proof-of-concept implementation of an
-simulator and interpreter that is capable of executing programs written in Join and
-simulate external events such as link downtimes and hardware functions.
+In order to be able to empirically test the sample programs we have devised, we
+have constructed a proof-of-concept implementation of a simulator and
+interpreter, that is capable of executing programs written in Join and simulate
+external events such as link downtimes and hardware sensors and actuators.
 
 The simulator is implemented in Haskell because it provided a nice foundation in
 the shape of a combinatoric parser library and a very extensive type system. The
 parser library called \texttt{Parsec} \cite{parsec} facilitated a rather
 concise mapping of the concrete syntax into abstract syntax, and by defining
 appropriate monads and type classes we feel that we have an implementation,
-that doesn't contain too much clutter and plumbing.\fixme{Should we actually
-include this?}
+that doesn't contain too much clutter and plumbing.
+
+\section{Overview}
+The interpreter consists of two major parts: One that handles the communication
+between machines and the progress of time, and one that performs reductions
+inside a single machine. These two parts are called \texttt{GlobalInterpreter}
+and \emph{Interpreter} respectively.
+
+Beyond communication and time \texttt{GlobalInterpreter} also manages the
+\emph{EventLog}, which is a list containing information about the values
+registered by hardware sensors in given time instants as well as machine link
+indicators. Migration is also managed by the global interpreter.
+
+Because our examples contain only spatially inert machines, the only actuators
+modelled have been print-commands.
+
+The global interpreter runs a loop in a fashion somewhat similar to what the
+semantics prescribe:
+
+\begin{enumerate}
+\item Match calls to sensors and actuators in each machine
+\item Spawn new sublocations
+\item Migrate locations
+\item Communicate
+\item Step individual interpreters
+\end{enumerate}
+
+This deviates slightly from what the rules in the semantics prescribe, but we
+consider the two to be largely equivalent. The chief reason for the difference
+is that the interpreter was put together bit by bit and used as a playground for
+new extensions, of which not all were deemed important enough to make it to the
+semantics. However, having now a concrete directed semantics for the programming
+language would probably greatly assist a potential new reimplementation without
+all the bits left over from obsolete extensions.
 
 \section{Implementation details}
 The simulator consists in its entirety of the following files, each comprising a
@@ -51,6 +83,31 @@ operations, but also the means for name exchange.
 
 \end{description}
 
+\subsection{The EventLog}
+
+The event log comprises a list of all the external events that influence the
+system at any given time interval. These events are specified via helper
+functions and a concatenation operator \texttt{+\&+}.
+
+Consider this example, taken from the use case:
+\begin{verbatim}
+events = ([
+           EvLinkUp "Server" "Sensor_A"
+         , EvLinkUp "Server" "Sensor_B"
+         ]:(cycle [[]]))
+         +&+ (atTime 20 $ linkUpProb 42 "Server" "Sensor_B" 0.6)
+         +&+ (mkSpecial 1 "readTemp" readTemp)
+         +&+ (mkSpecial 1 "print" jPrint)
+\end{verbatim}
+
+This example specifies that the server communicates without trouble with both
+sensors for the first twenty time instants. From time 20 and thereafter the link
+between the server and Sensor\_B alternates between up and down with a $60\%$
+chance of being up.
+The \texttt{mkSpecial} functions creates the sensor \texttt{readTemp} and the
+actuator \texttt{print}.
+
+\subsection{Garbage collection}
 The garbage collection scheme applied closely resembles the well known
 \emph{Mark-Sweep} algorithm, and works as follows, initially disregarding the
 distribution extension:
@@ -87,12 +144,13 @@ In the above example there is no way for machine two to conclude that its def
 could be garbage collected, because the name $\atm y<>$ has escaped to machine
 one, and only when it is done using it can the def be collected.
 
-However, if the required lifetime of $\atm y<>$ is known beforehand, guarding the
-def with an extra atom allows it to be collected, as shown below:
+However, if the required lifetime of $\atm y<>$ is known beforehand by the
+programmer, guarding the def with an extra atom allows it to be collected, as
+shown below:
 \begin{verbatim}
 Machine1:            | Machine2:
 def                  | def
-    x<> |> .. y<> .. |     y<> & alive<> |> ...
+    x<> |> .. y<> .. |     y<> & alive<> |> alive<> & ...
     z<> |> .. x<> .. |     done<> & alive<> |> 0
  in z<>              |  in alive<>
 \end{verbatim}
@@ -110,12 +168,12 @@ calculus, there are some differences between the semantics and the actual
 implementation.
 
 \subsection{Constructing an experiment}
-The auxiliary module which is called \texttt{Aux} contains functions for
+The auxiliary module which contains functions for
 starting the interpreter and datatypes for parametrising it. The central piece
 of the library is the function \texttt{stdJoinMain}, which starts the simulator
 with the given parameters, which are:
 
-\begin{itemize}
+\begin{enumerate}
 
 \item A map that maps atoms to built in function. This is usually used to make
 low level arithmetic operations available to join programs. In the code this is
@@ -134,7 +192,7 @@ termination conditions.
 \item An infinite list of external events, usually constructed by helper
 functions.
 
-\end{itemize}
+\end{enumerate}
 
 As an example, consider the code below that starts up a simple network of two
 machines:
@@ -144,8 +202,6 @@ module Main(main) where
 import Aux
 import Language
 import Interpreter
-
--- Currently, this file test a time lock.
 
 mClasses = [ ("Simple1", "Simple1.join")
            , ("Simple2", "Simple2.join")]

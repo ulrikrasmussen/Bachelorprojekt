@@ -77,11 +77,6 @@ It would be much more realistic to have time progress in each location
 independent of the others. This would isolate the bad effects of time-locks and
 introduce more concurrency into the system.
 
-While this would surely have a substantial impact on the semantics, that
-currently revolves around the fact that time progresses synchronously, at least
-it seems to be a lighter manipulation of the language than solving the name
-routing problem.
-
 \vspace{1em}
 
 Another shortcoming of the time model is that it doesn't allow a program to
@@ -94,24 +89,26 @@ been argued as being a dead end, perhaps a different approach might prove both
 sufficient for enabling action on unsatisfied realtime constraints as well as
 formally sound.
 
-A potential solution would be to adopt a model of time where the duration of
-time instants are considered an external influence on the execution to the
-program, and where delayed atoms enter the solution in the time instant that
-most closely matches their specified delay.
-
-Consider the following code sketch:
-\begin{verbatim}
-def
-    start<> |> [ series of actions that produce an x<>]
- or x<> & intime<> |> [[ further reductions on x<>, which is still relevant
-                      to the problem ]]
- or timeout<> & intime <> |> [[ actions to handle the timeout ]]
-
- in start<> & intime<> & 10s:timeout<>
-\end{verbatim}
-
-This is admittedly speculation however, but could be considered an interesting
-future work.
+%A potential solution would be to adopt a model of time where the duration of
+%time instants are considered an external influence on the execution of the
+%program, and where delayed atoms enter the solution in the time instant that
+%most closely matches their specified delay.
+%
+%Consider the following code sketch:
+%\begin{verbatim}
+%def
+%    start<> |> [ instant that produces an x<>]
+% or x<> & intime<> |>
+%         [[ further reductions on x<>,
+%            which is still relevant to the problem ]]
+% or !timeout<> & intime <> |>
+%         [[ actions to handle the timeout ]]
+%
+% in start<> & 1:intime<> & 10s:timeout<>
+%\end{verbatim}
+%
+%This is admittedly speculation however, but could be considered an interesting
+%future work.
 
 \section{Conclusion}
 % Join is nice, but work remains.
