@@ -1,25 +1,34 @@
 def
    listen<nm, ret> |> def
-         receive<data, n> & init<> |> match data with
-                                        Syn(ack) -> { do print("got Syn")}
-                                                    & ackNm<ack> & ack<SynAck, n> & init<>
-                                      | Data(dat) -> receive<data, n>
+         receive<data, n> & init<> |>
+           match data with
+             Syn(ack) -> { do print("got Syn")}
+                         & ackNm<ack> & ack<SynAck, n> & init<>
+           | Data(dat) -> receive<data, n>
 
       or receive<data', next>
        & pNum<cur> & ackNm<ack>
-       & lastResult<lr> |> { let Data(data) = data'
-                           ; do print("received");match leq(next, cur) with
-                               True  -> {  run pNum<cur> & ack<DataAck(lr), next> & lastResult<lr>}
-                             | False -> { run pNum<next>
-                                      & match nm with
-                                          Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<Just(ret)> }
-                                        | Async(nm') -> { run nm'<data> & ack<DataAck(Nothing), next> & lastResult<Nothing> }
-                                        }
-                           } & ackNm<ack>
+       & lastResult<lr> |>
+           { let Data(data) = data'
+           ; do print("received");match leq(next, cur) with
+               True  -> { run pNum<cur> & ack<DataAck(lr), next>
+                              & lastResult<lr>}
+             | False -> { run pNum<next>
+                      & match nm with
+                          Sync(nm') -> { let ret = nm'(data)
+                                       ; run ack<DataAck(Just(ret)), next>
+                                             & lastResult<Just(ret)> }
+                        | Async(nm') -> { run nm'<data>
+                                          & ack<DataAck(Nothing), next>
+                                          & lastResult<Nothing> }
+                        }
+           } & ackNm<ack>
       in ret<receive> & lastResult<Nothing> & pNum<0> & init<>
+
  or servPrint<txt> |> {do print("servPrint: "); do print(txt) }
  or servMult(data) |> { let Cons(a, Cons(b, Nil)) = data
-                      ; return mult(a,b) to servMult}
+                      ; return mult(a,b) to servMult }
+
  in { let expoPrint = listen(Async(servPrint))
     ; let expoMult = listen(Sync(servMult))
     ; do register("serverTest", Pair(expoPrint, expoMult))

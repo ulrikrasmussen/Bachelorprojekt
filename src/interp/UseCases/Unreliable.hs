@@ -5,8 +5,8 @@ import Language
 import Interpreter
 
 
-mClasses = [ ("Server", "UseCases/Server2.join")
-                 , ("Sensor", "UseCases/Sensor2.join") ]
+mClasses = [ ("Server", "UseCases/Server.join")
+                 , ("Sensor", "UseCases/Sensor.join") ]
 
 machines = [ ("Server", "Server")
            , ("Sensor_A", "Sensor")

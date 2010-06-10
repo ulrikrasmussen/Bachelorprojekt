@@ -14,7 +14,7 @@ def
                                             Sync  -> { run runRecvCont<dat> }
                                           | Async -> { run 0 }
                                     ; run pNum<cur> & lineClear<>}
-                          | False -> { do print("got unexpected ack x_x.. shouldn't happen.\n")
+                          | False -> { do print("got unexpected ack")
                                      ; run pNum<cur> & waitAck<>}
                         }
 
@@ -22,17 +22,26 @@ def
                                                  Just data' -> k<data'>
                                                | Nothing    -> k<>
 
-         or retransmit<pl,n> & pNum<cur> & waitAck<> |> { match eq(n, cur) with
-                                                   True  -> { run send<pl>}
-                                                 | False -> { run 0}
-                                               } & pNum<cur> & waitAck<>
+         or retransmit<pl,n> & pNum<cur> & waitAck<> |>
+              { match eq(n, cur) with
+                  True  -> { run send<pl>}
+                | False -> { run 0}
+              } & pNum<cur> & waitAck<>
 
-         or send<payload> & pNum<n> |> pNum<n> & dest<Data(payload), n> & 10:retransmit<payload, n>
+         or send<payload> & pNum<n> |> pNum<n>& dest<Data(payload), n>
+                                       & 10:retransmit<payload, n>
 
-         or sendAsync<payload>      & pNum<n> & lineClear<> |> {do print("sendasync");let n' = add(1,n); run waitAck<> & send<payload> & pNum<n'>}
-         or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run waitAck<> & send<payload> & recvCont<cont> & pNum<n'>}
+         or sendAsync<payload> & pNum<n>
+            & lineClear<> |> { do print("sendasync")
+                             ; let n' = add(1,n)
+                             ; run waitAck<> & send<payload> & pNum<n'>}
+         or sendSync<payload, cont> & pNum<n>
+            & lineClear<> |> { let n' = add(1,n)
+                             ; run waitAck<> & send<payload>
+                                   & recvCont<cont> & pNum<n'>}
 
-         or sendSyn<> |> {do print("sending syn")} & dest<Syn(ack), 0> & 10:retrSyn<> & waitSynAck<>
+         or sendSyn<> |> {do print("sending syn")}
+                         & dest<Syn(ack), 0> & 10:retrSyn<> & waitSynAck<>
          or retrSyn<> & waitSynAck<> |> sendSyn<>
 
          in pNum<0> & sendSyn<>

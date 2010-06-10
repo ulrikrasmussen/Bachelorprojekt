@@ -1,0 +1,1638 @@
+%!PS-Adobe-3.0
+%%Title: Server.join
+%%For: plc
+%%Creator: VIM - Vi IMproved 7.2 (2008 Aug 9)
+%%CreationDate: Thu Jun 10 03:45:04 2010
+%%DocumentData: Clean8Bit
+%%Orientation: Portrait
+%%Pages: (atend)
+%%PageOrder: Ascend
+%%BoundingBox: 59 49 564 800
+%%DocumentMedia: A4 595 842 0 () ()
+%%DocumentNeededResources: font Courier
+%%+ font Courier-Bold
+%%+ font Courier-Oblique
+%%+ font Courier-BoldOblique
+%%DocumentSuppliedResources: procset VIM-Prolog 1.4 1
+%%+ encoding VIM-latin1 1.0 0
+%%Requirements: duplex collate color
+%%EndComments
+%%BeginDefaults
+%%PageResources: font Courier
+%%+ font Courier-Bold
+%%+ font Courier-Oblique
+%%+ font Courier-BoldOblique
+%%PageMedia: A4
+%%EndDefaults
+%%BeginProlog
+%%BeginResource: procset VIM-Prolog
+%%BeginDocument: /usr/share/vim/vim72/print/prolog.ps
+%!PS-Adobe-3.0 Resource-ProcSet
+%%Title: VIM-Prolog
+%%Version: 1.4 1
+%%EndComments
+% Editing of this file is NOT RECOMMENDED.  You run a very good risk of causing
+% all PostScript printing from VIM failing if you do.  PostScript is not called
+% a write-only language for nothing!
+/packedarray where not{userdict begin/setpacking/pop load def/currentpacking
+false def end}{pop}ifelse/CP currentpacking def true setpacking
+/bd{bind def}bind def/ld{load def}bd/ed{exch def}bd/d/def ld
+/db{dict begin}bd/cde{currentdict end}bd
+/T true d/F false d
+/SO null d/sv{/SO save d}bd/re{SO restore}bd
+/L2 systemdict/languagelevel 2 copy known{get exec}{pop pop 1}ifelse 2 ge d
+/m/moveto ld/s/show ld /ms{m s}bd /g/setgray ld/r/setrgbcolor ld/sp{showpage}bd
+/gs/gsave ld/gr/grestore ld/cp/currentpoint ld
+/ul{gs UW setlinewidth cp UO add 2 copy newpath m 3 1 roll add exch lineto
+stroke gr}bd
+/bg{gs r cp BO add 4 -2 roll rectfill gr}bd
+/sl{90 rotate 0 exch translate}bd
+L2{
+/sspd{mark exch{setpagedevice}stopped cleartomark}bd
+/nc{1 db/NumCopies ed cde sspd}bd
+/sps{3 db/Orientation ed[3 1 roll]/PageSize ed/ImagingBBox null d cde sspd}bd
+/dt{2 db/Tumble ed/Duplex ed cde sspd}bd
+/c{1 db/Collate ed cde sspd}bd
+}{
+/nc{/#copies ed}bd
+/sps{statusdict/setpage get exec}bd
+/dt{statusdict/settumble 2 copy known{get exec}{pop pop pop}ifelse
+statusdict/setduplexmode 2 copy known{get exec}{pop pop pop}ifelse}bd
+/c{pop}bd
+}ifelse
+/ffs{findfont exch scalefont d}bd/sf{setfont}bd
+/ref{1 db findfont dup maxlength dict/NFD ed{exch dup/FID ne{exch NFD 3 1 roll
+put}{pop pop}ifelse}forall/Encoding findresource dup length 256 eq{NFD/Encoding
+3 -1 roll put}{pop}ifelse NFD dup/FontType get 3 ne{/CharStrings}{/CharProcs}
+ifelse 2 copy known{2 copy get dup maxlength dict copy[/questiondown/space]{2
+copy known{2 copy get 2 index/.notdef 3 -1 roll put pop exit}if pop}forall put
+}{pop pop}ifelse dup NFD/FontName 3 -1 roll put NFD definefont pop end}bd
+CP setpacking
+(\004)cvn{}bd
+% vim:ff=unix:
+%%EOF
+%%EndDocument
+%%EndResource
+%%BeginResource: encoding VIM-latin1
+%%BeginDocument: /usr/share/vim/vim72/print/latin1.ps
+%!PS-Adobe-3.0 Resource-Encoding
+%%Title: VIM-latin1
+%%Version: 1.0 0
+%%EndComments
+/VIM-latin1[
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quotesingle
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash
+/zero /one /two /three /four /five /six /seven
+/eight /nine /colon /semicolon /less /equal /greater /question
+/at /A /B /C /D /E /F /G
+/H /I /J /K /L /M /N /O
+/P /Q /R /S /T /U /V /W
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore
+/grave /a /b /c /d /e /f /g
+/h /i /j /k /l /m /n /o
+/p /q /r /s /t /u /v /w
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /periodcentered
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis]
+/Encoding defineresource pop
+% vim:ff=unix:
+%%EOF
+%%EndDocument
+%%EndResource
+%%EndProlog
+%%BeginSetup
+595 842 0 sps
+1 nc
+T F dt
+T c
+%%IncludeResource: font Courier
+/_F0 /VIM-latin1 /Courier ref
+/F0 10 /_F0 ffs
+%%IncludeResource: font Courier-Bold
+/_F1 /VIM-latin1 /Courier-Bold ref
+/F1 10 /_F1 ffs
+%%IncludeResource: font Courier-Oblique
+/_F2 /VIM-latin1 /Courier-Oblique ref
+/F2 10 /_F2 ffs
+%%IncludeResource: font Courier-BoldOblique
+/_F3 /VIM-latin1 /Courier-BoldOblique ref
+/F3 10 /_F3 ffs
+/UO -1 d
+/UW 0.5 d
+/BO -2.5 d
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+sv
+0 g
+F0 sf
+%%EndPageSetup
+F1 sf
+(Server.join                                                                   Page 1)59.5 792.4 ms
+0.647 0.165 0.165 r
+(def)59.5 772.4 ms
+F0 sf
+0 g
+( intToStr\(n\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(    )59.5 762.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(def)s
+F0 sf
+0 g
+( intToStr'\(n,acc\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(          )59.5 752.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( n )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(            )59.5 742.4 ms
+1 0 1 r
+(0)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \(acc\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( intToStr' })s
+(          )59.5 732.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+0 g
+(n )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( n' = div\(n, )s
+1 0 1 r
+(10)s
+0 g
+(\);)s
+(                   )59.5 722.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( d = mod\(n, )s
+1 0 1 r
+(10)s
+0 g
+(\);)s
+(                   )59.5 712.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( acc' = )s
+1 0 1 r
+(Cons)s
+0 g
+(\(add\(d, )s
+1 0 1 r
+(48)s
+0 g
+(\), acc\);)s
+(                   )59.5 702.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \(intToStr'\(n', acc'\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( intToStr')s
+(                 })59.5 692.4 ms
+(     )59.5 682.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \(intToStr'\(n, )s
+1 0 1 r
+(Nil)s
+0 g
+(\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( intToStr })s
+( )59.5 662.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( tempToStr\()s
+1 0 1 r
+(Above)s
+0 g
+(\(t\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( {)s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( concat\()s
+1 0 1 r
+("Above\(")s
+0 g
+(,concat\(intToStr\(t\),)s
+1 0 1 r
+("\)")s
+0 g
+(\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( tempT)s
+(oStr})59.5 652.4 ms
+( )59.5 642.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( tempToStr\()s
+1 0 1 r
+(Avg)s
+0 g
+(\(t\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( {)s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( concat\()s
+1 0 1 r
+("Avg\(")s
+0 g
+(,concat\(intToStr\(t\),)s
+1 0 1 r
+("\)")s
+0 g
+(\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( tempToStr)s
+(})59.5 632.4 ms
+( )59.5 612.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( ageToStr\(now, n\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( diff =  sub\(now, n\))s
+(                        ; )59.5 602.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( leq\(diff, )s
+1 0 1 r
+(20)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                            )59.5 592.4 ms
+1 0 1 r
+(True)s
+0 g
+(  )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+("Current")s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( ageToStr})s
+(                          )59.5 582.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+(False)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( leq\(diff, )s
+1 0 1 r
+(30)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                                         )59.5 572.4 ms
+1 0 1 r
+(True)s
+0 g
+(  )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+("Old")s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( ageToStr})s
+(                                       )59.5 562.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+(False)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+("Replace")s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( ageToStr})s
+(                                     })59.5 552.4 ms
+(                        })59.5 542.4 ms
+( )59.5 522.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( length\()s
+1 0 1 r
+(Nil)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \()s
+1 0 1 r
+(0)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( length })s
+( )59.5 512.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( length\()s
+1 0 1 r
+(Cons)s
+0 g
+(\(x,xs\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \(add\()s
+1 0 1 r
+(1)s
+0 g
+(,length\(xs\)\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( length })s
+( )59.5 492.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( concat\()s
+1 0 1 r
+(Nil)s
+0 g
+(, ys\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \(ys\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( concat })s
+( )59.5 482.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( concat\()s
+1 0 1 r
+(Cons)s
+0 g
+(\(x,xs\), ys\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \()s
+1 0 1 r
+(Cons)s
+0 g
+(\(x,concat\(xs,ys\)\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( concat })s
+( )59.5 462.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( map\(f, )s
+1 0 1 r
+(Nil)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \()s
+1 0 1 r
+(Nil)s
+0 g
+(\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( map })s
+( )59.5 452.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( map\(f, )s
+1 0 1 r
+(Cons)s
+0 g
+(\(x,xs\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( \()s
+1 0 1 r
+(Cons)s
+0 g
+(\(f\(x\), map\(f,xs\)\)\) )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( map })s
+( )59.5 432.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( mkClock\(init\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(def)s
+F0 sf
+0 g
+(                         getTime\(\) )59.5 422.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( time<n> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( n )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( getTime } )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( time<n>)s
+(                      )59.5 412.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( time<n> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( time<m> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( leq\(n,m\) )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                                                  )59.5 402.4 ms
+1 0 1 r
+(True)s
+0 g
+(  )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( time<m>})s
+(                                                )59.5 392.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+(False)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( time<n> }})s
+(                  )59.5 382.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( mkTimeSrc<time,init> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( getTime )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( mkClock })s
+( )59.5 362.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( mkTimeSrc<sink,init> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(def)s
+F0 sf
+0 g
+(                                time<n> )59.5 352.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( next = add\(n,)s
+1 0 1 r
+(1)s
+0 g
+(\))s
+(                                           ; )59.5 342.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(1)s
+0 g
+(:time<next> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( sink<n>})s
+(                             )59.5 332.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( init' = add\(init,)s
+1 0 1 r
+(1)s
+0 g
+(\);)s
+(                                  )59.5 322.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(1)s
+0 g
+(:time<init'> })s
+( )59.5 302.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( mkQuery\(threshold, readTemp, callback\) )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(                 { )59.5 292.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( num = )s
+1 0 1 r
+(10)s
+0 g
+(                 ; )59.5 282.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(def)s
+F0 sf
+0 g
+( query[)s
+(                     collect<n, tAkk> )59.5 272.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( t = readTemp\(\))s
+(                                         ; )59.5 262.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( leq\(threshold, t\) )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                                             )59.5 252.4 ms
+1 0 1 r
+(True)s
+0 g
+(  )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( callback<)s
+1 0 1 r
+(Above)s
+0 g
+(\(t\)> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(1)s
+0 g
+(:c)s
+(ollect<)59.5 242.4 ms
+1 0 1 r
+(1)s
+0 g
+(,t>})s
+(                                           )59.5 232.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+(False)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( eq\(n,num\) )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                                                          )59.5 222.4 ms
+1 0 1 r
+(True)s
+0 g
+(  )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( avg= div\(ad)s
+(d\(t,tAkk\),add\()59.5 212.4 ms
+1 0 1 r
+(1)s
+0 g
+(,num\)\))s
+(                                                                   ; )59.5 202.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( callback<)s
+1 0 1 r
+(Av)s
+(g)59.5 192.4 ms
+0 g
+(\(avg\)> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(1)s
+0 g
+(:collect<)s
+1 0 1 r
+(1)s
+0 g
+(,avg> })s
+(                                                        )59.5 182.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+(False)s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( tAkk' = add)s
+(\(t, tAkk\))59.5 172.4 ms
+(                                                                   ; )59.5 162.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( nextT = add)s
+(\(n,)59.5 152.4 ms
+1 0 1 r
+(1)s
+0 g
+(\))s
+(                                                                   ; )59.5 142.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(1)s
+0 g
+(:collect<n)s
+(extT, tAkk'> })59.5 132.4 ms
+(                                                      })59.5 122.4 ms
+(                                         })59.5 112.4 ms
+(                  )59.5 102.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( migrate<locNm> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( go\(locNm\); )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( t = readTemp\(\); )s
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( colle)s
+(ct<)59.5 92.4 ms
+1 0 1 r
+(1)s
+0 g
+(,t>})s
+(                  )59.5 82.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(0)s
+0 g
+( ] )s
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( {)s
+F1 sf
+0.647 0.165 0.165 r
+(return)s
+F0 sf
+0 g
+( migrate )s
+F1 sf
+0.647 0.165 0.165 r
+(to)s
+F0 sf
+0 g
+( mkQuery})s
+(                 })59.5 72.4 ms
+( )59.5 52.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( mkServer<> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( print\()s
+1 0 1 r
+("making clock..")s
+0 g
+(\))s
+re sp
+%%PageTrailer
+%%Page: 2 2
+%%BeginPageSetup
+sv
+0 g
+F0 sf
+%%EndPageSetup
+F1 sf
+(Server.join                                                                   Page 2)59.5 792.4 ms
+F0 sf
+(                  ; )59.5 772.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( cl = mkClock\()s
+1 0 1 r
+(0)s
+0 g
+(\))s
+(                  ; )59.5 762.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( print\()s
+1 0 1 r
+("clock made")s
+0 g
+(\))s
+(                  ; )59.5 752.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(def)s
+F0 sf
+0 g
+(                            sensorHandshake<mscId, readT, qLoc> )59.5 742.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( print\(concat)s
+(\()59.5 732.4 ms
+1 0 1 r
+("Received handshake from: ")s
+0 g
+(,mscId\)\);)s
+(                              )59.5 722.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(match)s
+F0 sf
+0 g
+( mscId )s
+F1 sf
+0.647 0.165 0.165 r
+(with)s
+F0 sf
+0 g
+(                                )59.5 712.4 ms
+1 0 1 r
+("Sensor_A")s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( {)s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( query = mkQuery\()s
+1 0 1 r
+(20)s
+0 g
+(, readT, sensor)s
+(ACallback\))59.5 702.4 ms
+(                                              ; )59.5 692.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( query<qLoc>})s
+(                              )59.5 682.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(| )s
+F0 sf
+1 0 1 r
+("Sensor_B")s
+0 g
+( )s
+F1 sf
+0.647 0.165 0.165 r
+(->)s
+F0 sf
+0 g
+( {)s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( query = mkQuery\()s
+1 0 1 r
+(22)s
+0 g
+(, readT, sensor)s
+(BCallback\))59.5 672.4 ms
+(                                              ; )59.5 662.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( query<qLoc>})s
+(                            })59.5 652.4 ms
+(                         )59.5 642.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( sensorACallback<temp> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, bT, bN)s
+(\)> )59.5 632.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(                                                   { )59.5 622.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( time = cl\(\))s
+(                                                   ; )59.5 612.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(temp, tim)s
+(e, bT, bN\)>)59.5 602.4 ms
+(                                                   })59.5 592.4 ms
+(                         )59.5 582.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( sensorBCallback<temp> )s
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, bT, bN)s
+(\)> )59.5 572.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(                                                   { )59.5 562.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( time = cl\(\))s
+(                                                   ; )59.5 552.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, t)s
+(emp, time\)>)59.5 542.4 ms
+(                                                   })59.5 532.4 ms
+(                         )59.5 522.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( printCollected<>)s
+(                          )59.5 512.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, bT, bN\)> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( t = cl\(\))s
+(                                                                  ; )59.5 502.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( print\(concat\()s
+1 0 1 r
+("Status: \(Sensor_A: ")59.5 492.4 ms
+0 g
+(,)s
+(                                                                             concat\()59.5 482.4 ms
+(tempToStr\(aT\),)59.5 472.4 ms
+(                                                                             concat\()59.5 462.4 ms
+1 0 1 r
+(" ")59.5 452.4 ms
+0 g
+(,)s
+(                                                                             concat\()59.5 442.4 ms
+(ageToStr\(t,aN\),)59.5 432.4 ms
+(                                                                             concat\()59.5 422.4 ms
+1 0 1 r
+("\) \(Sensor_B: ")59.5 412.4 ms
+0 g
+(,)s
+(                                                                             concat\()59.5 402.4 ms
+(tempToStr\(bT\),)59.5 392.4 ms
+(                                                                             concat\()59.5 382.4 ms
+1 0 1 r
+(" ")59.5 372.4 ms
+0 g
+(,)s
+(                                                                             concat\()59.5 362.4 ms
+(ageToStr\(t,bN\),)59.5 352.4 ms
+(                                                                             )59.5 342.4 ms
+1 0 1 r
+("\)")s
+0 g
+(                                                                             \)\)\)\)\)\)\))59.5 332.4 ms
+(\)\))59.5 322.4 ms
+(                                                                  } )59.5 312.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(5)s
+0 g
+(:printCollect)s
+(ed<>)59.5 302.4 ms
+(                                                                    )59.5 292.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sens)s
+(ors)59.5 282.4 ms
+0 g
+(\(aT, aN, bT, bN\)>)s
+(                         )59.5 272.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\()s
+1 0 1 r
+(Above)s
+0 g
+( )s
+1 0 1 r
+(0)s
+0 g
+(,)s
+1 0 1 r
+(0)s
+0 g
+(,)s
+1 0 1 r
+(Above)s
+0 g
+( )s
+1 0 1 r
+(0)s
+0 g
+(,)s
+1 0 1 r
+(0)s
+0 g
+(\)>)s
+(                          )59.5 262.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( { )s
+F1 sf
+0.647 0.165 0.165 r
+(do)s
+F0 sf
+0 g
+( register\()s
+1 0 1 r
+("server")s
+0 g
+(, sensorHandshake\) })s
+(                          )59.5 252.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( )s
+1 0 1 r
+(5)s
+0 g
+(:printCollected<>)s
+(                  })59.5 242.4 ms
+( )59.5 222.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(in)s
+F0 sf
+0 g
+( mkServer<>)s
+re sp
+%%PageTrailer
+%%Trailer
+%%Pages: 2
+%%EOF
+
