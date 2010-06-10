@@ -1,57 +1,69 @@
-  def
-       listen<nm, ret> |> {let timeout = 1000; run
+def
+     listen<nm, ret> |> {let timeout = 1000; run
+       def
+           receive<Syn(ack), num> |> ackNm<ack> & ack<SynAck, num> & pNum<num>
+
+        or receive<Data(data), next>
+         & pNum<cur> & ackNm<ack>
+         & lastResult<lr> |>
+             {let nextLeq = leq(next, cur)
+             ; match nextLeq with
+               True  -> {run pNum<cur> & ackNm<ack>
+                                       & ack<DataAck(lr), next>
+                                       & lastResult<lr>}
+             | False -> {run pNum<next> & ackNm<ack>
+                      & match nm with
+                          Sync(nm') -> { let ret = nm'(data)
+                                       ; run ack<DataAck(Just(ret)), next>
+                                             & lastResult<ret> }
+                        | Async(nm') -> { run ack<DataAck(Nothing), next>
+                                              & lastResult<Nothing> }
+                        }
+             }
+        in ret<receive> & lastResult<Nothing>
+       }
+
+ or
+     initTrans<nm, dest, ret> |> { let timeout = 1000; run
          def
-             receive<Syn(ack), num> |> ackNm<ack> & ack<SynAck, num> & pNum<num>
 
-          or receive<Data(data), next>
-           & pNum<cur> & ackNm<ack>
-           & lastResult<lr> |> {let nextLeq = leq(next, cur); match nextLeq with
-                                 True  -> {run pNum<cur> & ackNm<ack> & ack<DataAck(lr), next> & lastResult<lr>}
-                               | False -> {run pNum<next> & ackNm<ack>
-                                        & match nm with
-                                            Sync(nm') -> { let ret = nm'(data); run ack<DataAck(Just(ret)), next> & lastResult<ret> }
-                                          | Async(nm') -> { run ack<DataAck(Nothing), next> & lastResult<Nothing> }
-                                          }
-                               }
-          in ret<receive> & lastResult<Nothing>
-         }
+            ack<type, ackN>
+          & waitAck<>
+          & pNum<cur> |> {let ackMatch = eq(ackN, cur)
+                         ; match ackMatch with
+                           True -> {run (match type with
+                                          SynAck -> match nm with
+                                                      Sync(nm')  -> ret<sendSync>
+                                                    | ASync(nm') -> ret<sendAsync>
+                                        | DataAck(ret) -> match nm with
+                                                      Sync(nm') -> runRecvCont<ret>
+                                                    | Async(nm') -> 0)
+                                    & pNum<cur> & lineClear<>}
 
-   or
-       initTrans<nm, dest, ret> |> { let timeout = 1000; run
-           def
+                         | False -> {run 0}
+                         }
 
-              ack<type, ackN>
-            & waitAck<>
-            & pNum<cur> |> {let ackMatch = eq(ackN, cur)
-                           ; match ackMatch with
-                             True -> {run (match type with
-                                            SynAck -> match nm with
-                                                        Sync(nm')  -> ret<sendSync>
-                                                      | ASync(nm') -> ret<sendAsync>
-                                          | DataAck(ret) -> match nm with
-                                                        Sync(nm') -> runRecvCont<ret>
-                                                      | Async(nm') -> 0)
-                                      & pNum<cur> & lineClear<>}
+          or runRecvCont<data> & recvCont<k> |> match data with
+                                                  Just(data') -> k<data'>
+                                                | Nothing     -> k<>
 
-                           | False -> {run 0}
-                           }
+          or retransmit<pl> & waitAck<> |> send<pl>
 
-            or runRecvCont<data> & recvCont<k> |> match data with
-                                                    Just(data') -> k<data'>
-                                                  | Nothing     -> k<>
+          or send<payload> & pNum<n> |> {run pNum<n> & dest<Data(payload), n> & waitAck<>
+                                        ; do sleep(timeout)
+                                        ; run retransmit<payload>
+                                        }
 
-            or retransmit<pl> & waitAck<> |> send<pl>
+          or sendAsync<payload>      & pNum<n>
+                                     & lineClear<> |> { let n' = add(1,n)
+                                                      ; run send<payload> & pNum<n'>}
+          or sendSync<payload, cont> & pNum<n>
+                                     & lineClear<> |> { let n' = add(1,n)
+                                                      ; run send<payload> & recvCont<cont>
+                                                                          & pNum<n'>}
 
-            or send<payload> & pNum<n> |> {run pNum<n> & dest<Data(payload), n> & waitAck<>
-                                          ; do sleep(timeout)
-                                          ; run retransmit<payload>
-                                          }
+          or sendSyn<> |> dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
+          or retrSyn<> & waitAck<> |> sendSyn<>
 
-            or sendAsync<payload>      & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & pNum<n'>}
-            or sendSync<payload, cont> & pNum<n> & lineClear<> |> {let n' = add(1,n); run send<payload> & recvCont<cont> & pNum<n'>}
-
-            or sendSyn<> |> dest<Syn(ack), 0> & sleep<timeout, retrSyn> & waitAck<>
-            or retrSyn<> & waitAck<> |> sendSyn<>
-
-            in pNum<0> & sendSyn<>}
-   in 0
+          in pNum<0> & sendSyn<>}
+ in 0
