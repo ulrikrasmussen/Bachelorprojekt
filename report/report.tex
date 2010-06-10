@@ -6,6 +6,8 @@
 \usepackage{tikz}
 \usetikzlibrary{snakes,arrows,shapes}
 
+\usepackage{pdfpages}
+
 % Font and input encoding
 \usepackage[T1]{fontenc}
 \usepackage[utf8x]{inputenc}
@@ -85,9 +87,14 @@
 \chapter{Evaluation of join programming}
 \input{chap/join-evaluation.tex}
 
+\backmatter
 
 \bibliography{bib/bibliography}
 \bibliographystyle{alpha}
+
+\appendix
+\appendixpage
+\input{appendix}
 
 %\listoffixmes
 \end{document}
