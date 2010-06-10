@@ -1,10 +1,17 @@
 % vim:spell:spelllang=en_gb:
 We investigate the usefulness and feasibility of using a distributed process
-calculus, the join-calculus, as a basic programming model for programming
-distributed embedded devices such as sensor-networks. We develop a prototype
-programming language based on join-calculus, and provide an operational
-semantics that avoids dependency on structural equivalence for execution, along
-with our own extensions that enables us to model unreliable communication
-between physical devices. We implement the language in Haskell, and develop a
-set of programs for a constructed use case, which we use as a basis for
-evaluating the join-calculus.
+calculus, the join-calculus, as a basic programming model for distributed
+embedded devices such as sensor networks.
+%We develop a prototype programming language based on join-calculus, and provide
+%an operational semantics that avoids dependency on structural equivalence for
+%execution, along with our own extensions that enables us to model unreliable
+%communication between physical devices.
+We develop a prototype programming language based on join-calculus, and provide
+an operational semantics that avoids bidirectional reduction rules, resulting
+in a more directed rule set than the one provided in the defining
+article\cite{fournet1996reflexive}. The semantics are further extended with a
+way to model unreliable communication between physical units in a deterministic
+way.
+We implement the language in Haskell, and develop a set of programs for a
+constructed use case about temperature sensors in a warehouse, which we use as
+a basis for evaluating the join-calculus.
