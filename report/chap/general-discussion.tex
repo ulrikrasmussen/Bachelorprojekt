@@ -111,19 +111,24 @@ formally sound.
 %future work.
 
 \section{Conclusion}
-% Join is nice, but work remains.
-
-We set out to investigate the usefulness of the join calculus as a
+We set out to investigate the usefulness of the join-calculus as a
 formalism for expressing programs that execute in a distributed environment with
 limited resources and unreliable communication.
 
-While we have realised that it isn't possible to constructively assert such an
-abstract notion as \emph{usefulness} based on the small body of code that we have
-produced, we have at least been able to report that we haven't met any
-significant obstacles that obviously limit the elegance of the language.
+Based on the code we have produced for our relatively limited use case, we can
+say that we haven't met any challenges that was prohibitively hard to solve
+using our prototype language.
 
-Combining this with our reflections on the implementation impeding aspects of
-the language, most notably the ones that involve global awareness, we believe
-that a modified version without these problems would stand a decent chance at
-becoming a programming language suitable for expressing programs in the
-target domain of distributed embedded devices.
+We had to drop or change some features of the join-calculus in order to get a
+model that we felt was suitable for use in a distributed, unreliable setting.
+Most notably, we dropped observation of location failure, which introduced too
+many subtle challenges for implementations. We also chose to include some
+extensions to the programming model, such as pattern matching and timing
+constraints. We feel that the result, the Join language, is a viable candidate
+for a language for programming distributed devices, given that we drop
+unrealistic features such as global time synchronisation.
+
+A continuation of our work would include investigating possible solutions for
+some of the real-world implementation problems that we haven't addressed, such
+as message routing between physical units and compilation of Join programs, with
+the goal of carrying out experiments on physical units.

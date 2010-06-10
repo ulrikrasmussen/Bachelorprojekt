@@ -99,31 +99,6 @@ occurs in the join patterns of $D$ is \emph{locally} bound in $P$. This means
 that we can never extend or change the rule set for an existing port name, we
 can only define new rules for new port names.
 
-\subsection{Name binding}
-
-The calculus defines a set of structurally defined function that determines
-which variables are free, defined or received, as denoted by the table below.
-
-\[
-\begin{array}{lcl}
-rv(\atm x <\tilde v >) & \defEq & \{ u \in \tilde v \} \\
-rv(J \andJ J') & \defEq & rv(J) \uplus rv(J') \\
-\\
-dv(\atm x < \tilde v>) & \defEq & \{ x \} \\
-dv(J \andJ J') & \defEq & dv(J) \uplus rv(J') \\
-\\
-dv(J \triangleright P) & \defEq & dv(J) \\
-dv(D \andJ D') & \defEq & dv(D) \cup rv(D') \\
-\\
-fv(J \triangleright P) & \defEq & dv(J) \cup(fv(P)\setminus rv(J)) \\
-fv(D \andJ D') & \defEq & fv(D) \cup fv(D') \\
-\\
-fv(\atm x < \tilde v>) & \defEq & \{x\}\cup\{u\in\tilde v\} \\
-fv(\mathbf{def}~ D \inJ P) & \defEq & (fv(P) \cup fv(D))\setminus dv(D) \\
-fv(P \andJ P') & \defEq & fv(P) \cup fv(P') \\
-\end{array}
-\]
-
 \subsection{Encodings}
 
 As mentioned, the only values in the core join-calculus are names. However, the
@@ -469,6 +444,65 @@ The syntax of our prototype language is defined in Figure \ref{fig:syntax} and
 \ref{fig:syntax2}. In this definition, $x,y,a$ range over names, $s$ ranges over
 strings of characters, and $i,d,t \in \mathbb{N}_0$.
 
+We inductively define a set of functions over the syntax which determine the
+free variables, defined variables and received variables of a processes $P$,
+definitions $D$ and join patterns $J$. The set of received variables of a join
+pattern is simply the union of all the names that bind received values. We
+require that join patterns are linear, meaning that each received variable may
+occur at most once:
+\begin{align*}
+rv(\top) \defEq{}& \emptyset \\
+rv(j~\&~J) \defEq{}& rv(j) \uplus rv(J) \\
+rv(\atm x<y>) \defEq{}& \{y\}
+\end{align*}
+Received variables also appear in algebraic patterns:
+\begin{align*}
+rv(x) \defEq{}& \{x\} \\
+rv(\kappa(\pi_1, \pi_2, ..., \pi_n)) \defEq{}& \bigcup_{i \leq n} \pi_i \\
+\end{align*}
+
+The set of defined variables for a definition is the set of all names that
+appear as port names in join patterns:
+\begin{align*}
+ dv(\top) \defEq{}& \emptyset \\
+ dv(j~\&~J) \defEq{}& dv(j) \cup dv(J) \\
+\end{align*}
+for definitions, we have:
+\begin{align*}
+ dv(J \stackrel{d}{\triangleright} Q) \defEq{}& dv(J) \\
+ dv(a[D~\mathbf{in}~P]) \defEq{}& \{a\} \cup dv(D) \\
+ dv(D_1~\mathbf{or}~D_2) \defEq{}& dv(D_1) \cup dv(D_2)
+\end{align*}
+
+The set of free variables for a process is the set of all names that are not
+locally bound by any definitions. For processes, we have:
+\begin{align*}
+ fv(0) \defEq{}& \emptyset \\
+ fv(\atm x<y>) \defEq{}& \{x,y\} \\
+ fv(\mathbf{def}~D~\mathbf{in}~P) \defEq{}& (fv(P) \cup fv(D)) \setminus dv(D)
+ \\
+ fv(\mathbf{match}~e~\mathbf{with}~\Pi) \defEq{}& fv(e) \cup fv(\Pi) \\
+ fv(d : P) \defEq{}& fv(P) \\
+\end{align*}
+for match patterns, we have:
+\begin{align*}
+ fv(\top) \defEq{}& \emptyset \\
+ fv(\pi \rightarrow P~|~\Pi) \defEq{}& (fv(P) \setminus rv(\pi)) \cup fv(\Pi)
+\end{align*}
+for expressions, we have:
+\begin{align*}
+ fv(x) \defEq{}& \{x\} \\
+ fv(\kappa(e_1, e_2, ..., e_n)) \defEq{}& \bigcup_{i \leq n} fv(e_i)
+\end{align*}
+
+Calculating variable sets over a set of syntax trees is just defined as the
+union of the function applied to each element of the set:
+\begin{align*}
+ dv(\D) \defEq{}& \bigcup_{D \in \D} dv(D) \\
+ fv(\D) \defEq{}& \bigcup_{D \in \D} fv(D) \\
+ fv(\A) \defEq{}& \bigcup_{P \in \A} fv(P)
+\end{align*}
+
 \subsection{Syntactic sugar}
 All constructions marked with ``*'' are syntactic sugar, and have equivalent
 encodings in the core Join language. For instance, integers can be encoded as
@@ -497,7 +531,6 @@ enforce sequential evaluation, in the same way as it is done in
 \cite{fournet1996reflexive}. We won't go into much detail as to how this sub
 language is translated into the core Join language as the translation is pretty
 straightforward.
-\fixme{If we have more time, go into more detail.}
 
 
 \begin{figure}

@@ -106,6 +106,7 @@ def
 
 Above the technique of proxying is applied to yield two new names,
 that each represent an end of the communication channel.
+
 The proxy at the server end is the name returned by the synchronous call to
 \texttt{listen}. This is the name that is to be published to allow for
 communication. Feeding this name into the \texttt{initTrans} call yields the
@@ -116,6 +117,5 @@ distinguish a proxied name from an unproxied name, and using the library
 involves no extra complexity, which furthers the case that usage of the join
 calculus shouldn't necessarily be limited to modelling concurrent computation
 inside a single physical unit, but is also a decent option for a distributed
-system, even though the communication might be flawed.\fixme{This phrase might
-be wierd\ldots}
+system, even though the communication might be flawed.
 
