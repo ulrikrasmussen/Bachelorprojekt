@@ -2,7 +2,7 @@
 %%Title: Server.join
 %%For: plc
 %%Creator: VIM - Vi IMproved 7.2 (2008 Aug 9)
-%%CreationDate: Thu Jun 10 03:45:04 2010
+%%CreationDate: Thu Jun 10 04:54:23 2010
 %%DocumentData: Clean8Bit
 %%Orientation: Portrait
 %%Pages: (atend)
@@ -320,14 +320,14 @@ F0 sf
 1 0 1 r
 ("\)")s
 0 g
-(\)\) )s
+(\)\))s
+(                            )59.5 652.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (to)s
 F0 sf
 0 g
-( tempT)s
-(oStr})59.5 652.4 ms
+( tempToStr})s
 ( )59.5 642.4 ms
 F1 sf
 0.647 0.165 0.165 r
@@ -358,14 +358,14 @@ F0 sf
 1 0 1 r
 ("\)")s
 0 g
-(\)\) )s
+(\)\))s
+(                          )59.5 632.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (to)s
 F0 sf
 0 g
-( tempToStr)s
-(})59.5 632.4 ms
+( tempToStr})s
 ( )59.5 612.4 ms
 F1 sf
 0.647 0.165 0.165 r
@@ -975,14 +975,14 @@ F1 sf
 (|>)s
 F0 sf
 0 g
-( { )s
+(                       { )59.5 262.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
 ( t = readTemp\(\))s
-(                                         ; )59.5 262.4 ms
+(                       ; )59.5 252.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (match)s
@@ -994,7 +994,7 @@ F1 sf
 (with)s
 F0 sf
 0 g
-(                                             )59.5 252.4 ms
+(                           )59.5 242.4 ms
 1 0 1 r
 (True)s
 0 g
@@ -1024,13 +1024,12 @@ F0 sf
 1 0 1 r
 (1)s
 0 g
-(:c)s
-(ollect<)59.5 242.4 ms
+(:collect<)s
 1 0 1 r
 (1)s
 0 g
 (,t>})s
-(                                           )59.5 232.4 ms
+(                         )59.5 232.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (| )s
@@ -1056,7 +1055,7 @@ F1 sf
 (with)s
 F0 sf
 0 g
-(                                                          )59.5 222.4 ms
+(                                        )59.5 222.4 ms
 1 0 1 r
 (True)s
 0 g
@@ -1066,19 +1065,18 @@ F1 sf
 (->)s
 F0 sf
 0 g
-( { )s
+(                                          { )59.5 212.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
-( avg= div\(ad)s
-(d\(t,tAkk\),add\()59.5 212.4 ms
+( avg= div\(add\(t,tAkk\),add\()s
 1 0 1 r
 (1)s
 0 g
 (,num\)\))s
-(                                                                   ; )59.5 202.4 ms
+(                                          ; )59.5 202.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
@@ -1086,10 +1084,10 @@ F0 sf
 0 g
 ( callback<)s
 1 0 1 r
-(Av)s
-(g)59.5 192.4 ms
+(Avg)s
 0 g
-(\(avg\)> )s
+(\(avg\)>)s
+(                                                       )59.5 192.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1104,7 +1102,7 @@ F0 sf
 (1)s
 0 g
 (,avg> })s
-(                                                        )59.5 182.4 ms
+(                                      )59.5 182.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (| )s
@@ -1118,27 +1116,25 @@ F1 sf
 (->)s
 F0 sf
 0 g
-( { )s
+(                                          { )59.5 172.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
-( tAkk' = add)s
-(\(t, tAkk\))59.5 172.4 ms
-(                                                                   ; )59.5 162.4 ms
+( tAkk' = add\(t, tAkk\))s
+(                                          ; )59.5 162.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
-( nextT = add)s
-(\(n,)59.5 152.4 ms
+( nextT = add\(n,)s
 1 0 1 r
 (1)s
 0 g
 (\))s
-(                                                                   ; )59.5 142.4 ms
+(                                          ; )59.5 152.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
@@ -1148,11 +1144,10 @@ F0 sf
 1 0 1 r
 (1)s
 0 g
-(:collect<n)s
-(extT, tAkk'> })59.5 132.4 ms
-(                                                      })59.5 122.4 ms
-(                                         })59.5 112.4 ms
-(                  )59.5 102.4 ms
+(:collect<nextT, tAkk'> })s
+(                                    })59.5 142.4 ms
+(                       })59.5 132.4 ms
+(                  )59.5 122.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (or)s
@@ -1170,25 +1165,26 @@ F1 sf
 (do)s
 F0 sf
 0 g
-( go\(locNm\); )s
+( go\(locNm\))s
+(                                       ; )59.5 112.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
-( t = readTemp\(\); )s
+( t = readTemp\(\))s
+(                                       ; )59.5 102.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
 F0 sf
 0 g
-( colle)s
-(ct<)59.5 92.4 ms
+( collect<)s
 1 0 1 r
 (1)s
 0 g
 (,t>})s
-(                  )59.5 82.4 ms
+(                  )59.5 92.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (in)s
@@ -1217,8 +1213,8 @@ F1 sf
 F0 sf
 0 g
 ( mkQuery})s
-(                 })59.5 72.4 ms
-( )59.5 52.4 ms
+(                 })59.5 82.4 ms
+( )59.5 62.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (or)s
@@ -1241,6 +1237,17 @@ F0 sf
 ("making clock..")s
 0 g
 (\))s
+(                  ; )59.5 52.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( cl = mkClock\()s
+1 0 1 r
+(0)s
+0 g
+(\))s
 re sp
 %%PageTrailer
 %%Page: 2 2
@@ -1255,17 +1262,6 @@ F0 sf
 (                  ; )59.5 772.4 ms
 F1 sf
 0.647 0.165 0.165 r
-(let)s
-F0 sf
-0 g
-( cl = mkClock\()s
-1 0 1 r
-(0)s
-0 g
-(\))s
-(                  ; )59.5 762.4 ms
-F1 sf
-0.647 0.165 0.165 r
 (do)s
 F0 sf
 0 g
@@ -1274,7 +1270,7 @@ F0 sf
 ("clock made")s
 0 g
 (\))s
-(                  ; )59.5 752.4 ms
+(                  ; )59.5 762.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
@@ -1286,25 +1282,24 @@ F1 sf
 (def)s
 F0 sf
 0 g
-(                            sensorHandshake<mscId, readT, qLoc> )59.5 742.4 ms
+(                         sensorHandshake<mscId, readT, qLoc> )59.5 752.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (|>)s
 F0 sf
 0 g
-( { )s
+(                           { )59.5 742.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (do)s
 F0 sf
 0 g
-( print\(concat)s
-(\()59.5 732.4 ms
+( print\(concat\()s
 1 0 1 r
 ("Received handshake from: ")s
 0 g
-(,mscId\)\);)s
-(                              )59.5 722.4 ms
+(,mscId\)\))s
+(                           ; )59.5 732.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (match)s
@@ -1316,7 +1311,7 @@ F1 sf
 (with)s
 F0 sf
 0 g
-(                                )59.5 712.4 ms
+(                               )59.5 722.4 ms
 1 0 1 r
 ("Sensor_A")s
 0 g
@@ -1326,7 +1321,7 @@ F1 sf
 (->)s
 F0 sf
 0 g
-( {)s
+(                                 {)59.5 712.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
@@ -1336,16 +1331,15 @@ F0 sf
 1 0 1 r
 (20)s
 0 g
-(, readT, sensor)s
-(ACallback\))59.5 702.4 ms
-(                                              ; )59.5 692.4 ms
+(, readT, sensorACallback\))s
+(                                 ; )59.5 702.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
 F0 sf
 0 g
 ( query<qLoc>})s
-(                              )59.5 682.4 ms
+(                             )59.5 692.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (| )s
@@ -1359,7 +1353,7 @@ F1 sf
 (->)s
 F0 sf
 0 g
-( {)s
+(                                 {)59.5 682.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
@@ -1369,110 +1363,23 @@ F0 sf
 1 0 1 r
 (22)s
 0 g
-(, readT, sensor)s
-(BCallback\))59.5 672.4 ms
-(                                              ; )59.5 662.4 ms
+(, readT, sensorBCallback\))s
+(                                 ; )59.5 672.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (run)s
 F0 sf
 0 g
 ( query<qLoc>})s
-(                            })59.5 652.4 ms
+(                           })59.5 662.4 ms
+(                      )59.5 652.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( sensorACallback<temp>)s
 (                         )59.5 642.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(or)s
-F0 sf
-0 g
-( sensorACallback<temp> )s
-F1 sf
-0.647 0.165 0.165 r
-(&)s
-F0 sf
-0 g
-( collected<)s
-1 0 1 r
-(Sensors)s
-0 g
-(\(aT, aN, bT, bN)s
-(\)> )59.5 632.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(|>)s
-F0 sf
-0 g
-(                                                   { )59.5 622.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(let)s
-F0 sf
-0 g
-( time = cl\(\))s
-(                                                   ; )59.5 612.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(run)s
-F0 sf
-0 g
-( collected<)s
-1 0 1 r
-(Sensors)s
-0 g
-(\(temp, tim)s
-(e, bT, bN\)>)59.5 602.4 ms
-(                                                   })59.5 592.4 ms
-(                         )59.5 582.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(or)s
-F0 sf
-0 g
-( sensorBCallback<temp> )s
-F1 sf
-0.647 0.165 0.165 r
-(&)s
-F0 sf
-0 g
-( collected<)s
-1 0 1 r
-(Sensors)s
-0 g
-(\(aT, aN, bT, bN)s
-(\)> )59.5 572.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(|>)s
-F0 sf
-0 g
-(                                                   { )59.5 562.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(let)s
-F0 sf
-0 g
-( time = cl\(\))s
-(                                                   ; )59.5 552.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(run)s
-F0 sf
-0 g
-( collected<)s
-1 0 1 r
-(Sensors)s
-0 g
-(\(aT, aN, t)s
-(emp, time\)>)59.5 542.4 ms
-(                                                   })59.5 532.4 ms
-(                         )59.5 522.4 ms
-F1 sf
-0.647 0.165 0.165 r
-(or)s
-F0 sf
-0 g
-( printCollected<>)s
-(                          )59.5 512.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1488,14 +1395,98 @@ F1 sf
 (|>)s
 F0 sf
 0 g
-( { )s
+(                             { )59.5 632.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( time = cl\(\))s
+(                             ; )59.5 622.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(temp, time, bT, bN\)>)s
+(                             })59.5 612.4 ms
+(                      )59.5 602.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( sensorBCallback<temp>)s
+(                         )59.5 592.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, bT, bN\)> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(                             { )59.5 582.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(let)s
+F0 sf
+0 g
+( time = cl\(\))s
+(                             ; )59.5 572.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(run)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, temp, time\)>)s
+(                             })59.5 562.4 ms
+(                      )59.5 552.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(or)s
+F0 sf
+0 g
+( printCollected<>)s
+(                       )59.5 542.4 ms
+F1 sf
+0.647 0.165 0.165 r
+(&)s
+F0 sf
+0 g
+( collected<)s
+1 0 1 r
+(Sensors)s
+0 g
+(\(aT, aN, bT, bN\)> )s
+F1 sf
+0.647 0.165 0.165 r
+(|>)s
+F0 sf
+0 g
+(                           { )59.5 532.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (let)s
 F0 sf
 0 g
 ( t = cl\(\))s
-(                                                                  ; )59.5 502.4 ms
+(                           ; )59.5 522.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (do)s
@@ -1503,39 +1494,34 @@ F0 sf
 0 g
 ( print\(concat\()s
 1 0 1 r
-("Status: \(Sensor_A: ")59.5 492.4 ms
+("Status: \(Sensor_A: ")s
 0 g
 (,)s
-(                                                                             concat\()59.5 482.4 ms
-(tempToStr\(aT\),)59.5 472.4 ms
-(                                                                             concat\()59.5 462.4 ms
+(                                      concat\(tempToStr\(aT\),)59.5 512.4 ms
+(                                      concat\()59.5 502.4 ms
 1 0 1 r
-(" ")59.5 452.4 ms
+(" ")s
 0 g
 (,)s
-(                                                                             concat\()59.5 442.4 ms
-(ageToStr\(t,aN\),)59.5 432.4 ms
-(                                                                             concat\()59.5 422.4 ms
+(                                      concat\(ageToStr\(t,aN\),)59.5 492.4 ms
+(                                      concat\()59.5 482.4 ms
 1 0 1 r
-("\) \(Sensor_B: ")59.5 412.4 ms
+("\) \(Sensor_B: ")s
 0 g
 (,)s
-(                                                                             concat\()59.5 402.4 ms
-(tempToStr\(bT\),)59.5 392.4 ms
-(                                                                             concat\()59.5 382.4 ms
+(                                      concat\(tempToStr\(bT\),)59.5 472.4 ms
+(                                      concat\()59.5 462.4 ms
 1 0 1 r
-(" ")59.5 372.4 ms
+(" ")s
 0 g
 (,)s
-(                                                                             concat\()59.5 362.4 ms
-(ageToStr\(t,bN\),)59.5 352.4 ms
-(                                                                             )59.5 342.4 ms
+(                                      concat\(ageToStr\(t,bN\),)59.5 452.4 ms
+(                                      )59.5 442.4 ms
 1 0 1 r
 ("\)")s
 0 g
-(                                                                             \)\)\)\)\)\)\))59.5 332.4 ms
-(\)\))59.5 322.4 ms
-(                                                                  } )59.5 312.4 ms
+(                                      \)\)\)\)\)\)\)\)\))59.5 432.4 ms
+(                           } )59.5 422.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1545,9 +1531,8 @@ F0 sf
 1 0 1 r
 (5)s
 0 g
-(:printCollect)s
-(ed<>)59.5 302.4 ms
-(                                                                    )59.5 292.4 ms
+(:printCollected<>)s
+(                             )59.5 412.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1555,11 +1540,10 @@ F0 sf
 0 g
 ( collected<)s
 1 0 1 r
-(Sens)s
-(ors)59.5 282.4 ms
+(Sensors)s
 0 g
 (\(aT, aN, bT, bN\)>)s
-(                         )59.5 272.4 ms
+(                      )59.5 402.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (in)s
@@ -1594,7 +1578,7 @@ F0 sf
 (0)s
 0 g
 (\)>)s
-(                          )59.5 262.4 ms
+(                       )59.5 392.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1611,7 +1595,7 @@ F0 sf
 ("server")s
 0 g
 (, sensorHandshake\) })s
-(                          )59.5 252.4 ms
+(                       )59.5 382.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (&)s
@@ -1622,8 +1606,8 @@ F0 sf
 (5)s
 0 g
 (:printCollected<>)s
-(                  })59.5 242.4 ms
-( )59.5 222.4 ms
+(                  })59.5 372.4 ms
+( )59.5 352.4 ms
 F1 sf
 0.647 0.165 0.165 r
 (in)s
