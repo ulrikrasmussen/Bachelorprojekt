@@ -13,8 +13,7 @@ the shape of a combinatoric parser library and a very extensive type system. The
 parser library called \texttt{Parsec} \cite{parsec} facilitated a rather
 concise mapping of the concrete syntax into abstract syntax, and by defining
 appropriate monads and type classes we feel that we have an implementation,
-that doesn't contain too much clutter and plumbing.\fixme{Should we actually
-include this?}
+that doesn't contain too much clutter and plumbing.
 
 \section{Implementation details}
 The simulator consists in its entirety of the following files, each comprising a
@@ -99,15 +98,6 @@ def                  | def
 
 Upon the issuing of the $\atm done<>$ atom the $\atm alive<>$ atom will be
 consumed and the $\atm y<>$-def can be safely garbage collected.
-
-\subsection*{Deviations from the semantics}
-\fixme{Find out what to actually change in the interpreter and where the code
-deviates}
-Since the interpreter was devised prior to the operational semantics as a
-playground or sandbox, that served both the purpose of executing sample programs
-and the purpose of providing us with an intuition of the workings of the
-calculus, there are some differences between the semantics and the actual
-implementation.
 
 \subsection{Constructing an experiment}
 The auxiliary module which is called \texttt{Aux} contains functions for
