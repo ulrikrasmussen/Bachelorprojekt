@@ -1,0 +1,140 @@
+% vim:set textwidth=80 fo+=tcroql:
+\documentclass{beamer}
+\mode<presentation>
+{
+  \usetheme{Copenhagen}
+  \setbeamercovered{transparent}
+}
+
+\usepackage{pgfpages}
+\setbeameroption{show notes on second screen}
+\setbeameroption{always typeset second mode=true}
+
+\usepackage[danish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{palatino}
+\usepackage[T1]{fontenc}
+\title[Bachelorprojektforsvar]{Programming Mobile Embedded Devices using The Join Calculus} % (optional)
+\author{Philip Lykke Carlsen \& Ulrik Rasmussen}
+\institute{Datalogisk Institut, Københavns Universitet }
+\date{24. Juni 2010}
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Indhold}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+\begin{frame}{Problem.}
+\begin{itemize}
+\item<1->Motivation
+\note<1->{
+
+  Når man skal programmere mobile, indlejrede enheder såsom sensornetværk er man
+  henvist til at bruge C eller tilsvarende og manuelt håndtere al
+  enhedskommunikation.
+
+  Der eksisterer proceskalkyler, de er bare enten synkrone eller ikke formelt
+  definerede.
+
+  }
+\item<2->Join-calculus
+\note<2->{
+
+  Join-kalkylen er et forsøg på at skabe en asynkron proceskalkyle, der både er
+  formelt defineret, asynkron og oprationaliserbar.
+
+  Derfor har vi valgt at forsøge at konstruerer et programmeringssprog baseret
+  på join-kalkylen, som vi har anvendt på et par eksempelprogrammer.
+
+}
+\end{itemize}
+\end{frame}
+
+\section{Programmeringssproget: Definition \& eksempler}
+\subsection{Join Calculus}
+\begin{frame}{Programmeringssproget.}
+\end{frame}
+\subsection{Use Cases}
+\begin{frame}{Sensor Netværk.}
+
+\end{frame}
+\begin{frame}{Retransmission.}
+\end{frame}
+\section{Diskussion \& konklusion}
+\begin{frame}{Diskussion.}
+\end{frame}
+\begin{frame}{Konklusion.}
+\end{frame}
+
+\begin{frame}{Motivation.}
+
+  You can create overlays\dots
+  \begin{itemize}
+  \item using the \texttt{pause} command:
+    \begin{itemize}
+    \item
+      First item.
+      \pause
+    \item
+      Second item.
+    \end{itemize}
+  \item
+    using overlay specifications:
+    \begin{itemize}
+    \item<3->
+      First item.
+    \item<4->
+      Second item.
+    \end{itemize}
+  \item
+    using the general \texttt{uncover} command:
+    \begin{itemize}
+      \uncover<5->{\item
+        First item.}
+      \uncover<6->{\item
+        Second item.}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\subsection{Second Subsection}
+
+\begin{frame}{Make Titles Informative.}
+\end{frame}
+
+\begin{frame}{Make Titles Informative.}
+\end{frame}
+
+
+
+\begin{frame}{Summary}
+  % Keep the summary *very short*.
+  \begin{itemize}
+  \item
+    The \alert{first main message} of your talk in one or two lines.
+  \item
+    The \alert{second main message} of your talk in one or two lines.
+  \item
+    Perhaps a \alert{third message}, but not more than that.
+  \end{itemize}
+
+  % The following outlook is optional.
+  \vskip0pt plus.5fill
+  \begin{itemize}
+  \item
+    Outlook
+    \begin{itemize}
+    \item
+      Something you haven't solved.
+    \item
+      Something else you haven't solved.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+
+
+\end{document}
