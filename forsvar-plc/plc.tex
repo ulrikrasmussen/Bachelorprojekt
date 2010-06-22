@@ -2,8 +2,8 @@
 \documentclass{beamer}
 \mode<presentation>
 {
-  \usetheme{Copenhagen}
-  \setbeamercovered{transparent}
+  \usetheme[nat,dk]{Frederiksberg}
+  %\setbeamercovered{transparent}
 }
 
 \usepackage{pgfpages}
@@ -16,125 +16,98 @@
 \usepackage[T1]{fontenc}
 \title[Bachelorprojektforsvar]{Programming Mobile Embedded Devices using The Join Calculus} % (optional)
 \author{Philip Lykke Carlsen \& Ulrik Rasmussen}
-\institute{Datalogisk Institut, Københavns Universitet }
+\institute{Datalogisk Institut, Københavns Universitet}
 \date{24. Juni 2010}
 \begin{document}
 
-\frame{\titlepage}
+\frame[plain]{\titlepage}
 
 \begin{frame}{Indhold}
   \tableofcontents
   % You might wish to add the option [pausesections]
 \end{frame}
 
+\section{Problemet}
 \begin{frame}{Problem.}
-\begin{itemize}
-\item<1->Motivation
-\note<1->{
+At definere et programmeringssprog der med fordel kan anvendes på distribuerede
+enheder.
 
-  Når man skal programmere mobile, indlejrede enheder såsom sensornetværk er man
-  henvist til at bruge C eller tilsvarende og manuelt håndtere al
+\vspace{\stretch{1}}
+
+\begin{itemize}
+\item<2->Motivation \\
+Mangel på fornuftig, domænespecifik abstraktion.
+\note<2>{
+
+  Når man skal programmere mobile, indlejrede enheder, såsom sensornetværk er
+  man henvist til at bruge C eller tilsvarende og manuelt håndtere al
   enhedskommunikation.
 
-  Der eksisterer proceskalkyler, de er bare enten synkrone eller ikke formelt
+  Der eksisterer processkalkyler, de er bare enten synkrone eller ikke formelt
   definerede.
 
+  Synkronisitet går ikke i en distribueret sammenhæng, da det er for kompliceret
+  at implementere fornuftigt.
+
   }
-\item<2->Join-calculus
-\note<2->{
+\item<3->Join-calculus \\
+Asynkron, simpel, vist ækvivalent med $\pi$-calculus.
+\note<3>{
 
   Join-kalkylen er et forsøg på at skabe en asynkron proceskalkyle, der både er
   formelt defineret, asynkron og oprationaliserbar.
 
-  Derfor har vi valgt at forsøge at konstruerer et programmeringssprog baseret
+  Derfor har vi valgt at forsøge at konstruerere et programmeringssprog baseret
   på join-kalkylen, som vi har anvendt på et par eksempelprogrammer.
+
+  Udover grundkalkylen har vi en fortolker og simulator til et par udvidelser,
+  beskrevet tidligere i artikler, der virkede relevante for problemdomænet.
 
 }
 \end{itemize}
 \end{frame}
 
-\section{Programmeringssproget: Definition \& eksempler}
-\subsection{Join Calculus}
+\section{Programmeringssproget}
 \begin{frame}{Programmeringssproget.}
 \end{frame}
-\subsection{Use Cases}
-\begin{frame}{Sensor Netværk.}
 
-\end{frame}
-\begin{frame}{Retransmission.}
-\end{frame}
-\section{Diskussion \& konklusion}
-\begin{frame}{Diskussion.}
-\end{frame}
-\begin{frame}{Konklusion.}
-\end{frame}
+\begin{frame}{Use cases.}
+\begin{itemize}
+\item<1-> Sensor Netværk\\
+Lagerhus med intelligente termometre.
+\note<1>{
 
-\begin{frame}{Motivation.}
+  Skitsér strukturen i netværket.\\
+  Beret om query-systemet.
 
-  You can create overlays\dots
-  \begin{itemize}
-  \item using the \texttt{pause} command:
-    \begin{itemize}
-    \item
-      First item.
-      \pause
-    \item
-      Second item.
-    \end{itemize}
-  \item
-    using overlay specifications:
-    \begin{itemize}
-    \item<3->
-      First item.
-    \item<4->
-      Second item.
-    \end{itemize}
-  \item
-    using the general \texttt{uncover} command:
-    \begin{itemize}
-      \uncover<5->{\item
-        First item.}
-      \uncover<6->{\item
-        Second item.}
-    \end{itemize}
-  \end{itemize}
+}
+\item<2-> Garanteret levering \\
+Et protokolbibliotek med retransmission af beskeder.
+\note<2>{
+
+  Sammenlign med tcp.\\
+  elegant brug med proxy-mønstret.
+
+}
+\end{itemize}
 \end{frame}
 
-\subsection{Second Subsection}
+\section{Resultat}
 
-\begin{frame}{Make Titles Informative.}
+\begin{frame}{Resultat.}
+\begin{itemize}
+\item<1-> Sproget skal viderudvikles før det kan bruges.
+\note<1>{ Der forskellige forhold er uafklarede: migration, synkron tid.  }
+\item<2-> Sproget virker ikke uegnet.
+\note<2>{ Vi kan ikke konstruktivt entydigt konkludere egnethed, men vi har ikke
+haft nogen nævneværdige problemer.
+
+Tidsudvidelsen virker fornuftig. Samme med Algebraiske datatyper.
+
+Dog savner man måske et lidt stærkere argument for at have kodemigration som en
+del af sproget end at det er gavnligt for et applet-mønster.
+}
+\end{itemize}
 \end{frame}
-
-\begin{frame}{Make Titles Informative.}
-\end{frame}
-
-
-
-\begin{frame}{Summary}
-  % Keep the summary *very short*.
-  \begin{itemize}
-  \item
-    The \alert{first main message} of your talk in one or two lines.
-  \item
-    The \alert{second main message} of your talk in one or two lines.
-  \item
-    Perhaps a \alert{third message}, but not more than that.
-  \end{itemize}
-
-  % The following outlook is optional.
-  \vskip0pt plus.5fill
-  \begin{itemize}
-  \item
-    Outlook
-    \begin{itemize}
-    \item
-      Something you haven't solved.
-    \item
-      Something else you haven't solved.
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-
 
 \end{document}
