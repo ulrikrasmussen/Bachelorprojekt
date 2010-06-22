@@ -330,10 +330,10 @@ constraint like that in the core join-calculus would require that we
 rely on a specific implementation being able to generate a message on
 a given time interval:
 \begin{align*}
-  \textbf{def}\quad & \atm k<x> ~|~ \atm incall<> \triangleright P_{ok} \\
-  \land\quad & \atm timeout<> ~|~ \atm incall<> \triangleright P_{error} \\
-  \textbf{in}\quad & \atm remotecall<k> ~|~ \atm starttimer<timeout, 10>
-                                      ~|~ \atm incall<>
+  \textbf{def}\quad & \atm k<x> ~\&~ \atm incall<> \triangleright P_{ok} \\
+  \mathbf{or}\quad & \atm timeout<> ~\&~ \atm incall<> \triangleright P_{error} \\
+  \textbf{in}\quad & \atm remotecall<k> ~\&~ \atm starttimer<timeout, 10>
+                                      ~\&~ \atm incall<>
 \end{align*}
 In the example above, \emph{remotecall} is given $10$ time units to
 return a result on the name \emph{k}. If \emph{k} makes it before the
@@ -366,14 +366,14 @@ and all reactions are tagged with a
 \emph{delay} tag:
 \begin{align*}
   P ::={} & ...    & D ::={}& J \stackrel{d}{\triangleright} P \\
-          & t : P  &        & D \land D
+          & t : P  &        & D ~\&~ D
 \end{align*}
 We can now model the example above without depending on special
 messages that get captured by the environment:
 \begin{align*}
-  \textbf{def}\quad & \atm k<x> ~|~ \atm incall<> \triangleright P_{ok} \\
-  \land\quad & \atm incall<> \stackrel{16}{\triangleright} P_{error} \\
-  \textbf{in}\quad & \atm 0:remotecall<k> ~|~ \atm 0:incall<>
+  \textbf{def}\quad & \atm k<x> ~\&~ \atm incall<> \triangleright P_{ok} \\
+  \mathbf{or}\quad & \atm incall<> \stackrel{16}{\triangleright} P_{error} \\
+  \textbf{in}\quad & \atm 0:remotecall<k> ~\&~ \atm 0:incall<>
 \end{align*}
 Here, we assume that the response message \emph{k} gets transferred
 from an external location and gets time tagged as soon as it enters
