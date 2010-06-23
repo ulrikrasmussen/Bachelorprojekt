@@ -1,0 +1,10 @@
+digraph trees
+{
+  a -> ab;
+  a -> ac;
+  ab -> abd;
+  ab -> abe;
+
+  x -> xy;
+  x -> xz;
+}
