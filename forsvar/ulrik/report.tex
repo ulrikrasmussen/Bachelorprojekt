@@ -1,0 +1,147 @@
+% Punkter der skal gennemgås:
+
+% * Hurtigt eksempel på rendez-vous problemet (vis evt. 3 CSP-processer).
+% * Snak om strategi for evaluering af join-calculus
+%   * Model for fortolker
+%   * Sprogfeatures
+% * Vis eksempelprogram
+% * Snak om udfordringer mht. implementation
+%   * Distribueret GC (vis eksempel på konvention der løser problem)
+
+\documentclass{beamer}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage[utf8x]{inputenc}
+\usepackage[danish]{babel}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{listings}
+
+\usepackage{palatino}
+
+\title{Programmering af distribuerede indlejrede enheder ved brug af join-calculus}
+
+\author{Philip Carlsen \& Ulrik Rasmussen}
+
+\institute{\textrm{Datalogisk Institut, Københavns Universitet}}
+\date{\today}
+
+\mode<presentation>
+{
+ \usetheme{Copenhagen}
+ \definecolor{green}{rgb}{.125,.5,.25}
+ \usecolortheme[named=green]{structure}
+ \usefonttheme[onlylarge]{structuresmallcapsserif}
+ \usefonttheme[onlysmall]{structurebold}
+}
+
+\setcounter{tocdepth}{1}
+\setbeamertemplate{navigation symbols}{}
+
+\lstdefinelanguage{join}
+ {morekeywords=[1]{def,in,match,with}
+ ,morekeywords=[2]{Some,Nothing, A, B}
+ ,morekeywords=[3]{a,b,c,d,x,y,z,k}
+ ,keywordstyle=[2]{\color{violet}}
+ ,keywordstyle=[3]{\color{red}}
+ }
+
+\lstset{language = join
+       ,basicstyle = \small\ttfamily}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\section{Introduktion}
+
+\subsection{Motivation}
+
+\begin{frame}
+\frametitle{Motivation}
+
+\begin{itemize}
+\item
+    En proceskalkule baseret på asynkrone beskeder mellem processer.
+
+\item
+    Velegnet til distribution, da vi ikke skal implementere distribueret rendesvouz.
+
+\item
+    Er join-calculus velegnet som fundament til et programmeringssprog til
+    distribuerede indlejrede enheder?   
+\end{itemize}
+\end{frame}
+
+
+\subsection{Strategi for evaluering}
+
+\begin{frame}
+\frametitle{Strategi for evaluering}
+
+\begin{itemize}
+ \item Design et sprog der ligger tæt op ad join-calculus.
+ \item Implementer dette på indlejrede enheder.
+ \item Afprøv implementation ved at løse distribuerede problemer.
+\end{itemize}
+
+Vi begrænser os til et simuleret miljø, og et fortolket sprog.
+
+\end{frame}
+
+
+\section{Sprog}
+\subsection{Pattern matching}
+\begin{frame}[fragile]
+\frametitle{Pattern matching}
+\begin{block}{Eksempel}
+\begin{lstlisting}
+def x<a,k> |> match a with
+                    Some(a') -> k<a'>
+                  | Nothing  -> 0
+ in ...
+\end{lstlisting}
+\end{block}
+Vi begrænser os til ikke at tillade algebraiske mønstre i join patterns:
+\begin{block}{Problem}
+\begin{lstlisting}
+def x<A()> & x<b> |> ... in x<B()> & x<A()>
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+
+\subsection{Distribution}
+
+\begin{frame}[fragile]
+\frametitle{Distribution}
+\begin{itemize}
+\item
+  Parallel afvikling af uafhængige fortolkere.
+
+\item
+  Mulighed for at starte nye fortolkere, og "dræbe" eksisterende.
+
+\item
+  Asynkron envejskommunikation.
+
+\item
+  Mobile processer.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Distribution}
+Fortolkere er organiseret hierarkisk, og kan flyttes:
+\includegraphics[width=0.55\textwidth]{trees.pdf}
+\end{frame}
+\begin{frame}[fragile]
+\frametitle{Distribution}
+Fortolkere er organiseret hierarkisk, og kan flyttes:
+\includegraphics[width=0.45\textwidth]{trees2.pdf}
+\end{frame}
+
+
+
+
+\end{document}
