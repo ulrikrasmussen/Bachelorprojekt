@@ -19,9 +19,11 @@
 
 \usepackage{palatino}
 
-\title{Programmering af distribuerede indlejrede enheder ved brug af join-calculus}
+\title[Bacheorprojektforsvar]{Programmering af distribuerede indlejrede enheder ved brug af join-calculus}
 
 \author{Philip Carlsen \& Ulrik Rasmussen}
+
+\logo{fakultetslogo.png}
 
 \institute{\textrm{Datalogisk Institut, Københavns Universitet}}
 \date{\today}
@@ -41,9 +43,11 @@
 \lstdefinelanguage{join}
  {morekeywords=[1]{def,in,match,with}
  ,morekeywords=[2]{Some,Nothing, A, B}
- ,morekeywords=[3]{a,b,c,d,x,y,z,k}
+ ,morekeywords=[3]{a,b,c,d,x,y,z,k,start,read,mkQuery}
+ ,morekeywords=[4]{query,loc}
  ,keywordstyle=[2]{\color{violet}}
  ,keywordstyle=[3]{\color{red}}
+ ,keywordstyle=[4]{\color{blue}}
  }
 
 \lstset{language = join
@@ -65,11 +69,11 @@
     En proceskalkule baseret på asynkrone beskeder mellem processer.
 
 \item
-    Velegnet til distribution, da vi ikke skal implementere distribueret rendesvouz.
+    Velegnet til distribution, da vi ikke skal implementere distribueret rendezvous.
 
 \item
     Er join-calculus velegnet som fundament til et programmeringssprog til
-    distribuerede indlejrede enheder?   
+    distribuerede indlejrede enheder?
 \end{itemize}
 \end{frame}
 
@@ -132,16 +136,59 @@ def x<A()> & x<b> |> ... in x<B()> & x<A()>
 
 \begin{frame}[fragile]
 \frametitle{Distribution}
-Fortolkere er organiseret hierarkisk, og kan flyttes:
-\includegraphics[width=0.55\textwidth]{trees.pdf}
+Fortolkere er organiseret hierarkisk, og kan flyttes mellem hinanden:
+\begin{center}
+\only<1>{\includegraphics[width=0.5\textwidth]{trees-0.pdf}}
+\only<2>{\includegraphics[width=0.5\textwidth]{trees-1.pdf}}
+\end{center}
 \end{frame}
+
+\subsection{Tid}
 \begin{frame}[fragile]
-\frametitle{Distribution}
-Fortolkere er organiseret hierarkisk, og kan flyttes:
-\includegraphics[width=0.45\textwidth]{trees2.pdf}
+\frametitle{Tid}
+Eksplicit forsinkelse på beskeder og reaktioner.
+\begin{block}{Eksempel}
+\begin{lstlisting}
+def x<> & y<> |>^3 z<> in (1:x<>) & y<>
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\section{Evaluering}
+
+\subsection{Use Case}
+\begin{frame}
+\frametitle{Use Case}
+Programmerbare temperatursensorer der kommunikerer med en central server.
+\begin{center}
+\includegraphics[width=0.5\textwidth]{sensors.pdf}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Mobile forespørgsler}
+Forespørgsler kan udtrykkes som mobile programmer.
+\begin{block}{Eksempel}
+\begin{lstlisting}
+def mkQuery<loc,read,k> |>
+    def query[
+          start<> |> ...
+          in go<loc, start>
+        ]
+     in 0
+\end{lstlisting}
+\end{block}
 \end{frame}
 
 
-
+\subsection{Udfordringer}
+\begin{frame}
+\frametitle{Udfordringer}
+\begin{itemize}
+ \item Spildopsamling.
+ \item Kontrol af procesmigration.
+ \item Routing af kommunikation.
+\end{itemize}
+\end{frame}
 
 \end{document}
