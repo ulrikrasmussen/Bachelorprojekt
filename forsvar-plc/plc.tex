@@ -7,8 +7,10 @@
 }
 
 \usepackage{pgfpages}
-\setbeameroption{show notes on second screen}
-\setbeameroption{always typeset second mode=true}
+\pgfpagesuselayout{4 on 1}[a4paper, landscape, border shrink=5mm]
+%\setbeameroption{show notes on second screen}
+\setbeameroption{show only notes}
+%\setbeameroption{always typeset second mode=true}
 
 \usepackage[danish]{babel}
 \usepackage[utf8]{inputenc}
@@ -23,19 +25,18 @@
 \frame[plain]{\titlepage}
 
 \begin{frame}{Indhold}
-  \tableofcontents
-  % You might wish to add the option [pausesections]
+  \tableofcontents %[pausesections]
 \end{frame}
 
 \section{Problemet}
-\begin{frame}{Problem.}
-At definere et programmeringssprog der med fordel kan anvendes på distribuerede
+\begin{frame}{Problemet}
+At definere et programmeringssprog, der med fordel kan anvendes på distribuerede
 enheder.
 
 \vspace{\stretch{1}}
 
 \begin{itemize}
-\item<2->Motivation \\
+\item<2->Motivation: \\
 Mangel på fornuftig, domænespecifik abstraktion.
 \note<2>{
 
@@ -43,14 +44,18 @@ Mangel på fornuftig, domænespecifik abstraktion.
   man henvist til at bruge C eller tilsvarende og manuelt håndtere al
   enhedskommunikation.
 
+\vspace{1em}
+
   Der eksisterer processkalkyler, de er bare enten synkrone eller ikke formelt
   definerede.
+
+\vspace{1em}
 
   Synkronisitet går ikke i en distribueret sammenhæng, da det er for kompliceret
   at implementere fornuftigt.
 
   }
-\item<3->Join-calculus \\
+\item<3->Join-calculus: \\
 Asynkron, simpel, vist ækvivalent med $\pi$-calculus.
 \note<3>{
 
@@ -68,22 +73,72 @@ Asynkron, simpel, vist ækvivalent med $\pi$-calculus.
 \end{frame}
 
 \section{Programmeringssproget}
-\begin{frame}{Programmeringssproget.}
+\begin{frame}{Programmeringssproget}
+Join-sproget er en udvidet udgave af grund-kalkylen.
+
+\vspace{\stretch{1}}
+
+\begin{itemize}
+\item<2-> Forsøgt tilpasset til problemet.\\
+Algebraiske datatyper, distribution, tid og usikker kommunikation.
+
+\note<2>{
+
+  Værdi: Nødvendig for et praktisk programmeringssprog (ellers skal alt
+  simuleres gennem kernekonstruktionerne).
+
+  \vspace{1em}
+
+  Distribution: Relevant fordi den omhandler kommunikation mellem maskiner og
+  giver mulighed for at afprøve kodemigration.
+
+  \vspace{1em}
+
+  Tid + usikker com.: Relevant da de gør det muligt deterministisk:\\
+    \indent- at afgøre programadfæren ved udfald af kommunikation\\
+    \indent- at definere timeouts
+
+  }
+
+\item<3-> Guidet og konkret mod simpel og abstrakt.\\
+Opdelt i trin, der groft set svarer til hver udvidelse.
+
+\note<3>{
+
+  De oprindelige semantikker defineret for de enkelte udvidelser var relativt
+  simple og enten ikke-deterministiske i deres eksekvering eller udvalgte
+  reduktionsskridt fra kombinatorisk fremkomne mængder.
+
+  \vspace{1em}
+
+  Yderligere var særligt det at lave distribution og tid noget der blev dybt
+  involveret, og måtte adskilles i afgrænsede ``pakker''.
+
+  }
+\end{itemize}
+
 \end{frame}
 
-\begin{frame}{Use cases.}
+\section{Evalueringen}
+
+\begin{frame}{Use cases}
+Vores vurdering af programmeringssproget er baseret på to eksempelprogrammer,
+der omhandler:
+
+\vspace{\stretch{1}}
+
 \begin{itemize}
-\item<1-> Sensor Netværk\\
+\item<2-> Sensornetværk,\\
 Lagerhus med intelligente termometre.
-\note<1>{
+\note<2>{
 
   Skitsér strukturen i netværket.\\
   Beret om query-systemet.
 
 }
-\item<2-> Garanteret levering \\
+\item<3-> Garanteret levering, \\
 Et protokolbibliotek med retransmission af beskeder.
-\note<2>{
+\note<3>{
 
   Sammenlign med tcp.\\
   elegant brug med proxy-mønstret.
@@ -94,12 +149,12 @@ Et protokolbibliotek med retransmission af beskeder.
 
 \section{Resultat}
 
-\begin{frame}{Resultat.}
+\begin{frame}{Resultat}
 \begin{itemize}
-\item<1-> Sproget skal viderudvikles før det kan bruges.
-\note<1>{ Der forskellige forhold er uafklarede: migration, synkron tid.  }
-\item<2-> Sproget virker ikke uegnet.
-\note<2>{ Vi kan ikke konstruktivt entydigt konkludere egnethed, men vi har ikke
+\item<2-> Join-sproget skal viderudvikles før det kan bruges.
+\note<2>{ Der er forskellige uafklarede forhold : migration, synkron tid.  }
+\item<3-> Det virker ikke uegnet.
+\note<3>{ Vi kan ikke konstruktivt entydigt konkludere egnethed, men vi har ikke
 haft nogen nævneværdige problemer.
 
 Tidsudvidelsen virker fornuftig. Samme med Algebraiske datatyper.
