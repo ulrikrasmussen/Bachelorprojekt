@@ -19,7 +19,7 @@
 
 \usepackage{palatino}
 
-\title[Bacheorprojektforsvar]{Programmering af distribuerede indlejrede enheder ved brug af join-calculus}
+\title[Bachelorprojektforsvar]{Programmering af distribuerede indlejrede enheder ved brug af join-calculus}
 
 \author{Philip Carlsen \& Ulrik Rasmussen}
 
@@ -121,10 +121,10 @@ def x<A()> & x<b> |> ... in x<B()> & x<A()>
 \frametitle{Distribution}
 \begin{itemize}
 \item
-  Parallel afvikling af uafhængige fortolkere.
+  Parallel afvikling af uafhængige maskiner.
 
 \item
-  Mulighed for at starte nye fortolkere, og "dræbe" eksisterende.
+  Mulighed for at starte nye maskiner, og "dræbe" eksisterende.
 
 \item
   Asynkron envejskommunikation.
@@ -136,7 +136,7 @@ def x<A()> & x<b> |> ... in x<B()> & x<A()>
 
 \begin{frame}[fragile]
 \frametitle{Distribution}
-Fortolkere er organiseret hierarkisk, og kan flyttes mellem hinanden:
+Maskiner er organiseret hierarkisk, og kan flyttes mellem hinanden:
 \begin{center}
 \only<1>{\includegraphics[width=0.5\textwidth]{trees-0.pdf}}
 \only<2>{\includegraphics[width=0.5\textwidth]{trees-1.pdf}}
@@ -156,9 +156,9 @@ def x<> & y<> |>^3 z<> in (1:x<>) & y<>
 
 \section{Evaluering}
 
-\subsection{Use Case}
+\subsection{Use case}
 \begin{frame}
-\frametitle{Use Case}
+\frametitle{Use case}
 Programmerbare temperatursensorer der kommunikerer med en central server.
 \begin{center}
 \includegraphics[width=0.5\textwidth]{sensors.pdf}
@@ -186,8 +186,8 @@ def mkQuery<loc,read,k> |>
 \frametitle{Udfordringer}
 \begin{itemize}
  \item Spildopsamling.
- \item Kontrol af procesmigration.
- \item Routing af kommunikation.
+ \item Bedre kontrol af procesmigrering.
+ \item Rutning af kommunikation.
 \end{itemize}
 \end{frame}
 
